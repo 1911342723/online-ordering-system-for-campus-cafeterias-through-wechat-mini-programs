@@ -1,0 +1,34 @@
+<view class="container">
+  <view class="login-box">
+    <image class="logo" src="/assets/icons/logo.png" mode="aspectFit"></image>
+    <view class="title">欢迎使用智慧食堂</view>
+    <view class="subtitle">请授权手机号以快捷登录</view>
+    
+    <!-- 授权失败提示 -->
+    <view class="retry-tip" wx:if="{{showRetry}}">
+      <text class="retry-text">授权失败，请重新尝试或使用测试登录</text>
+    </view>
+    
+    <!-- 微信授权登录按钮 -->
+    <button 
+      class="login-btn" 
+      open-type="getPhoneNumber" 
+      bindgetphonenumber="getPhoneNumber"
+    >
+      微信手机号一键登录
+    </button>
+    
+    <!-- 开发测试登录按钮 -->
+    <button 
+      class="test-btn" 
+      wx:if="{{isDev}}"
+      bindtap="testLogin"
+    >
+      测试登录（开发使用）
+    </button>
+    
+    <view class="footer">
+      <text>登录即代表同意《用户协议》和《隐私政策》</text>
+    </view>
+  </view>
+</view>

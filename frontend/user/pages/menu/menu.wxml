@@ -1,0 +1,70 @@
+<!--pages/menu/menu.wxml-->
+<view class="container">
+  <!-- Canteen Header -->
+  <view class="header">
+    <text class="canteen-name">{{canteenName}}</text>
+    <view class="header-info">
+      <text class="info-item">起送 ¥0</text>
+      <text class="info-item">|</text>
+      <text class="info-item">配送费 ¥1</text>
+    </view>
+  </view>
+
+  <!-- Main Content -->
+  <view class="content">
+    <!-- Left Category Sidebar -->
+    <scroll-view scroll-y class="category-sidebar">
+      <view wx:for="{{categories}}" wx:key="id" 
+            class="category-item {{activeCategory === index ? 'active' : ''}}"
+            bindtap="switchCategory" data-index="{{index}}" data-id="{{item.id}}">
+        <text>{{item.name}}</text>
+      </view>
+    </scroll-view>
+
+    <!-- Right Food List -->
+    <scroll-view scroll-y class="food-list" scroll-into-view="{{toView}}" scroll-with-animation bindscroll="onFoodScroll">
+      <block wx:for="{{categories}}" wx:key="id" wx:for-index="catIndex">
+        <view class="category-header" id="cat-{{catIndex}}">{{item.name}}</view>
+        <view class="food-item" wx:for="{{item.dishes}}" wx:key="id" wx:for-item="dish">
+          <image class="food-img" src="{{dish.image || defaultDishImg}}" mode="aspectFill" bindtap="showDetail" data-dish="{{dish}}"></image>
+          <view class="food-info">
+            <text class="food-name">{{dish.name}}</text>
+            <text class="food-desc">{{dish.description || '暂无描述'}}</text>
+            <text class="food-sales">月售 {{dish.sales || 0}}</text>
+            <view class="price-action">
+              <text class="price">¥{{dish.price}}</text>
+              <view class="action-btn">
+                <view class="minus-btn" wx:if="{{dish.cartCount > 0}}" catchtap="updateCart" data-dish="{{dish}}" data-action="minus">-</view>
+                <text class="count" wx:if="{{dish.cartCount > 0}}">{{dish.cartCount}}</text>
+                <view class="add-btn" catchtap="updateCart" data-dish="{{dish}}" data-action="add">+</view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
+      <view style="height: 100rpx;"></view> <!-- Spacer -->
+    </scroll-view>
+  </view>
+
+  <!-- Cart Bar -->
+  <view class="cart-bar" wx:if="{{cartTotal > 0}}">
+    <view class="cart-icon-wrapper" bindtap="showCartDetail">
+      <image src="{{icons.cart}}" class="cart-icon"></image>
+      <view class="badge">{{cartCount}}</view>
+    </view>
+    <view class="cart-price">
+      <text class="total">¥{{cartTotal}}</text>
+      <text class="delivery-fee">另需配送费 ¥1</text>
+    </view>
+    <view class="pay-btn" bindtap="goToPay">去结算</view>
+  </view>
+  
+  <!-- Empty Cart Bar (Optional, usually hidden) -->
+  <view class="cart-bar empty" wx:else>
+    <view class="cart-icon-wrapper disabled">
+      <image src="{{icons.cartEmpty}}" class="cart-icon"></image>
+    </view>
+    <text class="empty-text">未选购商品</text>
+  </view>
+</view>
+

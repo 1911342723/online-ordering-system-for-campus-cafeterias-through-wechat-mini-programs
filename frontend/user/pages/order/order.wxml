@@ -1,0 +1,43 @@
+<!--pages/order/order.wxml-->
+<view class="container">
+  <view class="tabs">
+    <view class="tab {{currentTab==0 ? 'active' : ''}}" bindtap="switchTab" data-index="0">全部</view>
+    <view class="tab {{currentTab==1 ? 'active' : ''}}" bindtap="switchTab" data-index="1">待付款</view>
+    <view class="tab {{currentTab==2 ? 'active' : ''}}" bindtap="switchTab" data-index="2">制作中</view>
+    <view class="tab {{currentTab==3 ? 'active' : ''}}" bindtap="switchTab" data-index="3">配送中</view>
+    <view class="tab {{currentTab==4 ? 'active' : ''}}" bindtap="switchTab" data-index="4">已完成</view>
+  </view>
+
+  <scroll-view scroll-y class="order-list">
+    <block wx:if="{{orders.length > 0}}">
+      <view class="order-card" wx:for="{{orders}}" wx:key="id" bindtap="viewOrderDetail" data-id="{{item.id}}">
+        <view class="card-header">
+          <text class="shop-name">{{item.shopName}}</text>
+          <text class="status status-{{item.status}}">{{item.statusText}}</text>
+        </view>
+        <view class="card-body">
+          <view class="order-items">
+            <image src="{{item.image || defaultOrderImg}}" class="order-img"></image>
+            <view class="item-desc">
+              <text class="item-name">{{item.firstDishName}} 等{{item.count}}件商品</text>
+              <text class="order-time">⏰ {{item.orderTime}}</text>
+            </view>
+          </view>
+          <view class="order-total">
+            <text class="total-label">实付</text>
+            <text class="total-amount">¥{{item.amount}}</text>
+          </view>
+        </view>
+        <view class="card-footer">
+          <button size="mini" plain wx:if="{{item.status === 1}}" catchtap="goPay" data-id="{{item.id}}">去支付</button>
+          <button size="mini" class="btn-primary" wx:if="{{item.status === 4}}" catchtap="reorder" data-id="{{item.id}}">再来一单</button>
+        </view>
+      </view>
+    </block>
+    <view wx:else class="empty-state">
+      <image src="/assets/icons/no_order.png" class="empty-img"></image> <!-- Need to provide this later or standard -->
+      <text>暂无订单</text>
+    </view>
+  </scroll-view>
+</view>
+

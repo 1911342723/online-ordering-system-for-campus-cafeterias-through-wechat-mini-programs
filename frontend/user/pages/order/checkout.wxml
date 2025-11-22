@@ -1,0 +1,96 @@
+<!-- 下单页面 -->
+<view class="container">
+  <!-- 配送方式选择 -->
+  <view class="section">
+    <view class="section-title">配送方式</view>
+    <view class="delivery-methods">
+      <view class="method-item {{deliveryType === 1 ? 'active' : ''}}" bindtap="selectDeliveryType" data-type="1">
+        <view class="method-icon">🏪</view>
+        <view class="method-info">
+          <text class="method-name">到店自取</text>
+          <text class="method-desc">无需配送费</text>
+        </view>
+        <view class="method-check"></view>
+      </view>
+      
+      <view class="method-item {{deliveryType === 2 ? 'active' : ''}}" bindtap="selectDeliveryType" data-type="2">
+        <view class="method-icon">🛵</view>
+        <view class="method-info">
+          <text class="method-name">商家外送</text>
+          <text class="method-desc">配送费 ¥3.00</text>
+        </view>
+        <view class="method-check"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 收货地址（仅外送时显示） -->
+  <view class="section" wx:if="{{deliveryType === 2}}">
+    <view class="section-title">收货地址</view>
+    <view class="address-selector" bindtap="selectAddress">
+      <view wx:if="{{selectedAddress}}" class="address-info">
+        <view class="address-top">
+          <text class="name">{{selectedAddress.consignee}}</text>
+          <text class="phone">{{selectedAddress.phone}}</text>
+        </view>
+        <view class="address-detail">{{selectedAddress.detail}}</view>
+      </view>
+      <view wx:else class="address-placeholder">
+        <text>请选择收货地址</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 订单明细 -->
+  <view class="section">
+    <view class="section-title">订单明细</view>
+    <view class="order-items">
+      <view class="order-item" wx:for="{{orderItems}}" wx:key="id">
+        <image class="item-image" src="{{item.image}}" mode="aspectFill"></image>
+        <view class="item-info">
+          <text class="item-name">{{item.name}}</text>
+          <view class="item-bottom">
+            <text class="item-price">¥{{item.price}}</text>
+            <text class="item-count">×{{item.number}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 费用明细 -->
+  <view class="section">
+    <view class="section-title">费用明细</view>
+    <view class="fee-list">
+      <view class="fee-item">
+        <text>菜品金额</text>
+        <text>¥{{dishAmount}}</text>
+      </view>
+      <view class="fee-item" wx:if="{{deliveryType === 2}}">
+        <text>配送费</text>
+        <text>¥3.00</text>
+      </view>
+      <view class="fee-item total">
+        <text>合计</text>
+        <text class="total-amount">¥{{totalAmount}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 备注 -->
+  <view class="section">
+    <view class="section-title">备注</view>
+    <textarea class="remark-input" placeholder="如有特殊要求请备注" bindinput="onRemarkInput" value="{{remark}}" maxlength="100"></textarea>
+  </view>
+</view>
+
+<!-- 底部提交栏 -->
+<view class="footer">
+  <view class="total-info">
+    <text class="label">合计：</text>
+    <text class="price">¥{{totalAmount}}</text>
+  </view>
+  <button class="submit-btn" bindtap="submitOrder">提交订单</button>
+</view>
+

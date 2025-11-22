@@ -1,0 +1,180 @@
+# =============================================
+# Online Catering System - Git Ignore File
+# =============================================
+
+# ==================== Java/Maven ====================
+# Compiled class files
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+backend/target/
+backend/pom.xml.tag
+backend/pom.xml.releaseBackup
+backend/pom.xml.versionsBackup
+backend/pom.xml.next
+backend/release.properties
+backend/dependency-reduced-pom.xml
+backend/buildNumber.properties
+backend/.mvn/timing.properties
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# ==================== IDE ====================
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+.idea_modules/
+out/
+
+# Eclipse
+.project
+.classpath
+.settings/
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.loadpath
+.recommenders
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# ==================== Node.js/前端 ====================
+# Dependencies
+node_modules/
+frontend/admin/node_modules/
+frontend/user/node_modules/
+
+# npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Build outputs
+frontend/admin/dist/
+frontend/user/dist/
+frontend/admin/build/
+frontend/user/build/
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# ==================== 小程序 ====================
+# WeChat MiniProgram
+frontend/user/miniprogram_npm/
+frontend/user/project.private.config.json
+
+# ==================== 数据库 ====================
+# Database files
+*.sql.bak
+*.db
+*.sqlite
+*.sqlite3
+
+# 保留必要的SQL文件，但忽略备份
+*_backup.sql
+*_old.sql
+
+# ==================== 日志文件 ====================
+*.log
+logs/
+backend/logs/
+*.log.*
+log/
+
+# ==================== 临时文件 ====================
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*~
+*.swp
+*.swo
+
+# ==================== 上传文件/图片 ====================
+# 用户上传的文件（但保留示例图片）
+backend/src/main/resources/food_img/*
+!backend/src/main/resources/food_img/.gitkeep
+!backend/src/main/resources/food_img/*.jpg
+
+# 前端静态资源（如果是动态生成的）
+# frontend/user/assets/uploads/
+
+# ==================== 配置文件 ====================
+# 敏感配置文件（包含密码、密钥等）
+application-prod.yml
+application-dev.yml
+# 保留示例配置
+# !application.yml.example
+
+# ==================== 其他 ====================
+# 打包文件
+*.rar
+*.zip
+*.7z
+*.dmg
+*.iso
+
+# 测试覆盖率报告
+coverage/
+*.lcov
+.nyc_output/
+
+# 缓存
+.cache/
+*.cache
+
+# ==================== 项目特定 ====================
+# 构建产物
+*.jar.original
+
+# 本地测试数据
+test-data/
+
+# 文档草稿
+docs/draft/
+*.draft.md
+
+# ==================== 保留文件说明 ====================
+# 以下文件/文件夹会被保留：
+# - backend/db.sql (初始数据库脚本)
+# - backend/*.sql (数据库更新脚本)
+# - backend/src/main/resources/application.yml (配置模板)
+# - README.md (项目说明)
+# - 所有源代码文件
+

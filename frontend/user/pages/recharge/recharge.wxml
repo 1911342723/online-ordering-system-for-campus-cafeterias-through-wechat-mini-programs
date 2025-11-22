@@ -1,0 +1,84 @@
+<!-- 余额充值页面 -->
+<view class="container">
+  <!-- 当前余额 -->
+  <view class="balance-section">
+    <view class="balance-label">当前余额</view>
+    <view class="balance-amount">¥{{balance}}</view>
+  </view>
+
+  <!-- 充值金额选择 -->
+  <view class="amount-section">
+    <view class="section-title">选择充值金额</view>
+    <view class="amount-list">
+      <view class="amount-item {{selectedAmount === 10 ? 'active' : ''}}" bindtap="selectAmount" data-amount="10">
+        <text class="amount">¥10</text>
+      </view>
+      <view class="amount-item {{selectedAmount === 50 ? 'active' : ''}}" bindtap="selectAmount" data-amount="50">
+        <text class="amount">¥50</text>
+      </view>
+      <view class="amount-item {{selectedAmount === 100 ? 'active' : ''}}" bindtap="selectAmount" data-amount="100">
+        <text class="amount">¥100</text>
+      </view>
+      <view class="amount-item {{selectedAmount === 200 ? 'active' : ''}}" bindtap="selectAmount" data-amount="200">
+        <text class="amount">¥200</text>
+      </view>
+      <view class="amount-item {{selectedAmount === 500 ? 'active' : ''}}" bindtap="selectAmount" data-amount="500">
+        <text class="amount">¥500</text>
+      </view>
+      <view class="amount-item {{selectedAmount === 1000 ? 'active' : ''}}" bindtap="selectAmount" data-amount="1000">
+        <text class="amount">¥1000</text>
+      </view>
+    </view>
+    
+    <!-- 自定义金额 -->
+    <view class="custom-amount">
+      <text class="label">自定义金额</text>
+      <view class="input-wrapper">
+        <text class="currency">¥</text>
+        <input class="amount-input" 
+               type="digit" 
+               placeholder="请输入充值金额" 
+               value="{{customAmount}}"
+               bindinput="onCustomAmountInput"
+               bindconfirm="onCustomAmountConfirm"/>
+      </view>
+    </view>
+  </view>
+
+  <!-- 支付方式选择 -->
+  <view class="payment-section">
+    <view class="section-title">选择支付方式</view>
+    
+    <!-- 微信支付 -->
+    <view class="payment-item {{paymentMethod === 'wechat' ? 'active' : ''}}" bindtap="selectPayment" data-method="wechat">
+      <view class="payment-left">
+        <view class="payment-icon">💚</view>
+        <view class="payment-info">
+          <text class="payment-name">微信支付</text>
+        </view>
+      </view>
+      <view class="payment-check"></view>
+    </view>
+
+    <!-- 支付宝支付 -->
+    <view class="payment-item {{paymentMethod === 'alipay' ? 'active' : ''}}" bindtap="selectPayment" data-method="alipay">
+      <view class="payment-left">
+        <view class="payment-icon">💙</view>
+        <view class="payment-info">
+          <text class="payment-name">支付宝支付</text>
+        </view>
+      </view>
+      <view class="payment-check"></view>
+    </view>
+  </view>
+</view>
+
+<!-- 底部充值按钮 -->
+<view class="footer">
+  <view class="total-info">
+    <text class="label">充值金额：</text>
+    <text class="price">¥{{displayAmount}}</text>
+  </view>
+  <button class="recharge-btn" bindtap="submitRecharge">立即充值</button>
+</view>
+

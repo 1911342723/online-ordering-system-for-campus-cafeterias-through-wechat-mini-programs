@@ -1,0 +1,165 @@
+/* 我的优惠券页面样式 */
+page {
+  background-color: #f5f5f5;
+}
+
+.container {
+  min-height: 100vh;
+}
+
+/* Tab切换 */
+.tabs {
+  display: flex;
+  background: #fff;
+  padding: 20rpx 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  font-size: 28rpx;
+  color: #666;
+  position: relative;
+  padding-bottom: 20rpx;
+}
+
+.tab.active {
+  color: #FF6B00;
+  font-weight: bold;
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60rpx;
+  height: 6rpx;
+  background-color: #FF6B00;
+  border-radius: 3rpx;
+}
+
+/* 优惠券列表 */
+.coupon-list {
+  padding: 20rpx;
+}
+
+.coupon-card {
+  display: flex;
+  background: linear-gradient(135deg, #FF6B00, #FF8F3D);
+  border-radius: 16rpx;
+  margin-bottom: 20rpx;
+  overflow: hidden;
+  position: relative;
+}
+
+.coupon-card.used, .coupon-card.expired {
+  background: linear-gradient(135deg, #CCC, #AAA);
+  opacity: 0.6;
+}
+
+.coupon-left {
+  width: 220rpx;
+  padding: 40rpx 20rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-right: 2rpx dashed rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
+.amount-area {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 10rpx;
+}
+
+.symbol {
+  font-size: 36rpx;
+  font-weight: bold;
+}
+
+.amount {
+  font-size: 72rpx;
+  font-weight: bold;
+}
+
+.condition {
+  font-size: 22rpx;
+  opacity: 0.9;
+}
+
+.coupon-right {
+  flex: 1;
+  padding: 30rpx;
+  color: #fff;
+  position: relative;
+}
+
+.title {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+}
+
+.desc {
+  font-size: 24rpx;
+  opacity: 0.9;
+  margin-bottom: 20rpx;
+}
+
+.expire-time {
+  font-size: 22rpx;
+  opacity: 0.8;
+}
+
+.status-tag {
+  position: absolute;
+  top: 30rpx;
+  right: 30rpx;
+  padding: 8rpx 20rpx;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 30rpx;
+  font-size: 22rpx;
+}
+
+/* 空状态 */
+.empty-state {
+  padding: 200rpx 40rpx;
+  text-align: center;
+}
+
+.empty-img {
+  width: 200rpx;
+  height: 200rpx;
+  margin-bottom: 30rpx;
+}
+
+.empty-text {
+  display: block;
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 40rpx;
+}
+
+.get-coupon-btn {
+  width: 300rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  background: linear-gradient(135deg, #FF6B00, #FF8F3D);
+  color: #fff;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  border: none;
+}
+
+.get-coupon-btn::after {
+  border: none;
+}
+

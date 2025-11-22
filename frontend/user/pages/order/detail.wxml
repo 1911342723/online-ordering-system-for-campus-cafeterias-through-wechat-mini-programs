@@ -1,0 +1,85 @@
+<!-- 订单详情页 -->
+<view class="container">
+  <!-- 订单状态 -->
+  <view class="status-section status-{{orderInfo.status}}">
+    <view class="status-text">{{statusText}}</view>
+    <view class="status-desc">{{statusDesc}}</view>
+  </view>
+
+  <!-- 配送信息 -->
+  <view class="section" wx:if="{{orderInfo.deliveryType}}">
+    <view class="section-title">配送信息</view>
+    <view class="info-item">
+      <text class="label">配送方式</text>
+      <text class="value">{{orderInfo.deliveryType === 1 ? '到店自取' : '商家外送'}}</text>
+    </view>
+    <view class="info-item" wx:if="{{orderInfo.deliveryType === 2}}">
+      <text class="label">收货地址</text>
+      <text class="value">{{orderInfo.address}}</text>
+    </view>
+    <view class="info-item">
+      <text class="label">收货人</text>
+      <text class="value">{{orderInfo.consignee}} {{orderInfo.phone}}</text>
+    </view>
+  </view>
+
+  <!-- 商品列表 -->
+  <view class="section">
+    <view class="section-title">商品清单</view>
+    <view class="dish-list">
+      <view class="dish-item" wx:for="{{dishList}}" wx:key="id">
+        <image class="dish-image" src="{{item.image}}" mode="aspectFill"></image>
+        <view class="dish-info">
+          <text class="dish-name">{{item.name}}</text>
+          <text class="dish-flavor" wx:if="{{item.dishFlavor}}">{{item.dishFlavor}}</text>
+        </view>
+        <view class="dish-right">
+          <text class="dish-price">¥{{item.amount}}</text>
+          <text class="dish-count">×{{item.number}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 费用明细 -->
+  <view class="section">
+    <view class="section-title">费用明细</view>
+    <view class="fee-list">
+      <view class="fee-item">
+        <text>菜品金额</text>
+        <text>¥{{dishAmount}}</text>
+      </view>
+      <view class="fee-item" wx:if="{{orderInfo.deliveryFee > 0}}">
+        <text>配送费</text>
+        <text>¥{{orderInfo.deliveryFee}}</text>
+      </view>
+      <view class="fee-item total">
+        <text>实付金额</text>
+        <text class="amount">¥{{orderInfo.amount}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 订单信息 -->
+  <view class="section">
+    <view class="section-title">订单信息</view>
+    <view class="info-item">
+      <text class="label">订单号</text>
+      <text class="value">{{orderInfo.number}}</text>
+    </view>
+    <view class="info-item">
+      <text class="label">下单时间</text>
+      <text class="value">{{orderInfo.orderTime}}</text>
+    </view>
+    <view class="info-item" wx:if="{{orderInfo.remark}}">
+      <text class="label">备注</text>
+      <text class="value">{{orderInfo.remark}}</text>
+    </view>
+  </view>
+</view>
+
+<!-- 底部操作栏 -->
+<view class="footer" wx:if="{{orderInfo.status === 1}}">
+  <button class="pay-btn" bindtap="goPay">立即支付</button>
+</view>
+

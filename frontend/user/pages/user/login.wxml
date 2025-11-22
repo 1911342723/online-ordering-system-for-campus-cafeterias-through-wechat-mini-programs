@@ -1,0 +1,122 @@
+<template>
+  <div class="container">
+    <view class="login-box">
+      <image class="logo" src="/assets/icons/logo.png" mode="aspectFit"></image>
+      <view class="title">欢迎使用智慧食堂</view>
+      <view class="subtitle">请授权手机号以快捷登录</view>
+      
+      <button 
+        class="login-btn" 
+        open-type="getPhoneNumber" 
+        bindgetphonenumber="getPhoneNumber"
+      >
+        微信手机号一键登录
+      </button>
+      
+      <view class="footer">
+        <text>登录即代表同意《用户协议》和《隐私政策》</text>
+      </view>
+    </view>
+  </div>
+</template>
+
+<style>
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40rpx;
+  background-color: #fff;
+}
+
+.login-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo {
+  width: 160rpx;
+  height: 160rpx;
+  margin-bottom: 40rpx;
+  background-color: #FF6B00; /* Placeholder */
+  border-radius: 50%;
+}
+
+.title {
+  font-size: 40rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+  color: #333;
+}
+
+.subtitle {
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 80rpx;
+}
+
+.login-btn {
+  width: 100%;
+  background-color: #07c160;
+  color: #fff;
+  border-radius: 50rpx;
+  padding: 20rpx 0;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.login-btn:active {
+  opacity: 0.9;
+}
+
+.footer {
+  margin-top: 40rpx;
+  font-size: 24rpx;
+  color: #ccc;
+  text-align: center;
+}
+</style>
+
+<script>
+Page({
+  getPhoneNumber(e) {
+    if (e.detail.code) {
+      // 1. Front end gets code
+      console.log('Phone Code:', e.detail.code)
+      
+      // 2. Send code to backend to exchange for phone number and token
+      // For now, we simulate a successful login
+      wx.showLoading({ title: '登录中...' })
+      
+      setTimeout(() => {
+        wx.hideLoading()
+        const mockUser = {
+          nickName: '微信用户',
+          role: 'student',
+          phone: '13800138000'
+        }
+        wx.setStorageSync('userInfo', mockUser)
+        wx.setStorageSync('token', 'mock-token-123')
+        
+        wx.showToast({
+          title: '登录成功',
+          icon: 'success'
+        })
+        
+        setTimeout(() => {
+          wx.switchTab({ url: '/pages/index/index' })
+        }, 1500)
+      }, 1000)
+      
+    } else {
+      wx.showToast({
+        title: '用户拒绝授权',
+        icon: 'none'
+      })
+    }
+  }
+})
+</script>
+

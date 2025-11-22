@@ -1,0 +1,137 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <!-- Header -->
+  <view class="header">
+    <view class="header-top">
+      <view class="location-wrapper">
+        <image class="icon-location" src="{{icons.location}}"></image>
+        <text class="location-text">本部校区</text>
+        <view class="arrow-down"></view>
+      </view>
+      <view class="scan-btn" bindtap="onScanCode">
+        <image class="icon-scan" src="{{icons.scan}}"></image>
+        <text>扫码点餐</text>
+      </view>
+    </view>
+    
+    <!-- Search Bar -->
+    <view class="search-bar" bindtap="onSearch">
+      <image class="icon-search" src="{{icons.search}}"></image>
+      <text class="placeholder">搜索商家或菜品</text>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="main-scroll">
+    <!-- Banner -->
+    <view class="banner-wrapper">
+      <swiper class="banner" indicator-dots indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#fff" autoplay circular interval="4000" duration="500">
+        <swiper-item wx:for="{{banners}}" wx:key="id">
+          <view class="banner-item">
+            <image src="{{item.url || defaultBanner}}" mode="aspectFill" class="banner-img"></image>
+          </view>
+        </swiper-item>
+      </swiper>
+    </view>
+
+    <!-- Announcements -->
+    <view class="announcement-section" wx:if="{{announcements.length > 0}}">
+      <swiper class="announcement-swiper" autoplay circular interval="3000" vertical>
+        <swiper-item wx:for="{{announcements}}" wx:key="id">
+          <view class="announcement-item" bindtap="showAnnouncementDetail" data-announcement="{{item}}">
+            <image class="announcement-icon" src="{{icons.announcement}}"></image>
+            <view class="announcement-content">
+              <text class="announcement-type">{{item.typeText}}</text>
+              <text class="announcement-title">{{item.title}}</text>
+            </view>
+            <view class="announcement-arrow">></view>
+          </view>
+        </swiper-item>
+      </swiper>
+    </view>
+
+    <!-- Today's Recommendations - 今日推荐板块 -->
+    <view class="today-recommend-section" wx:if="{{todayRecommendations.length > 0}}">
+      <view class="section-header">
+        <text class="section-title">今日推荐</text>
+        <text class="section-more" bindtap="refreshRecommendations">
+          <text>换一批</text>
+          <text class="arrow-icon">›</text>
+        </text>
+      </view>
+      
+      <scroll-view scroll-x class="recommendation-scroll" show-scrollbar="{{false}}">
+        <view class="recommendation-list">
+          <view class="recommendation-card" wx:for="{{todayRecommendations}}" wx:key="id" bindtap="goToDishDetail" data-dish="{{item}}">
+            <image src="{{item.image}}" mode="aspectFill" class="recommendation-img"></image>
+            <view class="recommendation-info">
+              <text class="dish-name">{{item.name}}</text>
+              <view class="dish-meta">
+                <text class="category-name">{{item.categoryName}}</text>
+              </view>
+              <view class="price-row">
+                <text class="price">¥{{item.price}}</text>
+                <view class="add-btn" catchtap="addToCart" data-dish="{{item}}">
+                  <text>+</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- AI Assistant Entry -->
+    <view class="ai-entry" bindtap="goToAI">
+      <view class="ai-left">
+        <view class="ai-title-row">
+          <text class="ai-title">AI 智能推荐</text>
+          <view class="ai-tag">NEW</view>
+        </view>
+        <text class="ai-desc">不知道吃什么？让 AI 帮你挑美食</text>
+      </view>
+      <view class="ai-right">
+        <image class="ai-icon-img" src="{{icons.ai}}"></image>
+      </view>
+    </view>
+
+    <!-- Canteen List -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">校园食堂</text>
+        <text class="section-more">查看全部 ></text>
+      </view>
+      
+      <view class="canteen-list">
+        <view class="canteen-card" wx:for="{{canteens}}" wx:key="id" bindtap="goToMenu" data-id="{{item.id}}" data-name="{{item.name}}" data-isopen="{{item.isOpen}}">
+          <view class="card-img-wrapper">
+            <image src="{{item.image || defaultCanteen}}" mode="aspectFill" class="canteen-img"></image>
+            <view class="status-badge {{item.isOpen ? 'open' : 'closed'}}">
+              {{item.isOpen ? '营业中' : '休息中'}}
+            </view>
+          </view>
+          
+          <view class="canteen-info">
+            <view class="info-top">
+              <text class="canteen-name">{{item.name}}</text>
+              <view class="distance-badge">
+                <text>{{item.distance}}</text>
+              </view>
+            </view>
+            
+            <view class="rating-row">
+              <image class="icon-star" src="{{icons.star}}"></image>
+              <text class="score">{{item.rating}}</text>
+              <text class="sales">月售 {{item.sales}}+</text>
+            </view>
+            
+            <view class="tags-row">
+              <text class="tag" wx:for="{{item.tags}}" wx:key="*this" wx:for-item="tag">{{tag}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+    
+    <view class="footer-spacer"></view>
+  </scroll-view>
+</view>

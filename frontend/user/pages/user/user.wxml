@@ -1,0 +1,39 @@
+<!--pages/user/user.wxml-->
+<view class="container">
+  <view class="user-header">
+    <image class="avatar" src="{{userInfo.avatarUrl || defaultAvatar}}" mode="aspectFill"></image>
+    <view class="user-info" wx:if="{{isLoggedIn}}">
+      <text class="nickname">{{userInfo.nickName}}</text>
+      <text class="role">{{userInfo.role === 'teacher' ? '教师用户' : '学生用户'}}</text>
+    </view>
+    <view class="login-btn" wx:else bindtap="login">
+      <text>点击登录</text>
+    </view>
+  </view>
+
+  <view class="stats-card" wx:if="{{isLoggedIn}}">
+    <view class="stat-item" bindtap="goRecharge">
+      <text class="num">¥{{stats.balance}}</text>
+      <text class="label">钱包余额</text>
+      <view class="recharge-btn-mini">充值</view>
+    </view>
+    <view class="stat-item" bindtap="handleStatClick" data-type="coupon">
+      <text class="num">{{stats.coupon}}</text>
+      <text class="label">优惠券</text>
+    </view>
+  </view>
+
+  <view class="menu-list">
+    <view class="menu-item" wx:for="{{menuItems}}" wx:key="title" bindtap="handleMenuClick" data-action="{{item.action}}">
+      <view class="left">
+        <image class="menu-icon" src="{{item.icon}}"></image>
+        <text class="menu-title">{{item.title}}</text>
+      </view>
+      <text class="arrow">></text>
+    </view>
+  </view>
+
+  <view class="logout-btn" wx:if="{{isLoggedIn}}" bindtap="logout">
+    退出登录
+  </view>
+</view>

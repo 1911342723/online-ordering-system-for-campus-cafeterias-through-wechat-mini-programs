@@ -1,0 +1,65 @@
+<!-- 地址列表页面 -->
+<view class="container">
+  <view class="address-list" wx:if="{{addressList.length > 0}}">
+    <view class="address-item {{item.isDefault === 1 ? 'default' : ''}}" 
+          wx:for="{{addressList}}" 
+          wx:key="id"
+          bindtap="handleAddressClick"
+          data-address="{{item}}">
+      
+      <!-- 默认标签 -->
+      <view class="default-tag" wx:if="{{item.isDefault === 1}}">默认</view>
+      
+      <!-- 地址信息 -->
+      <view class="address-info">
+        <view class="consignee-info">
+          <text class="consignee">{{item.consignee}}</text>
+          <text class="phone">{{item.phone}}</text>
+        </view>
+        
+        <view class="address-detail">
+          <text class="address-text">{{item.provinceName}} {{item.cityName}} {{item.districtName}} {{item.detail}}</text>
+        </view>
+        
+        <view class="address-label" wx:if="{{item.label}}">
+          <text class="label-text">{{item.label}}</text>
+        </view>
+      </view>
+      
+      <!-- 操作按钮 -->
+      <view class="address-actions" catchtap="stopPropagation">
+        <button class="action-btn" 
+                wx:if="{{item.isDefault !== 1}}" 
+                catchtap="setDefault" 
+                data-id="{{item.id}}"
+                size="mini"
+                type="default">设为默认</button>
+        
+        <button class="action-btn edit" 
+                catchtap="editAddress" 
+                data-address="{{item}}"
+                size="mini"
+                type="primary">编辑</button>
+        
+        <button class="action-btn delete" 
+                catchtap="deleteAddress" 
+                data-id="{{item.id}}"
+                size="mini"
+                type="warn">删除</button>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <image class="empty-icon" src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23CCCCCC'%3E%3Cpath d='M50 10C35 10 25 20 25 30c0 17.5 25 45 25 45s25-27.5 25-45c0-10-10-20-25-20zm0 27c-4 0-7-3-7-7s3-7 7-7 7 3 7 7-3 7-7 7z'/%3E%3C/svg%3E"></image>
+    <text class="empty-text">暂无收货地址</text>
+    <text class="empty-hint">请添加您的收货地址</text>
+  </view>
+</view>
+
+<!-- 底部按钮 -->
+<view class="footer">
+  <button class="add-btn" bindtap="addAddress">添加新地址</button>
+</view>
+
