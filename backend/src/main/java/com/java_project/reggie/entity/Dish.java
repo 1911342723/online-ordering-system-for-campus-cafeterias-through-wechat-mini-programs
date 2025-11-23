@@ -31,6 +31,8 @@ public class Dish implements Serializable {
     //所属餐厅ID
     private Long canteenId;
 
+    //所属商家ID
+    private Long merchantId;
 
     //菜品价格
     private BigDecimal price;
@@ -47,6 +49,8 @@ public class Dish implements Serializable {
     //描述信息
     private String description;
 
+    //库存数量
+    private Integer stock;
 
     //0 停售 1 起售
     private Integer status;

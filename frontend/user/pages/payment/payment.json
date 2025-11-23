@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "收银台",
-  "navigationBarBackgroundColor": "#FF6B00",
-  "navigationBarTextStyle": "white"
+  "navigationBarBackgroundColor": "#FF6B35",
+  "navigationBarTextStyle": "white",
+  "usingComponents": {}
 }
 

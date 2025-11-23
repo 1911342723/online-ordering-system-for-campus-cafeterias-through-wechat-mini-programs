@@ -1,5 +1,5 @@
 // pages/settings/settings.js
-const { showError, showSuccess } = require('../../utils/util')
+const { showError, showSuccess, getImageUrl } = require('../../utils/util')
 
 Page({
   data: {
@@ -41,7 +41,7 @@ Page({
             nickName: userInfo.name || '未设置',
             phone: userInfo.phone || '未绑定',
             sex: userInfo.sex || '0',
-            avatarUrl: userInfo.avatar || DEFAULT_IMAGES.avatar
+            avatarUrl: getImageUrl(userInfo.avatar, DEFAULT_IMAGES.avatar)
           }
         })
       }
@@ -58,7 +58,7 @@ Page({
             nickName: userInfo.name || `用户${phone ? phone.substr(-4) : '****'}`,
             phone: phone || '未绑定',
             sex: userInfo.sex || '0',
-            avatarUrl: userInfo.avatar || DEFAULT_IMAGES.avatar
+            avatarUrl: getImageUrl(userInfo.avatar, DEFAULT_IMAGES.avatar)
           }
         })
       }
@@ -93,13 +93,14 @@ Page({
       sourceType: ['album', 'camera'],
       success: async (res) => {
         try {
-          const { showLoading, hideLoading, showSuccess, showError } = require('../../utils/util')
+          const { showLoading, hideLoading, showSuccess, showError, getImageUrl } = require('../../utils/util')
+          const { UPLOAD_URL } = require('../../utils/config')
           showLoading('上传中...')
           
           // 上传图片
           const uploadRes = await new Promise((resolve, reject) => {
             wx.uploadFile({
-              url: 'http://localhost:8080/common/upload',
+              url: UPLOAD_URL,
               filePath: res.tempFilePaths[0],
               name: 'file',
               header: {
@@ -122,8 +123,9 @@ Page({
               }
             })
             
+            // 使用 getImageUrl 统一处理图片URL
             this.setData({
-              'userInfo.avatarUrl': 'http://localhost:8080/common/download?name=' + data.data
+              'userInfo.avatarUrl': getImageUrl(data.data)
             })
             
             hideLoading()

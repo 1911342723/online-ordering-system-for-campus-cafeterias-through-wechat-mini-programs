@@ -1,0 +1,19 @@
+<!--pages/review/add.wxml-->
+<view class="container">
+  <view class="rating-section">
+    <text class="section-title">总体评价</text>
+    <view class="stars">
+      <view class="star" wx:for="{{[1,2,3,4,5]}}" wx:key="*this" bindtap="setRating" data-value="{{item}}">
+        {{item <= rating ? '⭐' : '☆'}}
+      </view>
+    </view>
+    <text class="rating-text">{{ratingText[rating]}}</text>
+  </view>
+
+  <view class="input-section">
+    <textarea class="review-input" placeholder="说说您对商家的评价吧..." bindinput="onInput" value="{{content}}" maxlength="200"></textarea>
+    <view class="word-count">{{content.length}}/200</view>
+  </view>
+
+  <button class="submit-btn" bindtap="submitReview" disabled="{{!content && rating === 0}}">提交评价</button>
+</view>

@@ -49,6 +49,29 @@
       </swiper>
     </view>
 
+    <!-- Coupon Center Entry - 领券中心入口（始终显示） -->
+    <view class="coupon-center-entry" bindtap="goToCouponCenter">
+      <view class="entry-left">
+        <view class="entry-icon">🎁</view>
+        <view class="entry-content">
+          <view class="entry-title">领券中心</view>
+          <view class="entry-subtitle" wx:if="{{coupons.length > 0}}">{{coupons.length}}张优惠券待领取</view>
+          <view class="entry-subtitle" wx:else>查看更多优惠券</view>
+        </view>
+      </view>
+      <view class="entry-right">
+        <view class="entry-coupons" wx:if="{{coupons.length > 0}}">
+          <view class="mini-coupon" wx:for="{{coupons.slice(0, 3)}}" wx:key="id">
+            <text class="mini-amount">¥{{item.amount}}</text>
+          </view>
+        </view>
+        <view class="entry-arrow">
+          <text>立即领取</text>
+          <text class="arrow">›</text>
+        </view>
+      </view>
+    </view>
+
     <!-- Today's Recommendations - 今日推荐板块 -->
     <view class="today-recommend-section" wx:if="{{todayRecommendations.length > 0}}">
       <view class="section-header">
@@ -98,7 +121,7 @@
     <view class="section">
       <view class="section-header">
         <text class="section-title">校园食堂</text>
-        <text class="section-more">查看全部 ></text>
+        <text class="section-more" bindtap="goToCanteenList">查看全部 ></text>
       </view>
       
       <view class="canteen-list">
@@ -134,4 +157,28 @@
     
     <view class="footer-spacer"></view>
   </scroll-view>
+
+  <!-- Coupon Dialog 优惠券弹窗 -->
+  <view class="coupon-dialog-mask" wx:if="{{showCouponDialog}}" bindtap="closeCouponDialog">
+    <view class="coupon-dialog" catchtap="">
+      <view class="dialog-close" bindtap="closeCouponDialog">×</view>
+      <view class="dialog-title">🎁 新人专享优惠券</view>
+      <view class="dialog-subtitle">限时领取，数量有限</view>
+      
+      <view class="dialog-coupons">
+        <view class="dialog-coupon-item" wx:for="{{coupons}}" wx:key="id">
+          <view class="dialog-coupon-left">
+            <text class="dialog-coupon-amount">¥{{item.amount}}</text>
+            <text class="dialog-coupon-condition">满{{item.minAmount}}元</text>
+          </view>
+          <view class="dialog-coupon-right">
+            <view class="dialog-coupon-name">{{item.name}}</view>
+            <view class="dialog-coupon-desc">{{item.description}}</view>
+          </view>
+        </view>
+      </view>
+      
+      <view class="dialog-btn" bindtap="goToCouponCenter">立即领取</view>
+    </view>
+  </view>
 </view>

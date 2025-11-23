@@ -1,0 +1,200 @@
+/* pages/merchant/list.wxss */
+.container {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-top: 20rpx;
+}
+
+/* 页面标题 */
+.page-header {
+  padding: 30rpx 32rpx;
+  background: #fff;
+  color: #333;
+  border-bottom: 1rpx solid #eee;
+  margin-bottom: 20rpx;
+}
+
+.header-title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+  color: #764ba2;
+}
+
+.header-subtitle {
+  display: block;
+  font-size: 26rpx;
+  color: #999;
+}
+
+/* 滚动区域 */
+.merchant-scroll {
+  height: calc(100vh - 160rpx);
+  padding: 0 24rpx;
+  box-sizing: border-box;
+}
+
+/* 加载中 */
+.loading-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 0;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 商家列表 */
+.merchant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  padding-bottom: 40rpx;
+}
+
+/* 商家卡片 */
+.merchant-item {
+  display: flex;
+  background: white;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  position: relative;
+}
+
+/* 商家图片 */
+.merchant-image-wrapper {
+  flex-shrink: 0;
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  position: relative;
+  margin-right: 24rpx;
+  background-color: #f0f0f0;
+}
+
+.merchant-image {
+  width: 100%;
+  height: 100%;
+}
+
+.status-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 4rpx 12rpx;
+  border-bottom-right-radius: 12rpx;
+  font-size: 20rpx;
+  color: white;
+  font-weight: bold;
+}
+
+.status-badge.open {
+  background: #4CAF50; /* Green */
+}
+
+.status-badge.closed {
+  background: #9E9E9E; /* Grey */
+}
+
+/* 商家信息 */
+.merchant-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.merchant-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
+}
+
+.merchant-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.window-number {
+  padding: 2rpx 10rpx;
+  background: #764ba2; /* Purple */
+  color: white;
+  border-radius: 6rpx;
+  font-size: 20rpx;
+}
+
+.merchant-desc {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  margin-bottom: 8rpx;
+}
+
+/* 商家统计 */
+.merchant-stats {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 8rpx;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font-size: 24rpx;
+  color: #666;
+}
+
+.stat-icon {
+  color: #FFC107; /* Star Color */
+  font-size: 24rpx;
+}
+
+.stat-value {
+  font-weight: 500;
+  color: #333;
+}
+
+/* 联系信息 */
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2rpx;
+  font-size: 22rpx;
+  color: #999;
+}
+
+/* 空状态 */
+.empty-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 0;
+}
+
+.empty-image {
+  width: 240rpx;
+  height: 240rpx;
+  margin-bottom: 20rpx;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #999;
+}

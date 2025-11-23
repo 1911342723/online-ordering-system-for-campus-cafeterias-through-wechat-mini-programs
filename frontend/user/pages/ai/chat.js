@@ -69,7 +69,7 @@ Page({
             dishes = dishes.map(dish => ({
               ...dish,
               image: getImageUrl(dish.image, DEFAULT_IMAGES.dish),
-              price: typeof dish.price === 'number' ? dish.price.toFixed(2) : dish.price
+              price: typeof dish.price === 'number' ? (dish.price / 100).toFixed(2) : dish.price
             }))
           } catch (e) {
             console.error('解析菜品JSON失败:', e)
@@ -136,7 +136,7 @@ Page({
         dishes = dishes.map(dish => ({
           ...dish,
           image: getImageUrl(dish.image, DEFAULT_IMAGES.dish),
-          price: typeof dish.price === 'number' ? dish.price.toFixed(2) : dish.price
+          price: typeof dish.price === 'number' ? (dish.price / 100).toFixed(2) : dish.price
         }))
       }
 
@@ -296,7 +296,7 @@ Page({
         dishId: dish.id,
         name: dish.name,
         image: imageName,
-        amount: dish.price  // 后端接收的是BigDecimal，会自动转换
+        amount: parseFloat(dish.price) * 100 // 转换为分
       }
       
       console.log('加入购物车:', cartData)
@@ -328,18 +328,16 @@ Page({
     const dish = e.currentTarget.dataset.dish
     console.log('跳转到菜品:', dish)
     
-    // 跳转到菜单页面，传递餐厅ID和菜品分类ID
-    const canteenId = dish.canteenId || 1
-    const categoryId = dish.categoryId || ''
-    
-    // 如果有分类ID，传递过去方便自动切换到对应分类
-    let url = `/pages/menu/menu?canteenId=${canteenId}`
-    if (categoryId) {
-      url += `&categoryId=${categoryId}`
+    // 优先使用 merchantId 直接跳转到商家页并定位菜品
+    if (dish.merchantId) {
+      wx.navigateTo({
+        url: `/pages/menu/menu?merchantId=${dish.merchantId}&dishId=${dish.id}`
+      })
+    } else {
+      // 如果没有merchantId，通过dishId让菜单页自动查询并跳转
+      wx.navigateTo({
+        url: `/pages/menu/menu?dishId=${dish.id}`
+      })
     }
-    
-    wx.navigateTo({
-      url: url
-    })
   }
 })

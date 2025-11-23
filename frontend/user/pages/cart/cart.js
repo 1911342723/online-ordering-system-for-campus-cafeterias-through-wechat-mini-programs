@@ -122,7 +122,10 @@ Page({
           await request({
             url: '/shoppingCart/sub',
             method: 'POST',
-            data: { dishId: item.dishId || item.setmealId }
+            data: { 
+              dishId: item.dishId,
+              setmealId: item.setmealId 
+            }
           })
           
           // 从列表中移除
@@ -134,7 +137,10 @@ Page({
           await request({
             url: '/shoppingCart/sub',
             method: 'POST',
-            data: { dishId: item.dishId || item.setmealId }
+            data: { 
+              dishId: item.dishId,
+              setmealId: item.setmealId 
+            }
           })
           
           item.number--

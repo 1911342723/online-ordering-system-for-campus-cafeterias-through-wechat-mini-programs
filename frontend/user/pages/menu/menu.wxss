@@ -1,40 +1,221 @@
 /* pages/menu/menu.wxss */
 .container {
   height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f5f5;
   overflow: hidden;
+}
+
+/* 商家信息头部 */
+.header {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); /* Purple gradient */
+  color: #fff;
+  padding: 30rpx 32rpx;
+  flex-shrink: 0;
+}
+
+.merchant-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 24rpx;
+}
+
+.merchant-logo {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
   background-color: #fff;
 }
 
-.header {
-  height: 100rpx;
-  background-color: #333;
-  color: #fff;
-  padding: 20rpx;
+.merchant-text {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  gap: 8rpx;
 }
 
-.canteen-name {
-  font-size: 34rpx;
+.merchant-name {
+  font-size: 36rpx;
   font-weight: bold;
+  color: #fff;
+  margin-bottom: 4rpx;
+}
+
+.merchant-stats {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.stat-divider {
+  opacity: 0.5;
 }
 
 .header-info {
-  font-size: 22rpx;
-  color: #ccc;
-  margin-top: 10rpx;
-}
-.info-item {
-  margin-right: 10rpx;
+  margin-top: 16rpx;
 }
 
+.merchant-desc {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+}
+
+/* 商家公告区域 */
+.announcement-section {
+  background: #fff8e1;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.announcement-swiper {
+  height: 70rpx;
+}
+
+.announcement-item {
+  display: flex;
+  align-items: center;
+  padding: 0 32rpx;
+  height: 100%;
+  gap: 12rpx;
+}
+
+.announcement-icon {
+  font-size: 30rpx;
+  color: #ff9800;
+}
+
+.announcement-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.announcement-title {
+  font-size: 24rpx;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.announcement-arrow {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 商家优惠券区域 */
+.merchant-coupons-section {
+  background: #fff;
+  padding: 20rpx 0;
+  margin-bottom: 20rpx;
+  flex-shrink: 0;
+}
+
+.coupons-header {
+  padding: 0 32rpx 12rpx;
+}
+
+.coupons-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.coupons-title::before {
+  content: '';
+  display: inline-block;
+  width: 30rpx;
+  height: 30rpx;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FFC107'%3E%3Cpath d='M2 9h20v6H2V9zm0-7h20v5H2V2zm0 13h20v7H2v-7z'/%3E%3C/svg%3E"); /* Simple icon placeholder */
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.coupons-scroll {
+  white-space: nowrap;
+  padding: 0 24rpx;
+  box-sizing: border-box;
+}
+
+.coupon-mini-card {
+  display: inline-flex;
+  width: 260rpx;
+  background: #fffbf0;
+  border: 1rpx solid #ffe0b2;
+  border-radius: 8rpx;
+  padding: 16rpx;
+  margin-right: 16rpx;
+  position: relative;
+}
+
+.coupon-mini-left {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-right: 16rpx;
+  border-right: 1rpx dashed #ffe0b2;
+  margin-right: 16rpx;
+}
+
+.coupon-amount {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #ff5722;
+}
+
+.coupon-condition {
+  font-size: 20rpx;
+  color: #ff9800;
+}
+
+.coupon-mini-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.coupon-name {
+  font-size: 22rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.coupon-receive-btn {
+  align-self: flex-start;
+  padding: 4rpx 16rpx;
+  background: #ff5722;
+  color: white;
+  border-radius: 20rpx;
+  font-size: 20rpx;
+  margin-top: 8rpx;
+}
+
+.coupon-receive-btn.received {
+  background: #e0e0e0;
+  color: #999;
+}
+
+/* 主内容区域 */
 .content {
   flex: 1;
   display: flex;
-  height: calc(100vh - 200rpx); /* Adjust for header and cart bar */
+  overflow: hidden;
 }
 
+/* 左侧分类 */
 .category-sidebar {
   width: 180rpx;
   background-color: #f8f8f8;
@@ -42,20 +223,30 @@
 }
 
 .category-item {
-  padding: 30rpx 20rpx;
+  padding: 32rpx 20rpx;
   font-size: 26rpx;
   color: #666;
-  border-bottom: 1rpx solid #eee;
   text-align: center;
+  position: relative;
 }
 
 .category-item.active {
   background-color: #fff;
   color: #333;
   font-weight: bold;
-  border-left: 6rpx solid var(--primary-color);
 }
 
+.category-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 32rpx;
+  bottom: 32rpx;
+  width: 6rpx;
+  background-color: #764ba2;
+}
+
+/* 右侧菜品列表 */
 .food-list {
   flex: 1;
   height: 100%;
@@ -63,25 +254,26 @@
 }
 
 .category-header {
-  padding: 20rpx;
+  padding: 20rpx 24rpx;
   font-size: 26rpx;
   font-weight: bold;
-  color: #666;
+  color: #333;
   background-color: #fcfcfc;
 }
 
 .food-item {
   display: flex;
-  padding: 20rpx;
+  padding: 24rpx;
   border-bottom: 1rpx solid #f5f5f5;
 }
 
 .food-img {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 8rpx;
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 12rpx;
   background-color: #eee;
-  margin-right: 20rpx;
+  margin-right: 24rpx;
+  flex-shrink: 0;
 }
 
 .food-info {
@@ -94,32 +286,43 @@
 .food-name {
   font-size: 30rpx;
   font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
 }
 
 .food-desc {
   font-size: 22rpx;
   color: #999;
   display: -webkit-box;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  line-height: 1.4;
+  margin-bottom: 8rpx;
 }
 
 .food-sales {
   font-size: 22rpx;
-  color: #666;
+  color: #999;
+  margin-bottom: 12rpx;
 }
 
 .price-action {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
 }
 
 .price {
-  font-size: 32rpx;
-  color: #e4393c;
+  font-size: 36rpx;
+  color: #e4393c; /* Red price */
   font-weight: bold;
+}
+
+.price::before {
+  content: '¥';
+  font-size: 24rpx;
+  margin-right: 2rpx;
 }
 
 .action-btn {
@@ -128,29 +331,36 @@
 }
 
 .minus-btn, .add-btn {
-  width: 44rpx;
-  height: 44rpx;
+  width: 48rpx;
+  height: 48rpx;
   border-radius: 50%;
   text-align: center;
-  line-height: 40rpx;
+  line-height: 44rpx;
   font-weight: bold;
+  font-size: 32rpx;
 }
 
 .minus-btn {
-  border: 2rpx solid #ccc;
-  color: #666;
+  border: 2rpx solid #ddd;
+  color: #999;
+  background: #fff;
 }
 
 .add-btn {
-  background-color: var(--primary-color);
+  background: #ff5722; /* Orange add button */
   color: #fff;
+  border: none;
+  line-height: 48rpx;
 }
 
 .count {
-  margin: 0 16rpx;
+  min-width: 40rpx;
+  text-align: center;
   font-size: 28rpx;
+  color: #333;
 }
 
+/* 底部购物车条 */
 .cart-bar {
   position: fixed;
   bottom: 0;
@@ -161,6 +371,7 @@
   display: flex;
   align-items: center;
   z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .cart-icon-wrapper {
@@ -169,12 +380,17 @@
   height: 100rpx;
   background-color: #333;
   border-radius: 50%;
-  margin-top: -40rpx;
-  margin-left: 30rpx;
+  margin-top: -30rpx;
+  margin-left: 32rpx;
   border: 10rpx solid #444;
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.cart-icon-wrapper.disabled {
+  background-color: #444;
+  border-color: #555;
 }
 
 .cart-icon {
@@ -184,20 +400,24 @@
 
 .badge {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: -5rpx;
+  right: -5rpx;
   background-color: #e4393c;
   color: #fff;
   font-size: 20rpx;
-  padding: 4rpx 10rpx;
-  border-radius: 20rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  text-align: center;
+  border-radius: 16rpx;
+  padding: 0 6rpx;
 }
 
 .cart-price {
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-left: 30rpx;
+  margin-left: 32rpx;
   color: #fff;
 }
 
@@ -212,22 +432,18 @@
 }
 
 .pay-btn {
-  background-color: var(--primary-color);
+  background-color: #ff5722;
   color: #fff;
-  height: 100%;
+  height: 100rpx;
   padding: 0 60rpx;
   display: flex;
   align-items: center;
-  font-size: 30rpx;
+  font-size: 32rpx;
   font-weight: bold;
-}
-
-.cart-bar.empty {
-  opacity: 0.9;
 }
 
 .empty-text {
   color: #999;
-  margin-left: 30rpx;
+  font-size: 28rpx;
+  margin-left: 32rpx;
 }
-

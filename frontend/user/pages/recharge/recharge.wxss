@@ -142,14 +142,44 @@
 }
 
 .payment-icon {
-  font-size: 48rpx;
-  margin-right: 20rpx;
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+  border-radius: 16rpx;
+  flex-shrink: 0;
+}
+
+.payment-icon.wechat-icon {
+  background: linear-gradient(135deg, #07C160 0%, #09BB5C 100%);
+}
+
+.payment-icon.alipay-icon {
+  background: linear-gradient(135deg, #1677FF 0%, #1890FF 100%);
+}
+
+.icon-img {
+  width: 50rpx;
+  height: 50rpx;
+}
+
+.payment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
 }
 
 .payment-name {
   font-size: 30rpx;
   font-weight: bold;
   color: #333;
+}
+
+.payment-desc {
+  font-size: 22rpx;
+  color: #999;
 }
 
 .payment-check {

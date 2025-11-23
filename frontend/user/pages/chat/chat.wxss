@@ -1,0 +1,135 @@
+/* pages/chat/chat.wxss */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f5f5f5;
+}
+
+.message-list {
+  flex: 1;
+  padding: 20rpx;
+  overflow-y: auto;
+}
+
+.empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 100rpx 0;
+  color: #999;
+  font-size: 28rpx;
+}
+
+.message-item {
+  display: flex;
+  margin-bottom: 30rpx;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-left {
+  flex-direction: row;
+}
+
+.message-right {
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: #4F46E5;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+
+.message-right .message-avatar {
+  background: #FF6B35;
+}
+
+.message-content {
+  max-width: 500rpx;
+  margin: 0 20rpx;
+}
+
+.message-left .message-content {
+  align-items: flex-start;
+}
+
+.message-right .message-content {
+  align-items: flex-end;
+}
+
+.message-bubble {
+  background: #fff;
+  padding: 20rpx 24rpx;
+  border-radius: 16rpx;
+  word-break: break-all;
+  line-height: 1.5;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.message-right .message-bubble {
+  background: #4F46E5;
+  color: #fff;
+}
+
+.message-time {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 10rpx;
+}
+
+/* 输入框 */
+.input-bar {
+  background: #fff;
+  padding: 20rpx;
+  border-top: 1rpx solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.message-input {
+  flex: 1;
+  background: #f5f5f5;
+  border-radius: 40rpx;
+  padding: 20rpx 30rpx;
+  font-size: 28rpx;
+}
+
+.send-button {
+  background: #FF6B35;
+  color: #fff;
+  border: none;
+  border-radius: 40rpx;
+  padding: 20rpx 40rpx;
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.send-button[disabled] {
+  background: #ccc;
+}
+
+.send-button[loading] {
+  background: #FF8A5C;
+}
+

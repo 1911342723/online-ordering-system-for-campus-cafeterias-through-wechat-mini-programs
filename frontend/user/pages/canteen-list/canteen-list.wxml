@@ -1,0 +1,47 @@
+<view class="container">
+  <view class="canteen-list">
+    <view class="canteen-item" 
+          wx:for="{{canteens}}" 
+          wx:key="id" 
+          bindtap="goToMerchantList" 
+          data-id="{{item.id}}" 
+          data-name="{{item.name}}"
+          data-isopen="{{item.isOpen}}">
+      
+      <image class="canteen-image" src="{{item.image}}" mode="aspectFill"></image>
+      
+      <view class="canteen-info">
+        <view class="canteen-header">
+          <text class="canteen-name">{{item.name}}</text>
+          <view class="status-badge {{item.isOpen ? 'open' : 'closed'}}">
+            {{item.isOpen ? '营业中' : '休息中'}}
+          </view>
+        </view>
+        
+        <text class="canteen-desc">{{item.description || '暂无简介'}}</text>
+        
+        <view class="canteen-meta">
+          <view class="meta-item">
+            <text class="star">⭐</text>
+            <text>{{item.rating}}</text>
+          </view>
+          <view class="meta-item">
+            <text class="icon">📍</text>
+            <text>{{item.distance}}m</text>
+          </view>
+          <view class="meta-item" wx:if="{{item.businessHours}}">
+            <text class="icon">🕐</text>
+            <text>{{item.businessHours}}</text>
+          </view>
+        </view>
+      </view>
+      
+      <view class="arrow-icon">›</view>
+    </view>
+  </view>
+  
+  <view class="empty" wx:if="{{canteens.length === 0}}">
+    <text>暂无食堂信息</text>
+  </view>
+</view>
+

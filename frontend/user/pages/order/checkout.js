@@ -11,7 +11,11 @@ Page({
     totalAmount: '0.00',
     remark: '',
     canteenId: null,
-    canteenName: ''
+    canteenName: '',
+    selectedCoupon: null, // 选中的优惠券
+    availableCoupons: [], // 可用优惠券列表
+    couponDiscount: 0, // 优惠券优惠金额
+    deliveryFee: 0 // 配送费
   },
 
   onLoad(options) {
@@ -32,6 +36,34 @@ Page({
       canteenId: orderData.canteenId || 1,
       canteenName: orderData.canteenName || '食堂'
     })
+    
+    // 加载可用优惠券
+    this.loadAvailableCoupons()
+  },
+
+  /**
+   * 加载可用优惠券
+   */
+  async loadAvailableCoupons() {
+    try {
+      const res = await request({
+        url: '/coupon/my',
+        method: 'GET',
+        data: { status: 0 } // 0-未使用
+      })
+      
+      if (res && res.length > 0) {
+        // 过滤满足订单金额的优惠券
+        const dishAmountValue = parseFloat(this.data.dishAmount) * 100 // 转换为分
+        const availableCoupons = res.filter(coupon => {
+          return dishAmountValue >= coupon.minAmount
+        })
+        
+        this.setData({ availableCoupons })
+      }
+    } catch (error) {
+      console.error('加载优惠券失败:', error)
+    }
   },
 
   /**
@@ -39,28 +71,80 @@ Page({
    */
   selectDeliveryType(e) {
     const type = parseInt(e.currentTarget.dataset.type) // 转换为数字
-    let totalAmount = this.data.dishAmount
+    const deliveryFee = type === 2 ? 3.00 : 0
 
-    // 如果选择外送，添加配送费
-    if (type === 2) {
-      totalAmount = (parseFloat(this.data.dishAmount) + 3.00).toFixed(2)
-      
-      // 如果选择外送但没有地址，需要选择地址
-      if (!this.data.selectedAddress) {
-        wx.showModal({
-          title: '提示',
-          content: '外送需要选择收货地址',
-          showCancel: false
-        })
-      }
-    } else {
-      // 自取时不加配送费
-      totalAmount = this.data.dishAmount
+    // 如果选择外送但没有地址，需要选择地址
+    if (type === 2 && !this.data.selectedAddress) {
+      wx.showModal({
+        title: '提示',
+        content: '外送需要选择收货地址',
+        showCancel: false
+      })
     }
 
     this.setData({
       deliveryType: type,
-      totalAmount: totalAmount
+      deliveryFee: deliveryFee
+    }, () => {
+      this.calculateTotal()
+    })
+  },
+
+  /**
+   * 选择优惠券
+   */
+  selectCoupon() {
+    if (this.data.availableCoupons.length === 0) {
+      showError('暂无可用优惠券')
+      return
+    }
+
+    const availableCoupons = this.data.availableCoupons
+    const itemList = availableCoupons.map(c => {
+      const amount = parseInt(c.amount / 100)
+      const minAmount = parseInt(c.minAmount / 100)
+      return `${c.couponName} - 满${minAmount}减${amount}`
+    })
+    itemList.push('不使用优惠券')
+
+    wx.showActionSheet({
+      itemList: itemList,
+      success: (res) => {
+        const index = res.tapIndex
+        if (index === availableCoupons.length) {
+          // 不使用优惠券
+          this.setData({
+            selectedCoupon: null,
+            couponDiscount: 0
+          }, () => {
+            this.calculateTotal()
+          })
+        } else {
+          // 选择优惠券
+          const coupon = availableCoupons[index]
+          this.setData({
+            selectedCoupon: coupon,
+            couponDiscount: parseFloat(coupon.amount / 100)
+          }, () => {
+            this.calculateTotal()
+          })
+        }
+      }
+    })
+  },
+
+  /**
+   * 计算总价
+   */
+  calculateTotal() {
+    const dishAmount = parseFloat(this.data.dishAmount)
+    const deliveryFee = this.data.deliveryFee
+    const couponDiscount = this.data.couponDiscount
+    
+    const total = Math.max(dishAmount + deliveryFee - couponDiscount, 0)
+    
+    this.setData({
+      totalAmount: total.toFixed(2)
     })
   },
 
@@ -90,7 +174,7 @@ Page({
    * 提交订单
    */
   async submitOrder() {
-    const { deliveryType, selectedAddress, orderItems, totalAmount, remark, canteenId, canteenName } = this.data
+    const { deliveryType, selectedAddress, orderItems, totalAmount, remark, canteenId, canteenName, selectedCoupon } = this.data
 
     // 验证
     if (deliveryType === 2 && !selectedAddress) {
@@ -113,7 +197,8 @@ Page({
         payMethod: 1, // 1:微信支付 2:支付宝
         remark: remark,
         canteenId: canteenId,
-        canteenName: canteenName
+        canteenName: canteenName,
+        userCouponId: selectedCoupon ? selectedCoupon.id : null // 用户优惠券ID
       }
 
       const res = await request({

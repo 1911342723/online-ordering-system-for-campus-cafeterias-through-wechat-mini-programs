@@ -39,5 +39,11 @@ public class ShoppingCart implements Serializable {
     //图片
     private String image;
 
+    //食堂ID
+    private Long canteenId;
+
+    //商家ID
+    private Long merchantId;
+
     private LocalDateTime createTime;
 }

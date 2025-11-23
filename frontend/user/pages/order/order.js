@@ -8,15 +8,125 @@ Page({
     currentTab: 0,
     orders: [],
     defaultOrderImg: DEFAULT_IMAGES.order,
-    statusFilter: '' // 状态过滤：'', 3(制作中), 4(待取餐), 5(已完成)
+    statusFilter: '', // 状态过滤：'', 3(制作中), 4(待取餐), 5(已完成)
+    page: 1,
+    pageSize: 10,
+    hasMore: true,
+    isLoading: false
   },
+
+  // 定时刷新定时器
+  refreshTimer: null,
 
   onShow() {
     if (!checkLogin()) {
       navigateToLogin()
       return
     }
-    this.loadOrders()
+    // 刷新第一页
+    this.resetAndLoad()
+    // 启动定时刷新（每10秒刷新一次）
+    this.startAutoRefresh()
+  },
+
+  onHide() {
+    // 页面隐藏时停止定时刷新
+    this.stopAutoRefresh()
+  },
+
+  onUnload() {
+    // 页面卸载时停止定时刷新
+    this.stopAutoRefresh()
+  },
+
+  /**
+   * 启动自动刷新
+   */
+  startAutoRefresh() {
+    this.stopAutoRefresh() // 先清除之前的定时器
+    this.refreshTimer = setInterval(() => {
+      // 静默刷新（不显示加载提示）
+      this.silentRefresh()
+    }, 10000) // 每10秒刷新一次
+  },
+
+  /**
+   * 停止自动刷新
+   */
+  stopAutoRefresh() {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer)
+      this.refreshTimer = null
+    }
+  },
+
+  /**
+   * 静默刷新（不显示loading）
+   */
+  async silentRefresh() {
+    if (this.data.isLoading) return
+    
+    try {
+      const requestData = {
+        page: 1,
+        pageSize: this.data.page * this.data.pageSize // 加载当前已显示的所有数据
+      }
+      
+      if (this.data.statusFilter && this.data.statusFilter > 0) {
+        requestData.status = this.data.statusFilter
+      }
+      
+      const result = await request({
+        url: '/order/userPage',
+        method: 'GET',
+        data: requestData
+      })
+
+      if (result && result.records) {
+        const formattedOrders = result.records.map(order => ({
+          ...order,
+          formattedPrice: formatPrice(order.amount),
+          formattedTime: formatTime(order.orderTime),
+          statusText: getOrderStatusText(order.status, order.deliveryType),
+          orderDishes: order.orderDetails ? order.orderDetails.map(detail => ({
+            ...detail,
+            image: getImageUrl(detail.image, DEFAULT_IMAGES.order)
+          })) : []
+        }))
+
+        this.setData({
+          orders: formattedOrders
+        })
+      }
+    } catch (error) {
+      console.error('静默刷新失败:', error)
+      // 静默失败，不提示用户
+    }
+  },
+
+  // 下拉刷新
+  onPullDownRefresh() {
+    this.resetAndLoad()
+  },
+
+  // 上拉加载更多
+  onReachBottom() {
+    if (this.data.hasMore && !this.data.isLoading) {
+      this.loadOrders()
+    }
+  },
+
+  /**
+   * 重置并加载第一页
+   */
+  async resetAndLoad() {
+    this.setData({
+      page: 1,
+      orders: [],
+      hasMore: true
+    })
+    await this.loadOrders()
+    wx.stopPullDownRefresh()
   },
 
   /**
@@ -26,40 +136,40 @@ Page({
     const index = parseInt(e.currentTarget.dataset.index)
     let statusFilter = 0
     
+    if (this.data.currentTab === index) return
+
     switch(index) {
       case 0: statusFilter = 0; break       // 全部（0表示不筛选）
       case 1: statusFilter = 1; break       // 待付款
-      case 2: statusFilter = 2; break       // 待派送
-      case 3: statusFilter = 3; break       // 已派送
+      case 2: statusFilter = 2; break       // 待派送(制作中)
+      case 3: statusFilter = 3; break       // 已派送(配送中)
       case 4: statusFilter = 4; break       // 已完成
     }
-    
-    console.log('切换Tab:', index, '筛选状态:', statusFilter)
     
     this.setData({
       currentTab: index,
       statusFilter: statusFilter
     })
-    this.loadOrders()
+    this.resetAndLoad()
   },
 
   /**
    * 加载订单列表 - 对接后端API
    */
   async loadOrders() {
+    if (this.data.isLoading || !this.data.hasMore) return
+
+    this.setData({ isLoading: true })
     showLoading('加载中...')
+    
     try {
       const requestData = {
-        page: 1,
-        pageSize: 20
+        page: this.data.page,
+        pageSize: this.data.pageSize
       }
       
-      // 如果有状态筛选，添加status参数（只有当statusFilter > 0时才传，空字符串不传）
       if (this.data.statusFilter && this.data.statusFilter > 0) {
         requestData.status = this.data.statusFilter
-        console.log('筛选状态:', this.data.statusFilter)
-      } else {
-        console.log('查询所有订单')
       }
       
       const result = await request({
@@ -70,8 +180,8 @@ Page({
       
       hideLoading()
       
-      if (result && result.records) {
-        const orders = result.records.map(order => {
+      if (result && result.records && result.records.length > 0) {
+        const newOrders = result.records.map(order => {
           // 获取第一个菜品信息
           const firstDish = order.orderDetails && order.orderDetails.length > 0 
             ? order.orderDetails[0] 
@@ -79,8 +189,6 @@ Page({
           
           const deliveryType = order.deliveryType || 1
           const statusText = getOrderStatusText(order.status, deliveryType)
-          
-          console.log(`订单${order.id}: 状态${order.status}, 配送方式${deliveryType}, 状态文本: ${statusText}`)
           
           return {
             id: order.id || order.number,
@@ -96,15 +204,26 @@ Page({
           }
         })
         
-        this.setData({ orders })
+        this.setData({
+          orders: [...this.data.orders, ...newOrders],
+          page: this.data.page + 1,
+          isLoading: false,
+          hasMore: newOrders.length === this.data.pageSize
+        })
       } else {
-        this.setData({ orders: [] })
+        this.setData({
+          isLoading: false,
+          hasMore: false
+        })
       }
     } catch (error) {
       hideLoading()
       console.error('加载订单失败:', error)
-      // 使用模拟数据作为降级方案
-      this.loadMockOrders()
+      this.setData({ isLoading: false })
+      // 仅在第一页失败时加载模拟数据
+      if (this.data.page === 1) {
+        this.loadMockOrders()
+      }
     }
   },
 

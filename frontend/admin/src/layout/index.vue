@@ -23,29 +23,67 @@
             <span>数据概览</span>
           </el-menu-item>
           
-          <div class="menu-group-title">业务管理</div>
-          
-          <el-menu-item index="/order">
-            <el-icon><List /></el-icon>
-            <span>订单管理</span>
-          </el-menu-item>
-          
-          <el-menu-item index="/food">
-            <el-icon><Food /></el-icon>
-            <span>菜品管理</span>
-          </el-menu-item>
-          
-          <el-menu-item index="/category">
-            <el-icon><Menu /></el-icon>
-            <span>分类管理</span>
-          </el-menu-item>
+          <!-- 商家业务模块（仅商家可见） -->
+          <template v-if="isMerchant && !isAdmin">
+            <div class="menu-group-title">商家业务</div>
+            
+            <el-menu-item index="/order">
+              <el-icon><List /></el-icon>
+              <span>订单管理</span>
+            </el-menu-item>
+            
+            <el-menu-item index="/food">
+              <el-icon><Food /></el-icon>
+              <span>菜品管理</span>
+            </el-menu-item>
+            
+            <el-menu-item index="/category">
+              <el-icon><Menu /></el-icon>
+              <span>分类管理</span>
+            </el-menu-item>
+          </template>
 
-          <div class="menu-group-title">系统设置</div>
+          <!-- 管理员功能模块（仅管理员可见） -->
+          <template v-if="isAdmin">
+            <div class="menu-group-title">管理员功能</div>
 
-          <el-menu-item index="/member">
-            <el-icon><User /></el-icon>
-            <span>员工管理</span>
-          </el-menu-item>
+            <el-menu-item index="/user">
+              <el-icon><UserFilled /></el-icon>
+              <span>用户管理</span>
+            </el-menu-item>
+
+            <el-menu-item index="/merchant">
+              <el-icon><OfficeBuilding /></el-icon>
+              <span>商家管理</span>
+            </el-menu-item>
+
+            <el-menu-item index="/canteen">
+              <el-icon><Shop /></el-icon>
+              <span>食堂管理</span>
+            </el-menu-item>
+            
+            <el-menu-item index="/announcement">
+              <el-icon><BellFilled /></el-icon>
+              <span>公告管理</span>
+            </el-menu-item>
+            
+            <el-menu-item index="/statistics">
+              <el-icon><DataAnalysis /></el-icon>
+              <span>数据统计</span>
+            </el-menu-item>
+
+            <div class="menu-group-title">系统管理</div>
+            
+            <el-menu-item index="/member">
+              <el-icon><User /></el-icon>
+              <span>员工管理</span>
+            </el-menu-item>
+
+            <el-menu-item index="/system">
+              <el-icon><Setting /></el-icon>
+              <span>系统设置</span>
+            </el-menu-item>
+          </template>
         </el-menu>
       </el-aside>
 
@@ -97,6 +135,19 @@ const router = useRouter()
 const activeMenu = computed(() => route.path)
 const pageTitle = computed(() => route.meta.title || '智慧食堂')
 const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+
+// 判断用户角色（简化版，实际应从后端获取）
+// 根据用户名判断：admin开头的是管理员，其他是商家
+const isAdmin = computed(() => {
+  const username = userInfo.username || ''
+  return username === 'admin' || username.startsWith('admin')
+})
+
+const isMerchant = computed(() => {
+  const username = userInfo.username || ''
+  // 只有非管理员的用户才是商家
+  return !isAdmin.value && (username === 'manager' || username === 'staff' || username.startsWith('merchant'))
+})
 
 const handleCommand = async (command) => {
   if (command === 'logout') {

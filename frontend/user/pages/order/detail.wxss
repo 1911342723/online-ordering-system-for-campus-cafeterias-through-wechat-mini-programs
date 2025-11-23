@@ -182,10 +182,12 @@
   background-color: #fff;
   padding: 20rpx;
   box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+  display: flex;
+  gap: 20rpx;
 }
 
 .pay-btn {
-  width: 100%;
+  flex: 1;
   height: 88rpx;
   background: linear-gradient(135deg, #FF6B00, #FF8F3D);
   color: #fff;
@@ -200,3 +202,14 @@
   border: none;
 }
 
+.review-btn {
+  flex: 1;
+  height: 88rpx;
+  background: #fff;
+  color: #FF6B00;
+  border: 2rpx solid #FF6B00;
+  border-radius: 44rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  line-height: 84rpx;
+}

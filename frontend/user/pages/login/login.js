@@ -73,20 +73,85 @@ Page({
   },
 
   /**
-   * 测试登录（开发使用）
+   * 快捷学生登录
    */
-  testLogin() {
-    wx.showModal({
-      title: '测试登录',
-      content: '这是开发测试功能，将使用随机手机号登录',
-      confirmText: '确定',
-      cancelText: '取消',
-      success: (res) => {
-        if (res.confirm) {
-          this.doLogin()
-        }
-      }
+  async quickStudentLogin() {
+    try {
+      wx.showLoading({ title: '登录中...' })
+      
+      // 生成测试学生手机号
+      const testPhone = '138' + Math.floor(Math.random() * 100000000).toString().padStart(8, '0')
+      
+      const result = await request({
+        url: '/userAuth/student/quickLogin',
+        method: 'POST',
+        data: { phone: testPhone }
+      })
+      
+      wx.hideLoading()
+      this.handleLoginSuccess(result, '学生')
+    } catch (err) {
+      wx.hideLoading()
+      console.error('学生登录失败:', err)
+      wx.showToast({
+        title: err.msg || '登录失败',
+        icon: 'none',
+        duration: 2000
+      })
+    }
+  },
+
+  /**
+   * 快捷教师登录
+   */
+  async quickTeacherLogin() {
+    try {
+      wx.showLoading({ title: '登录中...' })
+      
+      // 生成测试教师手机号
+      const testPhone = '139' + Math.floor(Math.random() * 100000000).toString().padStart(8, '0')
+      
+      const result = await request({
+        url: '/userAuth/teacher/quickLogin',
+        method: 'POST',
+        data: { phone: testPhone }
+      })
+      
+      wx.hideLoading()
+      this.handleLoginSuccess(result, '教师')
+    } catch (err) {
+      wx.hideLoading()
+      console.error('教师登录失败:', err)
+      wx.showToast({
+        title: err.msg || '登录失败',
+        icon: 'none',
+        duration: 2000
+      })
+    }
+  },
+
+  /**
+   * 处理登录成功
+   */
+  handleLoginSuccess(result, userType) {
+    const { user, token } = result
+    
+    // 保存用户信息和Token
+    wx.setStorageSync('userInfo', user)
+    wx.setStorageSync('token', token)
+    wx.setStorageSync('phone', user.phone)
+    
+    console.log(`${userType}登录成功:`, user)
+    
+    wx.showToast({
+      title: `${userType}登录成功`,
+      icon: 'success',
+      duration: 1500
     })
+    
+    setTimeout(() => {
+      wx.switchTab({ url: '/pages/index/index' })
+    }, 1500)
   },
 
   /**

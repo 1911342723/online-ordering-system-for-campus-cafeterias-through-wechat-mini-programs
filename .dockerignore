@@ -1,0 +1,32 @@
+# 后端忽略文件
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+
+# 前端忽略文件
+frontend/*/node_modules/
+frontend/*/dist/
+frontend/*/.cache/
+frontend/*/npm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# 文档
+*.md
+README.md
+

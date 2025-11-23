@@ -31,8 +31,11 @@ public class DishFlavorController {
 
     @Autowired
     private CategoryService categoryService;
+    
+    @Autowired
+    private com.java_project.reggie.common.AuthHelper authHelper;
 
-    /*分页查询*/
+    /*分页查询 - 支持商家数据隔离*/
     @GetMapping("/page")
     public R<Page> page(int page, Integer pagesize, String name){
         log.info("page:{} , pagesize:{}", page, pagesize);
@@ -45,6 +48,19 @@ public class DishFlavorController {
         // 构造条件构造器
         LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
 
+        // 商家数据隔离：商家只能看到自己的菜品
+        if (authHelper.isMerchant()) {
+            Long merchantId = authHelper.getCurrentMerchantId();
+            if (merchantId != null) {
+                queryWrapper.eq(Dish::getMerchantId, merchantId);
+                log.info("商家{}查询菜品", merchantId);
+            } else {
+                log.warn("商家角色但未找到关联的商家ID");
+                return R.success(new Page()); // 返回空页面
+            }
+        }
+        // 管理员可以看到所有菜品，不添加额外条件
+        
         // 添加过滤条件
         queryWrapper.like(name != null, Dish::getName, name);
 
@@ -93,12 +109,27 @@ public class DishFlavorController {
     }
 
 
-    //处理新增菜品上传的JSON数据
+    //处理新增菜品上传的JSON数据 - 自动关联当前商家
     @PostMapping
     public R<String> upload(@RequestBody DishDto dishDto){
         //操作数据库，保存数据
         /*因为这里要同时操作两张表，Dish和DishFlavor
         * 所以这里要拓展一下*/
+        
+        // 商家角色自动设置merchantId
+        if (authHelper.isMerchant()) {
+            Long merchantId = authHelper.getCurrentMerchantId();
+            if (merchantId != null) {
+                dishDto.setMerchantId(merchantId);
+                log.info("商家{}新增菜品", merchantId);
+            } else {
+                return R.error("未找到关联的商家信息");
+            }
+        } else if (dishDto.getMerchantId() == null) {
+            // 管理员必须指定merchantId
+            return R.error("请指定商家ID");
+        }
+        
         dishService.saveWithFlavor(dishDto);
 
         return R.success("新增菜品成功！");
@@ -112,6 +143,14 @@ public class DishFlavorController {
 
     @PutMapping
     public  R<DishDto> update(@RequestBody DishDto dishDto){
+        // 权限检查：商家只能更新自己的菜品
+        if (authHelper.isMerchant()) {
+            Dish existingDish = dishService.getById(dishDto.getId());
+            if (existingDish != null && !authHelper.canAccessMerchant(existingDish.getMerchantId())) {
+                return R.error("无权修改此菜品");
+            }
+        }
+        
         dishService.updateWithFlavor(dishDto);
         // Redis缓存已禁用
         // String key = "dish_"+dishDto.getCategoryId()+"_1";

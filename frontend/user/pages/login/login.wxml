@@ -19,13 +19,20 @@
     </button>
     
     <!-- 开发测试登录按钮 -->
-    <button 
-      class="test-btn" 
-      wx:if="{{isDev}}"
-      bindtap="testLogin"
-    >
-      测试登录（开发使用）
-    </button>
+    <view class="quick-login-section" wx:if="{{isDev}}">
+      <view class="divider">
+        <text>快捷测试登录</text>
+      </view>
+      <view class="quick-login-buttons">
+        <button class="quick-btn student-btn" bindtap="quickStudentLogin">
+          学生账号登录
+        </button>
+        <button class="quick-btn teacher-btn" bindtap="quickTeacherLogin">
+          教师账号登录
+        </button>
+      </view>
+      <view class="quick-login-tip">教师账号可访问教师专属食堂</view>
+    </view>
     
     <view class="footer">
       <text>登录即代表同意《用户协议》和《隐私政策》</text>

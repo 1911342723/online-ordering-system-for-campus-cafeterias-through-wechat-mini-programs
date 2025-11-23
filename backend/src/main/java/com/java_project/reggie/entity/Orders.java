@@ -20,6 +20,14 @@ public class Orders implements Serializable {
 
     //订单状态 1待付款，2待派送，3已派送，4已完成，5已取消
     private Integer status;
+    
+    
+    //订单类型 1:立即下单 2:预订单
+    private Integer orderType;
+    
+    
+    //预约取餐时间
+    private LocalDateTime scheduledTime;
 
 
     //下单用户id
@@ -70,4 +78,31 @@ public class Orders implements Serializable {
 
     //餐厅名称
     private String canteenName;
+
+    //商家ID
+    private Long merchantId;
+
+    //商家名称
+    private String merchantName;
+
+    //用户优惠券ID
+    private Long userCouponId;
+
+    //优惠券优惠金额
+    private BigDecimal couponAmount = BigDecimal.ZERO;
+
+    //退款状态 0:无退款 1:申请中 2:已退款 3:退款失败
+    private Integer refundStatus = 0;
+
+    //退款原因
+    private String refundReason;
+
+    //退款金额
+    private BigDecimal refundAmount;
+
+    //退款时间
+    private LocalDateTime refundTime;
+
+    //评价状态 0:未评价 1:已评价
+    private Integer reviewStatus = 0;
 }

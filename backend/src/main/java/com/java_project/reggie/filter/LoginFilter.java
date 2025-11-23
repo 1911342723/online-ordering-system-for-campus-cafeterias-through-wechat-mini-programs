@@ -38,6 +38,7 @@ public class LoginFilter implements Filter {
                 "/front/**",//用户端的页面，不需要处理拦截
                 "/common/**",
                 "/user/**",//移动端用户接口
+                "/userAuth/**", //用户认证接口（快捷登录）
                 "/order/**", //订单接口（需要JWT认证）
                 "/payment/**", //支付接口（需要JWT认证）
                 "/addressBook/**", //地址管理接口（需要JWT认证）
@@ -46,7 +47,12 @@ public class LoginFilter implements Filter {
                 "/category/**", //分类接口（公开）
                 "/dish/**", //菜品接口（公开）
                 "/setmeal/**", //套餐接口（公开）
-                "/shoppingCart/**" //购物车接口（需要JWT认证）
+                "/shoppingCart/**", //购物车接口（需要JWT认证）
+                "/coupon/available", //可领取的优惠券列表（公开）
+                "/announcement/**", //公告接口（公开）
+                "/recommendation/**", //推荐接口（公开）
+                "/merchant/**", //商家接口（公开）
+                "/merchantAnnouncement/**" //商家公告接口（公开）
         };
 
         //2:判断本次请求是否需要处理

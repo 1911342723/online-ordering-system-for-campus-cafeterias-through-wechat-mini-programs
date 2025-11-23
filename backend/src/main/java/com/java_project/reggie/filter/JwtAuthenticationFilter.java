@@ -45,6 +45,7 @@ public class JwtAuthenticationFilter implements Filter {
                 "/employee/logout",     // 员工登出
                 "/user/login",          // 用户登录
                 "/user/sendMsg",        // 发送验证码
+                "/userAuth/**",         // 用户认证接口（快捷登录等）
                 "/common/**",           // 静态资源
                 "/backend/**",          // 后台静态资源
                 "/front/**",            // 前端静态资源
@@ -53,7 +54,7 @@ public class JwtAuthenticationFilter implements Filter {
                 "/dish/**",             // 菜品接口
                 "/ai/**",               // AI接口
                 "/feedback/**",         // 反馈接口
-                "/coupon/**",           // 优惠券接口
+                "/coupon/available",    // 可领取的优惠券列表（无需登录）
                 "/announcement/**",     // 公告接口
                 "/recommendation/**"    // 推荐接口
         };

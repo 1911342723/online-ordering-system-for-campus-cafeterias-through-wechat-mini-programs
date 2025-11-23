@@ -1,0 +1,52 @@
+<!--pages/chat/chat.wxml-->
+<view class="container">
+  <!-- 消息列表 -->
+  <scroll-view 
+    class="message-list" 
+    scroll-y 
+    scroll-into-view="{{scrollToView}}"
+    scroll-with-animation
+  >
+    <view wx:if="{{messages.length === 0}}" class="empty">
+      <text>暂无消息，快来和商家聊聊吧~</text>
+    </view>
+    
+    <view 
+      wx:for="{{messages}}" 
+      wx:key="id" 
+      id="msg-{{index}}"
+      class="message-item {{item.fromMerchant ? 'message-left' : 'message-right'}}"
+    >
+      <view class="message-avatar">
+        <text>{{item.fromMerchant ? '商' : '我'}}</text>
+      </view>
+      <view class="message-content">
+        <view class="message-bubble">
+          {{item.content}}
+        </view>
+        <view class="message-time">{{formatTime(item.createTime)}}</view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 输入框 -->
+  <view class="input-bar">
+    <input 
+      class="message-input" 
+      placeholder="输入消息..." 
+      value="{{inputMessage}}"
+      bindinput="onInputChange"
+      confirm-type="send"
+      bindconfirm="sendMessage"
+    />
+    <button 
+      class="send-button" 
+      bindtap="sendMessage"
+      disabled="{{sending || !inputMessage}}"
+      loading="{{sending}}"
+    >
+      发送
+    </button>
+  </view>
+</view>
+

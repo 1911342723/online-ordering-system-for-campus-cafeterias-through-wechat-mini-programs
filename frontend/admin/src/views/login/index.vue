@@ -64,6 +64,11 @@
               </el-tag>
             </div>
           </div>
+
+          <div class="merchant-link" style="margin-top: 20px; text-align: center;">
+            <el-divider />
+            <p><a @click="router.push('/merchant-login')" style="color: #409eff; text-decoration: none;">商家登录入口 →</a></p>
+          </div>
         </div>
       </div>
     </div>
@@ -92,8 +97,8 @@ const loginRules = {
 
 const quickAccounts = [
   { label: '超级管理员', u: 'admin', p: '123456' },
-  { label: '食堂经理', u: 'manager', p: '123456' },
-  { label: '员工测试', u: 'staff', p: '123456' }
+  { label: '商家', u: 'manager', p: '123456' },
+  { label: '员工', u: 'staff', p: '123456' }
 ]
 
 const fillAccount = (account) => {
@@ -299,6 +304,26 @@ const handleLogin = async () => {
       transform: scale(1.05);
       border-color: #6366f1;
       color: #6366f1;
+    }
+  }
+}
+
+.register-link {
+  margin-top: 24px;
+  text-align: center;
+
+  p {
+    color: #606266;
+    font-size: 14px;
+
+    a {
+      color: #409eff;
+      cursor: pointer;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 }

@@ -10,6 +10,9 @@ const DEFAULT_IMAGES = {
   // 食堂默认图
   canteen: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=500&q=80',
   
+  // 商家默认图（窗口）
+  merchant: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=80',
+  
   // 菜品默认图
   dish: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80',
   
@@ -26,22 +29,30 @@ const DEFAULT_IMAGES = {
 // API 基础URL
 const API_BASE_URL = 'http://localhost:8080'
 
-// 订单状态映射 - 基础状态
+// 文件上传URL
+const UPLOAD_URL = `${API_BASE_URL}/common/upload`
+
+// 文件下载URL前缀
+const DOWNLOAD_URL_PREFIX = `${API_BASE_URL}/common/download?name=`
+
+// 订单状态映射 - 统一状态定义
 const ORDER_STATUS = {
   1: '待付款',
-  2: '制作中',
-  3: '待取餐',
-  4: '已完成',
-  5: '已取消'
+  2: '待接单',
+  3: '制作中',
+  4: '待取餐',  // 自取订单
+  5: '已完成',
+  6: '已取消'
 }
 
 // 外送订单状态映射
 const ORDER_STATUS_DELIVERY = {
   1: '待付款',
-  2: '制作中',
-  3: '派送中',
-  4: '已完成',
-  5: '已取消'
+  2: '待接单',
+  3: '制作中',
+  4: '派送中',  // 外送订单
+  5: '已完成',
+  6: '已取消'
 }
 
 /**
@@ -50,6 +61,7 @@ const ORDER_STATUS_DELIVERY = {
  * @param {number} deliveryType - 配送方式 1:自取 2:外送
  */
 function getOrderStatusText(status, deliveryType) {
+  // 区分自取和外送
   if (deliveryType === 2) {
     return ORDER_STATUS_DELIVERY[status] || '未知状态'
   }
@@ -75,6 +87,8 @@ const CATEGORY_TYPE = {
 module.exports = {
   DEFAULT_IMAGES,
   API_BASE_URL,
+  UPLOAD_URL,
+  DOWNLOAD_URL_PREFIX,
   ORDER_STATUS,
   ORDER_STATUS_DELIVERY,
   ORDER_STATUS_COLOR,

@@ -79,7 +79,10 @@
 </view>
 
 <!-- 底部操作栏 -->
-<view class="footer" wx:if="{{orderInfo.status === 1}}">
-  <button class="pay-btn" bindtap="goPay">立即支付</button>
+<view class="footer" wx:if="{{orderInfo.status === 1 || orderInfo.status === 5 || orderInfo.status === 6}}">
+  <button class="pay-btn" wx:if="{{orderInfo.status === 1}}" bindtap="goPay">立即支付</button>
+  <button class="cancel-btn" wx:if="{{orderInfo.status === 1}}" bindtap="cancelOrder">取消订单</button>
+  <button class="review-btn" wx:if="{{orderInfo.status === 5 && orderInfo.reviewStatus === 0}}" bindtap="goReview">评价订单</button>
+  <button class="refund-btn" wx:if="{{orderInfo.status === 5 || orderInfo.status === 6}}" bindtap="applyRefund">申请退款</button>
 </view>
 

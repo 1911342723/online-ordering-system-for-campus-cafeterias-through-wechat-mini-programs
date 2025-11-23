@@ -5,8 +5,11 @@ const { formatPrice, getImageUrl, showLoading, hideLoading, showError, showSucce
 
 Page({
   data: {
-    canteenId: '',
-    canteenName: '',
+    merchantId: '',
+    merchantName: '',
+    merchantInfo: null, // 商家详细信息
+    announcements: [], // 商家公告
+    merchantCoupons: [], // 商家优惠券
     categories: [],
     activeCategory: 0,
     toView: '',
@@ -21,17 +24,172 @@ Page({
   },
 
   onLoad(options) {
-    if (options.canteenId) {
-      const canteenId = options.canteenId
+    console.log('菜单页参数:', options)
+    
+    if (options.merchantId) {
+      const merchantId = options.merchantId
       const categoryId = options.categoryId || null
+      const dishId = options.dishId || null
       
       this.setData({ 
-        canteenId: canteenId,
-        canteenName: options.name || '食堂'
+        merchantId: merchantId,
+        merchantName: decodeURIComponent(options.merchantName || '商家'),
+        targetDishId: dishId // 保存目标菜品ID，用于自动定位
       })
       
+      this.loadMerchantInfo() // 加载商家信息
+      this.loadMerchantAnnouncements() // 加载商家公告
+      this.loadMerchantCoupons() // 加载商家优惠券
       this.loadMenuData(categoryId)
+    } else if (options.dishId) {
+      // 如果只有dishId，先获取菜品信息，再获取商家ID
+      this.loadDishAndMerchant(options.dishId)
+    } else {
+      showError('参数错误')
+      setTimeout(() => {
+        wx.navigateBack()
+      }, 1500)
     }
+  },
+
+  /**
+   * 根据菜品ID加载菜品和商家信息
+   */
+  async loadDishAndMerchant(dishId) {
+    try {
+      showLoading('加载中...')
+      
+      // 获取菜品详情
+      const dishDetail = await request({
+        url: `/dish/${dishId}`,
+        method: 'GET'
+      })
+      
+      if (dishDetail && dishDetail.merchantId) {
+        this.setData({
+          merchantId: dishDetail.merchantId,
+          targetDishId: dishId
+        })
+        
+        this.loadMerchantInfo()
+        this.loadMerchantAnnouncements()
+        this.loadMerchantCoupons()
+        this.loadMenuData(dishDetail.categoryId)
+      } else {
+        hideLoading()
+        showError('无法找到菜品所属商家')
+        setTimeout(() => {
+          wx.navigateBack()
+        }, 1500)
+      }
+    } catch (error) {
+      hideLoading()
+      console.error('加载菜品信息失败:', error)
+      showError('加载失败')
+      setTimeout(() => {
+        wx.navigateBack()
+      }, 1500)
+    }
+  },
+
+  /**
+   * 加载商家信息
+   */
+  async loadMerchantInfo() {
+    try {
+      const merchantInfo = await request({
+        url: `/merchant/${this.data.merchantId}`,
+        method: 'GET'
+      })
+      
+      console.log('商家信息:', merchantInfo)
+      
+      this.setData({
+        merchantInfo: {
+          ...merchantInfo,
+          image: getImageUrl(merchantInfo.image, DEFAULT_IMAGES.merchant)
+        },
+        merchantName: merchantInfo.name || this.data.merchantName
+      })
+    } catch (error) {
+      console.error('加载商家信息失败:', error)
+    }
+  },
+
+  /**
+   * 加载商家公告
+   */
+  async loadMerchantAnnouncements() {
+    try {
+      const announcements = await request({
+        url: '/merchantAnnouncement/active',
+        method: 'GET',
+        data: { merchantId: this.data.merchantId }
+      })
+      
+      console.log('商家公告:', announcements)
+      
+      const typeMap = {
+        1: '通知',
+        2: '优惠',
+        3: '活动'
+      }
+      
+      const processedAnnouncements = announcements.map(item => ({
+        ...item,
+        typeText: typeMap[item.type] || '公告'
+      }))
+      
+      this.setData({ announcements: processedAnnouncements })
+    } catch (error) {
+      console.error('加载商家公告失败:', error)
+      this.setData({ announcements: [] })
+    }
+  },
+
+  /**
+   * 加载商家优惠券
+   */
+  async loadMerchantCoupons() {
+    try {
+      const coupons = await request({
+        url: '/coupon/available',
+        method: 'GET',
+        data: {
+          type: 2, // 商家券
+          merchantId: this.data.merchantId
+        }
+      })
+      
+      console.log('商家优惠券:', coupons)
+      
+      if (coupons && coupons.length > 0) {
+        const formattedCoupons = coupons.map(coupon => ({
+          ...coupon,
+          amount: Math.floor(parseFloat(coupon.amount) / 100),
+          minAmount: Math.floor(parseFloat(coupon.minAmount) / 100),
+          received: coupon.received || false
+        }))
+        
+        this.setData({ merchantCoupons: formattedCoupons })
+      }
+    } catch (error) {
+      console.error('加载商家优惠券失败:', error)
+      this.setData({ merchantCoupons: [] })
+    }
+  },
+
+  /**
+   * 显示公告详情
+   */
+  showAnnouncementDetail(e) {
+    const announcement = e.currentTarget.dataset.announcement
+    wx.showModal({
+      title: announcement.title,
+      content: announcement.content,
+      showCancel: false,
+      confirmText: '知道了'
+    })
   },
 
   /**
@@ -51,7 +209,7 @@ Page({
             ...category,
             dishes: dishes.map(dish => ({
               ...dish,
-              price: formatPrice(dish.price), // 将分转换为元
+              price: formatPrice(dish.price), // 后端返回的是分，formatPrice会处理
               image: getImageUrl(dish.image, DEFAULT_IMAGES.dish),
               cartCount: 0
             }))
@@ -69,11 +227,52 @@ Page({
         }
       }
       
+      // 如果指定了目标菜品ID，自动定位到该菜品所在分类
+      const targetDishId = this.data.targetDishId
+      let targetViewId = `cat-${activeIndex}`
+      
+      if (targetDishId && !highlightCategoryId) {
+        // 查找目标菜品所在的分类
+        for (let i = 0; i < categoriesWithDishes.length; i++) {
+          const category = categoriesWithDishes[i]
+          const dishIndex = category.dishes.findIndex(d => d.id == targetDishId)
+          if (dishIndex !== -1) {
+            activeIndex = i
+            console.log('找到目标菜品，所在分类:', category.name, '菜品索引:', dishIndex)
+            
+            // 高亮该菜品（添加一个标记，用于样式显示）
+            category.dishes[dishIndex].isHighlighted = true
+            
+            // 设置滚动到该菜品
+            targetViewId = `dish-${i}-${dishIndex}`
+            console.log('准备滚动到:', targetViewId)
+            
+            // 2秒后取消高亮效果
+            setTimeout(() => {
+              const categories = this.data.categories
+              if (categories[i] && categories[i].dishes[dishIndex]) {
+                categories[i].dishes[dishIndex].isHighlighted = false
+                this.setData({ categories })
+              }
+            }, 2000)
+            break
+          }
+        }
+      }
+      
       this.setData({ 
         categories: categoriesWithDishes,
         activeCategory: activeIndex,
-        toView: `category-${activeIndex}`
+        toView: targetViewId
       })
+      
+      // 如果需要滚动到菜品，再次设置toView确保滚动生效
+      if (targetDishId && targetViewId.startsWith('dish-')) {
+        setTimeout(() => {
+          this.setData({ toView: targetViewId })
+          console.log('延迟滚动到:', targetViewId)
+        }, 300)
+      }
       hideLoading()
     } catch (error) {
       hideLoading()
@@ -101,7 +300,7 @@ Page({
   },
 
   /**
-   * 加载菜品列表 - 根据餐厅ID和分类ID查询
+   * 加载菜品列表 - 根据商家ID和分类ID查询
    */
   async loadDishes(categoryId) {
     try {
@@ -109,11 +308,12 @@ Page({
         url: '/dish/list',
         method: 'GET',
         data: {
-          canteenId: this.data.canteenId, // 添加餐厅ID参数
+          merchantId: this.data.merchantId, // 根据商家ID查询菜品
           categoryId: categoryId,
           status: 1 // 1-在售
         }
       })
+      console.log('加载菜品:', result)
       return result || []
     } catch (error) {
       console.error('加载菜品失败:', error)
@@ -156,6 +356,7 @@ Page({
     this.setData({ categories: mockCategories })
     showError('网络异常，使用模拟数据')
   },
+
 
   /**
    * 切换分类
@@ -290,7 +491,8 @@ Page({
     
     // 保存订单数据到本地
     wx.setStorageSync('orderData', {
-      canteenName: this.data.canteenName,
+      merchantId: this.data.merchantId,
+      merchantName: this.data.merchantName,
       items: orderItems,
       total: this.data.cartTotal
     })
@@ -311,6 +513,43 @@ Page({
       content: `价格：¥${dish.price}\n描述：${dish.description || '暂无描述'}\n月售：${dish.sales || 0}`,
       showCancel: false
     })
+  },
+
+  /**
+   * 领取商家优惠券
+   */
+  async receiveMerchantCoupon(e) {
+    const { id, index } = e.currentTarget.dataset
+    const coupon = this.data.merchantCoupons[index]
+    
+    if (coupon.received) {
+      showError('您已经领取过该优惠券了')
+      return
+    }
+    
+    try {
+      const request = require('../../utils/request')
+      showLoading('领取中...')
+      
+      await request({
+        url: `/coupon/receive/${id}`,
+        method: 'POST'
+      })
+      
+      hideLoading()
+      showSuccess('领取成功')
+      
+      // 更新UI
+      const merchantCoupons = this.data.merchantCoupons
+      merchantCoupons[index].received = true
+      merchantCoupons[index].remainCount--
+      
+      this.setData({ merchantCoupons })
+    } catch (error) {
+      hideLoading()
+      console.error('领取商家优惠券失败:', error)
+      showError(error.msg || '领取失败')
+    }
   }
 })
 

@@ -1,0 +1,89 @@
+<!--pages/favorite/favorite.wxml-->
+<view class="container">
+  <van-tabs active="{{ activeTab }}" bind:change="onTabChange" color="#FF6B35" animated>
+    <van-tab title="收藏商家">
+      <view class="tab-content">
+        <view wx:if="{{loading}}" class="loading">
+          <van-loading size="24px">加载中...</van-loading>
+        </view>
+        
+        <view wx:elif="{{merchants.length === 0}}" class="empty">
+          <image src="/assets/icons/empty.png" class="empty-icon"></image>
+          <text class="empty-text">暂无收藏的商家</text>
+        </view>
+        
+        <view wx:else class="merchant-list">
+          <view 
+            wx:for="{{merchants}}" 
+            wx:key="id" 
+            class="merchant-item"
+            bindtap="goToMerchant"
+            data-merchant-id="{{item.merchantId}}"
+          >
+            <image src="{{item.image}}" class="merchant-image" mode="aspectFill"></image>
+            <view class="merchant-info">
+              <view class="merchant-name">{{item.name}}</view>
+              <view class="merchant-desc">{{item.description}}</view>
+              <view class="merchant-meta">
+                <view class="meta-item">
+                  <van-icon name="star" color="#FFB800" />
+                  <text>{{item.rating || 5.0}}</text>
+                </view>
+                <view class="meta-item">
+                  <text>月售{{item.salesCount || 0}}</text>
+                </view>
+                <view class="meta-item">
+                  <text>￥{{item.avgPrice || 0}}/人</text>
+                </view>
+              </view>
+            </view>
+            <view class="merchant-action" catchtap="cancelFavoriteMerchant" data-merchant-id="{{item.merchantId}}">
+              <van-icon name="star" color="#FF6B35" size="24px" />
+            </view>
+          </view>
+        </view>
+      </view>
+    </van-tab>
+
+    <van-tab title="收藏菜品">
+      <view class="tab-content">
+        <view wx:if="{{loading}}" class="loading">
+          <van-loading size="24px">加载中...</van-loading>
+        </view>
+        
+        <view wx:elif="{{dishes.length === 0}}" class="empty">
+          <image src="/assets/icons/empty.png" class="empty-icon"></image>
+          <text class="empty-text">暂无收藏的菜品</text>
+        </view>
+        
+        <view wx:else class="dish-list">
+          <view wx:for="{{dishes}}" wx:key="id" class="dish-item">
+            <image src="{{item.image}}" class="dish-image" mode="aspectFill"></image>
+            <view class="dish-info">
+              <view class="dish-name">{{item.name}}</view>
+              <view class="dish-desc">{{item.description}}</view>
+              <view class="dish-footer">
+                <view class="dish-price">￥{{(item.price / 100).toFixed(2)}}</view>
+                <view class="dish-actions">
+                  <van-button 
+                    round 
+                    size="small" 
+                    color="#FF6B35" 
+                    bindtap="addToCart"
+                    data-dish-id="{{item.dishId}}"
+                    disabled="{{item.status === 0}}"
+                  >
+                    {{item.status === 0 ? '已售罄' : '加入购物车'}}
+                  </van-button>
+                </view>
+              </view>
+            </view>
+            <view class="dish-cancel" catchtap="cancelFavoriteDish" data-dish-id="{{item.dishId}}">
+              <van-icon name="star" color="#FF6B35" size="20px" />
+            </view>
+          </view>
+        </view>
+      </view>
+    </van-tab>
+  </van-tabs>
+</view>

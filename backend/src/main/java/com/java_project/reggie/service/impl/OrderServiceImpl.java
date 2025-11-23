@@ -8,14 +8,20 @@ import com.java_project.reggie.common.CustomException;
 import com.java_project.reggie.entity.*;
 import com.java_project.reggie.mapper.OrderMapper;
 import com.java_project.reggie.service.*;
+import com.java_project.reggie.websocket.OrderWebSocketHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+@Slf4j
 
 @Service
 public class OrderServiceImpl extends ServiceImpl<OrderMapper,Orders> implements OrderService {
@@ -29,6 +35,18 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper,Orders> implements
     private OrderDtailService orderDtailService;
     @Autowired
     private OrderMapper orderMapper;
+    @Autowired
+    private UserCouponService userCouponService;
+    
+    @Autowired
+    private CanteenService canteenService;
+    
+    @Autowired
+    private MerchantService merchantService;
+    @Autowired
+    private CouponService couponService;
+    @Autowired
+    private MerchantSettingsService merchantSettingsService;
 
 
     /**
@@ -51,6 +69,29 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper,Orders> implements
 
         //查询用户数据
         User user = userService.getById(userId);
+        
+        // 从购物车获取食堂和商家信息
+        if (!shoppingCarts.isEmpty()) {
+            ShoppingCart firstItem = shoppingCarts.get(0);
+            orders.setCanteenId(firstItem.getCanteenId());
+            orders.setMerchantId(firstItem.getMerchantId());
+            
+            // 查询食堂名称
+            if (firstItem.getCanteenId() != null) {
+                Canteen canteen = canteenService.getById(firstItem.getCanteenId());
+                if (canteen != null) {
+                    orders.setCanteenName(canteen.getName());
+                }
+            }
+            
+            // 查询商家名称
+            if (firstItem.getMerchantId() != null) {
+                Merchant merchant = merchantService.getById(firstItem.getMerchantId());
+                if (merchant != null) {
+                    orders.setMerchantName(merchant.getName());
+                }
+            }
+        }
 
         //查询地址数据（仅在外送时需要）
         AddressBook addressBook = null;
@@ -95,21 +136,61 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper,Orders> implements
             orders.setDeliveryType(1); // 默认自取
         }
         
-        // 计算配送费
+        // 计算配送费（单位：分）
         BigDecimal deliveryFee = BigDecimal.ZERO;
         if (orders.getDeliveryType() == 2) {
             // 外送收取配送费（可根据距离动态计算）
-            deliveryFee = new BigDecimal("3.00"); // 固定3元配送费
+            deliveryFee = new BigDecimal("300"); // 固定3元配送费（300分）
         }
         orders.setDeliveryFee(deliveryFee);
         
-        // 计算最终总金额 = 菜品金额 + 配送费
-        BigDecimal totalAmount = dishAmount.add(deliveryFee);
+        // 处理优惠券
+        BigDecimal couponAmount = BigDecimal.ZERO;
+        if (orders.getUserCouponId() != null) {
+            UserCoupon userCoupon = userCouponService.getById(orders.getUserCouponId());
+            if (userCoupon != null && userCoupon.getStatus() == 0) {
+                // 验证优惠券是否过期
+                if (userCoupon.getExpireTime().isAfter(LocalDateTime.now())) {
+                    Coupon coupon = couponService.getById(userCoupon.getCouponId());
+                    if (coupon != null) {
+                        // 验证订单金额是否满足优惠券使用条件
+                        if (dishAmount.compareTo(coupon.getMinAmount()) >= 0) {
+                            couponAmount = coupon.getAmount();
+                        } else {
+                            throw new CustomException("订单金额不满足优惠券使用条件");
+                        }
+                    }
+                } else {
+                    throw new CustomException("优惠券已过期");
+                }
+            } else {
+                throw new CustomException("优惠券无效或已使用");
+            }
+        }
+        orders.setCouponAmount(couponAmount);
+        
+        // 计算最终总金额 = 菜品金额 + 配送费 - 优惠券优惠
+        BigDecimal totalAmount = dishAmount.add(deliveryFee).subtract(couponAmount);
+        // 确保总金额不为负数
+        if (totalAmount.compareTo(BigDecimal.ZERO) < 0) {
+            totalAmount = BigDecimal.ZERO;
+        }
         
         orders.setId(orderId);
         orders.setOrderTime(LocalDateTime.now());
         orders.setCheckoutTime(LocalDateTime.now());
-        orders.setStatus(1); // 待付款 - 订单提交后需要先支付
+        
+        // 检查商家是否开启自动接单
+        Integer initialStatus = 2; // 默认：待接单
+        if (orders.getMerchantId() != null) {
+            MerchantSettings settings = merchantSettingsService.getByMerchantId(orders.getMerchantId());
+            if (settings != null && settings.getAutoAcceptOrder() == 1) {
+                // 自动接单：直接进入制作中
+                initialStatus = 3;
+            }
+        }
+        
+        orders.setStatus(initialStatus); // 2-待接单 或 3-制作中（自动接单）
         orders.setAmount(totalAmount); // 总金额（含配送费）
         orders.setUserId(userId);
         orders.setNumber(String.valueOf(orderId));
@@ -136,9 +217,39 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper,Orders> implements
 
         //向订单明细表插入数据，多条数据
         orderDtailService.saveBatch(orderDetails);
+        
+        // 更新优惠券状态为已使用
+        if (orders.getUserCouponId() != null) {
+            UserCoupon userCoupon = userCouponService.getById(orders.getUserCouponId());
+            if (userCoupon != null) {
+                userCoupon.setStatus(1); // 1-已使用
+                userCoupon.setUsedTime(LocalDateTime.now());
+                userCoupon.setOrderId(orderId);
+                userCouponService.updateById(userCoupon);
+            }
+        }
 
         //清空购物车数据
         shoppingCartService.remove(wrapper);
+        
+        // 发送WebSocket通知给商家（仅在非自动接单时发送）
+        if (orders.getMerchantId() != null && initialStatus == 2) {
+            try {
+                Map<String, Object> notificationData = new HashMap<>();
+                notificationData.put("orderId", orderId);
+                notificationData.put("orderNumber", orders.getNumber());
+                notificationData.put("amount", totalAmount);
+                notificationData.put("userName", orders.getConsignee());
+                notificationData.put("orderType", orders.getOrderType());
+                notificationData.put("scheduledTime", orders.getScheduledTime());
+                
+                OrderWebSocketHandler.sendNewOrderNotification(orders.getMerchantId(), notificationData);
+                log.info("已向商家{}发送新订单WebSocket通知", orders.getMerchantId());
+            } catch (Exception e) {
+                log.error("发送WebSocket通知失败", e);
+                // 不影响订单创建流程
+            }
+        }
     }
 
 

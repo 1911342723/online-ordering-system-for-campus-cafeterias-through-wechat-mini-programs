@@ -6,9 +6,6 @@
         <h2>早安，{{ userInfo.name }} 👋</h2>
         <p>祝你今天工作愉快！这里是今日的运营概览。</p>
       </div>
-      <div class="action-buttons">
-        <el-button type="primary" icon="Plus">发布公告</el-button>
-      </div>
     </div>
     
     <!-- Statistics Cards -->

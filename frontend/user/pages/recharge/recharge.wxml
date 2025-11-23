@@ -52,9 +52,12 @@
     <!-- 微信支付 -->
     <view class="payment-item {{paymentMethod === 'wechat' ? 'active' : ''}}" bindtap="selectPayment" data-method="wechat">
       <view class="payment-left">
-        <view class="payment-icon">💚</view>
+        <view class="payment-icon wechat-icon">
+          <image class="icon-img" src="/assets/icons/icons8-微信-100.png" mode="aspectFit"></image>
+        </view>
         <view class="payment-info">
           <text class="payment-name">微信支付</text>
+          <text class="payment-desc">推荐使用</text>
         </view>
       </view>
       <view class="payment-check"></view>
@@ -63,9 +66,12 @@
     <!-- 支付宝支付 -->
     <view class="payment-item {{paymentMethod === 'alipay' ? 'active' : ''}}" bindtap="selectPayment" data-method="alipay">
       <view class="payment-left">
-        <view class="payment-icon">💙</view>
+        <view class="payment-icon alipay-icon">
+          <image class="icon-img" src="/assets/icons/icons8-支付宝-96.png" mode="aspectFit"></image>
+        </view>
         <view class="payment-info">
           <text class="payment-name">支付宝支付</text>
+          <text class="payment-desc">快速到账</text>
         </view>
       </view>
       <view class="payment-check"></view>

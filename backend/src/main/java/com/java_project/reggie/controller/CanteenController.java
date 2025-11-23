@@ -2,14 +2,20 @@ package com.java_project.reggie.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.java_project.reggie.common.BaseContext;
 import com.java_project.reggie.common.R;
 import com.java_project.reggie.entity.Canteen;
+import com.java_project.reggie.entity.CanteenConfig;
+import com.java_project.reggie.entity.User;
+import com.java_project.reggie.service.CanteenConfigService;
 import com.java_project.reggie.service.CanteenService;
+import com.java_project.reggie.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 餐厅控制器
@@ -22,13 +28,31 @@ public class CanteenController {
     @Autowired
     private CanteenService canteenService;
 
+    @Autowired
+    private CanteenConfigService canteenConfigService;
+
+    @Autowired
+    private UserService userService;
+
     /**
-     * 获取餐厅列表
+     * 获取餐厅列表（根据用户类型筛选）
      * @return 餐厅列表
      */
     @GetMapping("/list")
     public R<List<Canteen>> list() {
         log.info("查询餐厅列表");
+        
+        // 获取当前用户
+        Long userId = BaseContext.getThreadLocal();
+        User user = null;
+        Integer userType = 1; // 默认学生
+        
+        if (userId != null) {
+            user = userService.getById(userId);
+            if (user != null) {
+                userType = user.getUserType() != null ? user.getUserType() : 1;
+            }
+        }
         
         LambdaQueryWrapper<Canteen> queryWrapper = new LambdaQueryWrapper<>();
         // 只查询营业中的餐厅
@@ -37,7 +61,24 @@ public class CanteenController {
         queryWrapper.orderByAsc(Canteen::getSort);
         
         List<Canteen> list = canteenService.list(queryWrapper);
-        log.info("查询到{}个餐厅", list.size());
+        
+        // 过滤教师食堂
+        final Integer finalUserType = userType;
+        list = list.stream().filter(canteen -> {
+            // 查询食堂配置
+            LambdaQueryWrapper<CanteenConfig> configQuery = new LambdaQueryWrapper<>();
+            configQuery.eq(CanteenConfig::getCanteenId, canteen.getId());
+            CanteenConfig config = canteenConfigService.getOne(configQuery);
+            
+            // 如果食堂仅限教师，则只有教师才能看到
+            if (config != null && config.getIsTeacherOnly() == 1) {
+                return finalUserType == 2; // 只有教师能看到
+            }
+            
+            return true; // 其他食堂所有人都能看到
+        }).collect(Collectors.toList());
+        
+        log.info("查询到{}个餐厅（用户类型：{}）", list.size(), userType);
         
         return R.success(list);
     }

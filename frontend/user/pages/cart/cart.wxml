@@ -3,10 +3,17 @@
   <view wx:if="{{cartItems.length === 0}}" class="empty-cart">
     <image class="empty-icon" src="{{emptyCartIcon}}" mode="aspectFit"></image>
     <text class="empty-text">购物车空空如也</text>
-    <button class="go-shopping-btn" bindtap="goShopping">去逛逛</button>
+    <text class="empty-tip">快去选购心仪的美食吧~</text>
+    <button class="go-shopping-btn" bindtap="goShopping">立即选购</button>
   </view>
 
   <view wx:else class="cart-content">
+    <!-- 顶部标题 -->
+    <view class="cart-header">
+      <text class="header-title">购物车</text>
+      <text class="header-count">共{{cartItems.length}}件商品</text>
+    </view>
+
     <!-- 购物车列表 -->
     <scroll-view scroll-y class="cart-list">
       <view class="cart-item" wx:for="{{cartItems}}" wx:key="id">
@@ -18,11 +25,18 @@
           <text class="item-name">{{item.name}}</text>
           <text class="item-flavor" wx:if="{{item.dishFlavor}}">{{item.dishFlavor}}</text>
           <view class="item-bottom">
-            <text class="item-price">¥{{item.price}}</text>
+            <view class="price-wrapper">
+              <text class="item-price">{{item.price}}</text>
+              <text class="price-unit">/ 份</text>
+            </view>
             <view class="stepper">
-              <view class="stepper-btn minus" bindtap="updateQuantity" data-id="{{item.id}}" data-action="minus">-</view>
+              <view class="stepper-btn minus" bindtap="updateQuantity" data-id="{{item.id}}" data-action="minus">
+                <text class="btn-icon">−</text>
+              </view>
               <text class="stepper-num">{{item.number}}</text>
-              <view class="stepper-btn plus" bindtap="updateQuantity" data-id="{{item.id}}" data-action="plus">+</view>
+              <view class="stepper-btn plus" bindtap="updateQuantity" data-id="{{item.id}}" data-action="plus">
+                <text class="btn-icon">+</text>
+              </view>
             </view>
           </view>
         </view>
@@ -31,18 +45,18 @@
 
     <!-- 底部结算栏 -->
     <view class="footer">
-      <view class="select-all">
-        <checkbox checked="{{allChecked}}" bindtap="toggleSelectAll"></checkbox>
+      <view class="footer-left">
+        <checkbox class="select-all-checkbox" checked="{{allChecked}}" bindtap="toggleSelectAll"></checkbox>
         <text class="select-all-text">全选</text>
       </view>
       
-      <view class="total-section">
+      <view class="footer-right">
         <view class="total-info">
-          <text class="total-label">合计：</text>
+          <text class="total-label">合计</text>
           <text class="total-price">¥{{totalAmount}}</text>
         </view>
         <button class="checkout-btn" bindtap="goToCheckout" disabled="{{checkedCount === 0}}">
-          去结算({{checkedCount}})
+          结算{{checkedCount > 0 ? '(' + checkedCount + ')' : ''}}
         </button>
       </view>
     </view>

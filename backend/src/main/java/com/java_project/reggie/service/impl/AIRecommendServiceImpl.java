@@ -26,6 +26,9 @@ public class AIRecommendServiceImpl implements AIRecommendService {
     
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private com.java_project.reggie.service.MerchantService merchantService;
     
     // 关键词映射
     private static final Map<String, List<String>> KEYWORD_MAP = new HashMap<>();
@@ -69,11 +72,24 @@ public class AIRecommendServiceImpl implements AIRecommendService {
             log.warn("没有找到在售菜品");
             return new ArrayList<>();
         }
+
+        // 获取所有商家评分映射
+        Map<Long, BigDecimal> merchantRatings = new HashMap<>();
+        try {
+            List<com.java_project.reggie.entity.Merchant> merchants = merchantService.list();
+            for (com.java_project.reggie.entity.Merchant m : merchants) {
+                if (m.getId() != null && m.getRating() != null) {
+                    merchantRatings.put(m.getId(), m.getRating());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("获取商家评分失败", e);
+        }
         
         // 根据关键词匹配度排序
         List<Dish> rankedDishes = allDishes.stream()
                 .map(dish -> {
-                    int score = calculateMatchScore(dish, keywords, userQuery);
+                    int score = calculateMatchScore(dish, keywords, userQuery, merchantRatings);
                     dish.setSort(score); // 临时用sort字段存储分数
                     return dish;
                 })
@@ -150,7 +166,7 @@ public class AIRecommendServiceImpl implements AIRecommendService {
     /**
      * 计算匹配分数
      */
-    private int calculateMatchScore(Dish dish, Set<String> keywords, String userQuery) {
+    private int calculateMatchScore(Dish dish, Set<String> keywords, String userQuery, Map<Long, BigDecimal> merchantRatings) {
         int score = 0;
         String dishInfo = (dish.getName() + " " + 
                           (dish.getDescription() != null ? dish.getDescription() : "")).toLowerCase();
@@ -175,6 +191,15 @@ public class AIRecommendServiceImpl implements AIRecommendService {
                 } else if (dish.getPrice().compareTo(new BigDecimal("3000")) < 0) { // 30元以下
                     score += 5;
                 }
+            }
+        }
+
+        // 商家评分加权
+        if (dish.getMerchantId() != null && merchantRatings.containsKey(dish.getMerchantId())) {
+            BigDecimal rating = merchantRatings.get(dish.getMerchantId());
+            if (rating != null) {
+                // 评分 * 5，例如 4.8分 -> +24分
+                score += rating.multiply(new BigDecimal("5")).intValue();
             }
         }
         

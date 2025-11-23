@@ -1,32 +1,29 @@
 /* pages/order/order.wxss */
 page {
-  background-color: var(--bg-color);
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+  background-color: #f8f8f8;
+  min-height: 100vh;
 }
 
 .container {
-  height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 .tabs {
   display: flex;
-  background: var(--white);
-  padding: 0 0 20rpx;
+  background: #fff;
+  padding: 0 0 10rpx;
   position: sticky;
   top: 0;
-  z-index: 10;
-  box-shadow: var(--shadow-sm);
+  z-index: 100;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
 }
 
 .tab {
   flex: 1;
   text-align: center;
   font-size: 28rpx;
-  color: var(--text-sub);
+  color: #666;
   position: relative;
   padding: 24rpx 0 20rpx;
   white-space: nowrap;
@@ -34,8 +31,8 @@ page {
 }
 
 .tab.active {
-  color: var(--primary-color);
-  font-weight: 700;
+  color: #FF6B00;
+  font-weight: bold;
   font-size: 30rpx;
 }
 
@@ -47,22 +44,22 @@ page {
   transform: translateX(-50%);
   width: 40rpx;
   height: 6rpx;
-  background-color: var(--primary-color);
+  background-color: #FF6B00;
   border-radius: 4rpx;
 }
 
+/* 移除scroll-view样式，改为普通布局 */
 .order-list {
-  flex: 1;
   padding: 24rpx 30rpx;
-  box-sizing: border-box;
+  padding-bottom: 120rpx; /* 底部留白 */
 }
 
 .order-card {
-  background: var(--white);
+  background: #fff;
   border-radius: 24rpx;
   padding: 24rpx;
   margin-bottom: 24rpx;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 }
 
 .card-header {
@@ -75,9 +72,9 @@ page {
 }
 
 .shop-name {
-  font-weight: 700;
+  font-weight: bold;
   font-size: 30rpx;
-  color: var(--text-main);
+  color: #333;
 }
 
 .status {
@@ -128,9 +125,9 @@ page {
 }
 
 .order-img {
-  width: 96rpx;
-  height: 96rpx;
-  background: #f0f0f0;
+  width: 120rpx;
+  height: 120rpx;
+  background: #f8f8f8;
   margin-right: 24rpx;
   border-radius: 12rpx;
   flex-shrink: 0;
@@ -139,47 +136,54 @@ page {
 .item-desc {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   flex: 1;
-  overflow: hidden;
+  height: 120rpx;
+  padding: 4rpx 0;
 }
 
 .item-name {
   font-size: 28rpx;
   margin-bottom: 8rpx;
-  color: var(--text-main);
+  color: #333;
+  font-weight: bold;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 500;
 }
 
 .order-time {
-  font-size: 24rpx;
-  color: var(--text-sub);
+  font-size: 22rpx;
+  color: #999;
 }
 
 .order-total {
   text-align: right;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .total-label {
   font-size: 24rpx;
-  color: var(--text-sub);
-  display: block;
+  color: #999;
   margin-bottom: 4rpx;
 }
 
 .total-amount {
   font-weight: 800;
   font-size: 36rpx;
-  color: var(--text-main);
+  color: #333;
 }
 
 .card-footer {
   display: flex;
   justify-content: flex-end;
   gap: 20rpx;
+  border-top: 1rpx solid #f9f9f9;
+  padding-top: 20rpx;
 }
 
 .card-footer button {
@@ -187,33 +191,40 @@ page {
   font-size: 26rpx;
   border-radius: 32rpx;
   padding: 0 32rpx;
-  line-height: 2;
+  line-height: 2.2;
 }
 
 .card-footer button[plain] {
   border: 1rpx solid #ddd;
   color: #666;
+  background: transparent;
 }
 
 .card-footer .btn-primary {
-  background: linear-gradient(135deg, #FF7A30, #FF5000);
+  background: linear-gradient(135deg, #FF8C00, #FF6B00);
   color: #fff;
   border: none;
-  box-shadow: 0 4rpx 12rpx rgba(255, 80, 0, 0.2);
+  box-shadow: 0 4rpx 12rpx rgba(255, 107, 0, 0.2);
 }
 
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 100rpx;
-  color: var(--text-sub);
+  margin-top: 200rpx;
+  color: #999;
 }
 
 .empty-img {
-  width: 240rpx;
-  height: 240rpx;
-  margin-bottom: 20rpx;
-  opacity: 0.6;
+  width: 300rpx;
+  height: 300rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.8;
 }
 
+.loading-more, .no-more {
+  text-align: center;
+  padding: 30rpx;
+  color: #999;
+  font-size: 24rpx;
+}

@@ -3,16 +3,20 @@ package com.java_project.reggie.controller;
 import com.java_project.reggie.common.BaseContext;
 import com.java_project.reggie.common.CustomException;
 import com.java_project.reggie.common.R;
+import com.java_project.reggie.entity.MerchantSettings;
 import com.java_project.reggie.entity.Orders;
 import com.java_project.reggie.entity.User;
+import com.java_project.reggie.service.MerchantSettingsService;
 import com.java_project.reggie.service.OrderService;
 import com.java_project.reggie.service.UserService;
+import com.java_project.reggie.websocket.OrderWebSocketHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,7 +33,111 @@ public class PaymentController {
     
     @Autowired
     private OrderService orderService;
+    
+    @Autowired
+    private MerchantSettingsService merchantSettingsService;
 
+    /**
+     * 统一支付接口
+     * payMethod: 1-微信支付 2-支付宝 3-余额支付
+     */
+    @PostMapping("/pay")
+    @Transactional
+    public R<Map<String, Object>> pay(@RequestBody Map<String, Object> params) {
+        Long orderId = Long.valueOf(params.get("orderId").toString());
+        Integer payMethod = Integer.valueOf(params.getOrDefault("payMethod", 3).toString());
+        Long userId = BaseContext.getThreadLocal();
+        
+        log.info("用户{}支付订单{}，支付方式：{}", userId, orderId, payMethod);
+        
+        // 查询订单
+        Orders order = orderService.getById(orderId);
+        if (order == null) {
+            return R.error("订单不存在");
+        }
+        
+        // 验证订单所属用户
+        if (!order.getUserId().equals(userId)) {
+            return R.error("无权操作此订单");
+        }
+        
+        // 验证订单状态（必须是待付款）
+        if (order.getStatus() != 1) {
+            return R.error("订单状态异常");
+        }
+        
+        // 根据支付方式处理
+        if (payMethod == 3) {
+            // 余额支付
+            User user = userService.getById(userId);
+            if (user == null) {
+                return R.error("用户不存在");
+            }
+            
+            BigDecimal balance = user.getBalance();
+            BigDecimal orderAmount = order.getAmount();
+            
+            // 验证余额是否充足
+            if (balance.compareTo(orderAmount) < 0) {
+                return R.error("余额不足");
+            }
+            
+            // 扣除余额
+            BigDecimal newBalance = balance.subtract(orderAmount);
+            user.setBalance(newBalance);
+            userService.updateById(user);
+            
+            log.info("余额支付成功，用户{}余额从{}扣除{}，剩余{}", userId, balance, orderAmount, newBalance);
+        } else {
+            // 微信/支付宝模拟支付
+            log.info("模拟支付成功，支付方式：{}", payMethod == 1 ? "微信" : "支付宝");
+        }
+        
+        // 更新订单支付信息
+        order.setPayMethod(payMethod);
+        order.setCheckoutTime(LocalDateTime.now());
+        
+        // 检查商家是否开启自动接单
+        Integer newStatus = 2; // 默认：待接单
+        if (order.getMerchantId() != null) {
+            MerchantSettings settings = merchantSettingsService.getByMerchantId(order.getMerchantId());
+            if (settings != null && settings.getAutoAcceptOrder() == 1) {
+                newStatus = 3; // 自动接单：直接进入制作中
+                log.info("商家{}开启了自动接单，订单{}直接进入制作中", order.getMerchantId(), orderId);
+            }
+        }
+        
+        order.setStatus(newStatus);
+        orderService.updateById(order);
+        
+        // 如果是待接单状态，发送WebSocket通知给商家
+        if (newStatus == 2 && order.getMerchantId() != null) {
+            try {
+                Map<String, Object> notificationData = new HashMap<>();
+                notificationData.put("orderId", orderId);
+                notificationData.put("orderNumber", order.getNumber());
+                notificationData.put("amount", order.getAmount());
+                notificationData.put("userName", order.getConsignee());
+                notificationData.put("orderType", order.getOrderType());
+                notificationData.put("scheduledTime", order.getScheduledTime());
+                
+                OrderWebSocketHandler.sendNewOrderNotification(order.getMerchantId(), notificationData);
+                log.info("已向商家{}发送新订单WebSocket通知", order.getMerchantId());
+            } catch (Exception e) {
+                log.error("发送WebSocket通知失败", e);
+            }
+        }
+        
+        log.info("订单{}支付成功，状态更新为：{}", orderId, newStatus == 2 ? "待接单" : "制作中");
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("orderId", orderId);
+        result.put("status", newStatus);
+        result.put("message", "支付成功");
+        
+        return R.success(result);
+    }
+    
     /**
      * 使用钱包余额支付
      */

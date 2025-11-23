@@ -20,6 +20,9 @@ public class UserCouponServiceImpl extends ServiceImpl<UserCouponMapper, UserCou
 
     @Autowired
     private CouponService couponService;
+    
+    @Autowired
+    private com.java_project.reggie.service.UserService userService;
 
     @Override
     @Transactional
@@ -37,6 +40,17 @@ public class UserCouponServiceImpl extends ServiceImpl<UserCouponMapper, UserCou
             throw new CustomException("优惠券已领完");
         }
         
+        // 【重要】检查用户是否已经领取过该优惠券
+        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<UserCoupon> queryWrapper = 
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+        queryWrapper.eq(UserCoupon::getUserId, userId);
+        queryWrapper.eq(UserCoupon::getCouponId, couponId);
+        long count = this.count(queryWrapper);
+        
+        if (count > 0) {
+            throw new CustomException("您已经领取过该优惠券了");
+        }
+        
         // 减少剩余数量
         coupon.setRemainCount(coupon.getRemainCount() - 1);
         couponService.updateById(coupon);
@@ -48,6 +62,15 @@ public class UserCouponServiceImpl extends ServiceImpl<UserCouponMapper, UserCou
         userCoupon.setStatus(0); // 未使用
         userCoupon.setExpireTime(LocalDateTime.now().plusDays(coupon.getValidDays()));
         this.save(userCoupon);
+        
+        // 更新用户的优惠券数量
+        com.java_project.reggie.entity.User user = userService.getById(userId);
+        if (user != null) {
+            int currentCount = user.getCouponCount() == null ? 0 : user.getCouponCount();
+            user.setCouponCount(currentCount + 1);
+            userService.updateById(user);
+            log.info("用户{}的优惠券数量更新为{}", userId, user.getCouponCount());
+        }
         
         log.info("用户{}领取优惠券{}", userId, couponId);
         

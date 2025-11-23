@@ -1,0 +1,78 @@
+<!--pages/merchant/list.wxml-->
+<view class="container">
+  <!-- 页面标题 -->
+  <view class="page-header">
+    <text class="header-title">{{canteenName}}</text>
+    <text class="header-subtitle">请选择商家</text>
+  </view>
+
+  <!-- 商家列表 -->
+  <scroll-view scroll-y class="merchant-scroll" enable-passive="{{true}}">
+    <!-- 加载中 -->
+    <view class="loading-wrapper" wx:if="{{loading}}">
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <!-- 商家列表 -->
+    <view class="merchant-list" wx:if="{{!loading && merchantList.length > 0}}">
+      <view class="merchant-item" 
+            wx:for="{{merchantList}}" 
+            wx:key="id" 
+            bindtap="goToMenu" 
+            data-id="{{item.id}}"
+            data-name="{{item.name}}"
+            data-status="{{item.status}}">
+        
+        <!-- 商家图片 -->
+        <view class="merchant-image-wrapper">
+          <image class="merchant-image" src="{{item.image}}" mode="aspectFill"></image>
+          <view class="status-badge {{item.status === 1 ? 'open' : 'closed'}}">
+            {{item.statusText}}
+          </view>
+        </view>
+
+        <!-- 商家信息 -->
+        <view class="merchant-info">
+          <view class="merchant-header">
+            <text class="merchant-name">{{item.name}}</text>
+            <text class="window-number" wx:if="{{item.windowNumber}}">{{item.windowNumber}}</text>
+          </view>
+
+          <text class="merchant-desc" wx:if="{{item.description}}">{{item.description}}</text>
+
+          <view class="merchant-stats">
+            <view class="stat-item" wx:if="{{item.avgPrice}}">
+              <text class="stat-label">人均</text>
+              <text class="stat-value">{{item.avgPriceText}}</text>
+            </view>
+            <view class="stat-item">
+              <text class="stat-icon">⭐</text>
+              <text class="stat-value">{{item.ratingText}}</text>
+            </view>
+            <view class="stat-item">
+              <text class="stat-value">{{item.salesText}}</text>
+            </view>
+          </view>
+
+          <view class="contact-info" wx:if="{{item.contact || item.phone}}">
+            <text wx:if="{{item.contact}}">联系人：{{item.contact}}</text>
+            <text wx:if="{{item.phone}}">电话：{{item.phone}}</text>
+          </view>
+        </view>
+
+        <!-- 箭头 -->
+        <view class="arrow-icon">
+          <text>›</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-wrapper" wx:if="{{!loading && merchantList.length === 0}}">
+      <image class="empty-image" src="/assets/icons/no_order.png" mode="aspectFit"></image>
+      <text class="empty-text">该食堂暂无商家</text>
+      <text class="empty-hint">请选择其他食堂或稍后再试</text>
+    </view>
+  </scroll-view>
+</view>
+

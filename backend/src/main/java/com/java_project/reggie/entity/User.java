@@ -27,6 +27,18 @@ public class User implements Serializable {
 
     //手机号
     private String phone;
+    
+    
+    //用户类型 1:学生 2:教师 3:普通用户
+    private Integer userType;
+    
+    
+    //真实姓名
+    private String realName;
+    
+    
+    //教师认证状态 0:未认证 1:待审核 2:已认证 3:已拒绝
+    private Integer teacherVerified;
 
 
     //性别 0 女 1 男

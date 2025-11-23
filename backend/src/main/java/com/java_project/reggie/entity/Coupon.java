@@ -20,11 +20,19 @@ public class Coupon implements Serializable {
     
     private String name;
     
+    /**
+     * 优惠券类型 1:平台券 2:商家券
+     */
+    private Integer type;
+    
+    /**
+     * 商家ID（商家券专用）
+     */
+    private Long merchantId;
+    
     private BigDecimal amount; // 优惠金额
     
     private BigDecimal minAmount; // 最低消费金额
-    
-    private String type; // normal-普通券，newbie-新人券，points-积分券
     
     private String description;
     
@@ -41,5 +49,11 @@ public class Coupon implements Serializable {
     
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
+    
+    @TableField(fill = FieldFill.INSERT)
+    private Long createUser;
+    
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Long updateUser;
 }
 

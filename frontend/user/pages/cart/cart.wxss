@@ -1,7 +1,8 @@
 /* 购物车页面样式 */
 .container {
-  height: 100vh;
-  background-color: var(--bg-color);
+  min-height: 100vh;
+  background-color: #f8f8f8;
+  padding-bottom: 120rpx; /* 为底部结算栏留出空间 */
 }
 
 /* 空购物车 */
@@ -14,61 +15,90 @@
 }
 
 .empty-icon {
-  width: 300rpx;
-  height: 300rpx;
+  width: 320rpx;
+  height: 320rpx;
   margin-bottom: 40rpx;
-  opacity: 0.8;
 }
 
 .empty-text {
   font-size: 32rpx;
-  color: var(--text-sub);
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 16rpx;
+}
+
+.empty-tip {
+  font-size: 26rpx;
+  color: #999;
   margin-bottom: 60rpx;
 }
 
 .go-shopping-btn {
-  padding: 24rpx 80rpx;
-  background: linear-gradient(135deg, #FF7A30, #FF5000);
+  width: 280rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: center;
+  background: linear-gradient(135deg, #ff9c35 0%, #ff6b00 100%);
   color: #fff;
-  border: none;
-  border-radius: 48rpx;
+  border-radius: 40rpx;
   font-size: 30rpx;
   font-weight: bold;
-  box-shadow: 0 8rpx 20rpx rgba(255, 80, 0, 0.25);
-  transition: all 0.3s ease;
-}
-
-.go-shopping-btn:active {
-  transform: scale(0.95);
-  box-shadow: 0 4rpx 10rpx rgba(255, 80, 0, 0.15);
+  box-shadow: 0 8rpx 20rpx rgba(255, 107, 0, 0.2);
 }
 
 /* 购物车内容 */
 .cart-content {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+  width: 100%;
 }
 
+/* 顶部标题 */
+.cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 30rpx;
+  background-color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-title {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.header-count {
+  font-size: 26rpx;
+  color: #999;
+  margin-bottom: 6rpx;
+}
+
+/* 列表区域 */
 .cart-list {
-  flex: 1;
-  padding: 20rpx 30rpx;
-  padding-bottom: 140rpx;
+  padding: 20rpx;
 }
 
 .cart-item {
   display: flex;
   align-items: center;
   padding: 24rpx;
-  margin-bottom: 24rpx;
-  background-color: var(--white);
+  margin-bottom: 20rpx;
+  background: #fff;
   border-radius: 20rpx;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
 }
 
 .item-checkbox {
+  transform: scale(0.9);
   margin-right: 20rpx;
-  transform: scale(1.1);
+}
+
+/* 修改checkbox选中颜色 */
+checkbox .wx-checkbox-input.wx-checkbox-input-checked {
+  background: #ff6b00;
+  border-color: #ff6b00;
 }
 
 .item-image {
@@ -81,90 +111,98 @@
 
 .item-info {
   flex: 1;
+  height: 160rpx;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 160rpx;
 }
 
 .item-name {
   font-size: 30rpx;
-  font-weight: 600;
-  color: var(--text-main);
-  margin-bottom: 8rpx;
+  font-weight: bold;
+  color: #333;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.4;
 }
 
 .item-flavor {
-  font-size: 24rpx;
-  color: var(--text-sub);
-  margin-bottom: 16rpx;
+  font-size: 22rpx;
+  color: #999;
+  background: #f5f5f5;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  align-self: flex-start;
+  margin-top: 8rpx;
 }
 
 .item-bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: auto;
+}
+
+.price-wrapper {
+  display: flex;
+  align-items: baseline;
 }
 
 .item-price {
   font-size: 36rpx;
-  font-weight: 800;
-  color: var(--primary-color);
+  font-weight: bold;
+  color: #ff4d4f;
 }
 
 .item-price::before {
   content: '¥';
-  font-size: 26rpx;
-  font-weight: normal;
+  font-size: 24rpx;
   margin-right: 2rpx;
 }
 
-/* 数量步进器 */
+.price-unit {
+  font-size: 22rpx;
+  color: #999;
+  margin-left: 4rpx;
+}
+
+/* 步进器 */
 .stepper {
   display: flex;
   align-items: center;
-  border: 1rpx solid #eee;
-  border-radius: 30rpx;
-  overflow: hidden;
-  background-color: #f9f9f9;
 }
 
 .stepper-btn {
-  width: 56rpx;
-  height: 56rpx;
+  width: 48rpx;
+  height: 48rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #f5f5f5;
+  border-radius: 50%;
   font-size: 32rpx;
-  color: #666;
-  background-color: transparent;
-  transition: background-color 0.2s;
-}
-
-.stepper-btn:active {
-  background-color: #eee;
+  color: #333;
+  font-weight: bold;
+  transition: all 0.2s;
 }
 
 .stepper-btn.minus {
-  border-right: 1rpx solid #eee;
+  color: #666;
 }
 
 .stepper-btn.plus {
-  border-left: 1rpx solid #eee;
-  color: var(--primary-color);
-  font-weight: bold;
+  background: #ff6b00;
+  color: #fff;
 }
 
 .stepper-num {
   min-width: 60rpx;
   text-align: center;
   font-size: 28rpx;
-  color: var(--text-main);
-  font-weight: 600;
+  font-weight: bold;
+  color: #333;
+  margin: 0 10rpx;
 }
 
 /* 底部结算栏 */
@@ -173,68 +211,82 @@
   bottom: 0;
   left: 0;
   right: 0;
+  height: 110rpx;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24rpx 30rpx;
-  background-color: var(--white);
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
-  z-index: 100;
+  padding: 0 30rpx;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
   padding-bottom: env(safe-area-inset-bottom);
+  z-index: 100;
 }
 
-.select-all {
+.footer-left {
   display: flex;
   align-items: center;
 }
 
-.select-all checkbox {
-  transform: scale(1.1);
-  margin-right: 16rpx;
+.select-all-checkbox {
+  transform: scale(0.9);
+  margin-right: 12rpx;
 }
 
 .select-all-text {
   font-size: 28rpx;
-  color: var(--text-main);
-  font-weight: 500;
+  color: #666;
 }
 
-.total-section {
+.footer-right {
   display: flex;
   align-items: center;
-  gap: 24rpx;
 }
 
 .total-info {
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-right: 24rpx;
 }
 
 .total-label {
-  font-size: 28rpx;
-  color: var(--text-main);
-  margin-right: 8rpx;
+  font-size: 24rpx;
+  color: #999;
 }
 
 .total-price {
   font-size: 40rpx;
-  font-weight: 800;
-  color: var(--primary-color);
+  font-weight: bold;
+  color: #ff4d4f;
 }
 
 .checkout-btn {
-  padding: 20rpx 48rpx;
-  background: linear-gradient(135deg, #FF7A30, #FF5000);
+  width: 220rpx;
+  height: 76rpx;
+  line-height: 76rpx;
+  text-align: center;
+  background: linear-gradient(135deg, #ff9c35 0%, #ff6b00 100%);
   color: #fff;
-  border: none;
-  border-radius: 48rpx;
+  border-radius: 38rpx;
   font-size: 30rpx;
-  font-weight: 600;
-  box-shadow: 0 4rpx 12rpx rgba(255, 80, 0, 0.3);
+  font-weight: bold;
+  margin: 0;
+  padding: 0;
+  box-shadow: 0 6rpx 16rpx rgba(255, 107, 0, 0.25);
 }
 
 .checkout-btn[disabled] {
   background: #ccc;
   box-shadow: none;
+  color: #fff;
 }
 
+/* 点击态 */
+.stepper-btn:active {
+  transform: scale(0.9);
+}
+
+.checkout-btn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}

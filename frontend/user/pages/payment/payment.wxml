@@ -1,77 +1,52 @@
-<!-- 支付页面 -->
+<!--pages/payment/payment.wxml-->
 <view class="container">
-  <!-- 订单信息 -->
-  <view class="order-section">
-    <view class="section-title">订单信息</view>
-    <view class="order-info">
-      <view class="info-item">
-        <text class="label">订单号</text>
-        <text class="value">{{orderInfo.number}}</text>
-      </view>
-      <view class="info-item">
-        <text class="label">订单金额</text>
-        <text class="amount">¥{{orderInfo.amount}}</text>
-      </view>
-    </view>
+  <!-- 支付金额 -->
+  <view class="amount-section">
+    <view class="amount-label">支付金额</view>
+    <view class="amount-value">¥{{orderAmount}}</view>
   </view>
 
-  <!-- 支付方式选择 -->
-  <view class="payment-section">
+  <!-- 支付方式 -->
+  <view class="pay-method-section">
     <view class="section-title">选择支付方式</view>
     
-    <!-- 钱包余额支付 -->
-    <view class="payment-item {{paymentMethod === 'balance' ? 'active' : ''}}" bindtap="selectPayment" data-method="balance">
-      <view class="payment-left">
-        <view class="payment-icon">💰</view>
-        <view class="payment-info">
-          <text class="payment-name">钱包余额</text>
-          <text class="payment-desc">当前余额：¥{{userBalance}}</text>
+    <view 
+      wx:for="{{payMethods}}" 
+      wx:key="id"
+      class="pay-method-item {{payMethod === item.id ? 'active' : ''}}"
+      bindtap="selectPayMethod"
+      data-method="{{item.id}}"
+    >
+      <view class="pay-left">
+        <image class="pay-icon" src="{{item.icon}}" mode="aspectFit"></image>
+        <view class="pay-info">
+          <view class="pay-name">{{item.name}}</view>
+          <view class="pay-desc" wx:if="{{item.desc}}">{{item.desc}}</view>
         </view>
       </view>
-      <view class="payment-check"></view>
-    </view>
-
-    <!-- 微信支付 -->
-    <view class="payment-item {{paymentMethod === 'wechat' ? 'active' : ''}}" bindtap="selectPayment" data-method="wechat">
-      <view class="payment-left">
-        <view class="payment-icon">💚</view>
-        <view class="payment-info">
-          <text class="payment-name">微信支付</text>
-          <text class="payment-desc">安全快捷的支付方式</text>
-        </view>
+      <view class="radio {{payMethod === item.id ? 'checked' : ''}}">
+        <view class="radio-inner"></view>
       </view>
-      <view class="payment-check"></view>
-    </view>
-
-    <!-- 支付宝支付 -->
-    <view class="payment-item {{paymentMethod === 'alipay' ? 'active' : ''}}" bindtap="selectPayment" data-method="alipay">
-      <view class="payment-left">
-        <view class="payment-icon">💙</view>
-        <view class="payment-info">
-          <text class="payment-name">支付宝支付</text>
-          <text class="payment-desc">便捷支付，值得信赖</text>
-        </view>
-      </view>
-      <view class="payment-check"></view>
     </view>
   </view>
 
-  <!-- 余额不足提示 -->
-  <view class="tip-section" wx:if="{{paymentMethod === 'balance' && insufficientBalance}}">
-    <view class="tip-box">
-      <text class="tip-icon">⚠️</text>
-      <text class="tip-text">余额不足，请先充值或选择其他支付方式</text>
-    </view>
-    <button class="recharge-btn" bindtap="goRecharge">去充值</button>
+  <!-- 支付说明 -->
+  <view class="tips-section">
+    <view class="tips-title">支付说明</view>
+    <view class="tips-text">1. 支付成功后商家将开始制作您的订单</view>
+    <view class="tips-text">2. 如需退款请在订单详情页申请</view>
+    <view class="tips-text">3. 本次支付为模拟支付，实际不会扣费</view>
   </view>
-</view>
 
-<!-- 底部支付按钮 -->
-<view class="footer">
-  <view class="total-info">
-    <text class="label">需支付：</text>
-    <text class="price">¥{{orderInfo.amount}}</text>
+  <!-- 底部支付按钮 -->
+  <view class="footer">
+    <view class="footer-amount">
+      <text class="label">实付款：</text>
+      <text class="value">¥{{orderAmount}}</text>
+    </view>
+    <button class="pay-btn" bindtap="confirmPay">
+      确认支付
+    </button>
   </view>
-  <button class="pay-btn" bindtap="submitPayment">立即支付</button>
 </view>
 

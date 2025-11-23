@@ -1,13 +1,64 @@
 <!--pages/menu/menu.wxml-->
 <view class="container">
-  <!-- Canteen Header -->
+  <!-- Merchant Header -->
   <view class="header">
-    <text class="canteen-name">{{canteenName}}</text>
-    <view class="header-info">
-      <text class="info-item">起送 ¥0</text>
-      <text class="info-item">|</text>
-      <text class="info-item">配送费 ¥1</text>
+    <view class="merchant-info-row">
+      <image wx:if="{{merchantInfo.image}}" class="merchant-logo" src="{{merchantInfo.image}}" mode="aspectFill"></image>
+      <view class="merchant-text">
+        <text class="merchant-name">{{merchantName}}</text>
+        <view class="merchant-stats" wx:if="{{merchantInfo}}">
+          <text class="stat-item" wx:if="{{merchantInfo.avgPrice}}">人均¥{{merchantInfo.avgPrice}}</text>
+          <text class="stat-divider" wx:if="{{merchantInfo.avgPrice && merchantInfo.rating}}">|</text>
+          <text class="stat-item" wx:if="{{merchantInfo.rating}}">⭐{{merchantInfo.rating}}</text>
+          <text class="stat-divider" wx:if="{{merchantInfo.rating && merchantInfo.salesCount}}">|</text>
+          <text class="stat-item" wx:if="{{merchantInfo.salesCount}}">月售{{merchantInfo.salesCount}}</text>
+        </view>
+      </view>
     </view>
+    <view class="header-info" wx:if="{{merchantInfo.description}}">
+      <text class="merchant-desc">{{merchantInfo.description}}</text>
+    </view>
+  </view>
+
+  <!-- Merchant Announcements -->
+  <view class="announcement-section" wx:if="{{announcements.length > 0}}">
+    <swiper class="announcement-swiper" autoplay circular interval="3000" vertical>
+      <swiper-item wx:for="{{announcements}}" wx:key="id">
+        <view class="announcement-item" bindtap="showAnnouncementDetail" data-announcement="{{item}}">
+          <view class="announcement-icon">📢</view>
+          <view class="announcement-content">
+            <text class="announcement-type">{{item.typeText}}</text>
+            <text class="announcement-title">{{item.title}}</text>
+          </view>
+          <view class="announcement-arrow">›</view>
+        </view>
+      </swiper-item>
+    </swiper>
+  </view>
+
+  <!-- Merchant Coupons -->
+  <view class="merchant-coupons-section" wx:if="{{merchantCoupons.length > 0}}">
+    <view class="coupons-header">
+      <text class="coupons-title">🎫 本店优惠券</text>
+    </view>
+    <scroll-view scroll-x class="coupons-scroll" show-scrollbar="{{false}}">
+      <view class="coupon-mini-card" wx:for="{{merchantCoupons}}" wx:key="id">
+        <view class="coupon-mini-left">
+          <text class="coupon-amount">¥{{item.amount}}</text>
+          <text class="coupon-condition">满{{item.minAmount}}</text>
+        </view>
+        <view class="coupon-mini-right">
+          <text class="coupon-name">{{item.name}}</text>
+          <text class="coupon-valid">{{item.validDays}}天有效</text>
+          <view class="coupon-receive-btn {{item.received ? 'received' : ''}}" 
+                catchtap="receiveMerchantCoupon" 
+                data-id="{{item.id}}" 
+                data-index="{{index}}">
+            {{item.received ? '已领取' : '领取'}}
+          </view>
+        </view>
+      </view>
+    </scroll-view>
   </view>
 
   <!-- Main Content -->
@@ -25,7 +76,12 @@
     <scroll-view scroll-y class="food-list" scroll-into-view="{{toView}}" scroll-with-animation bindscroll="onFoodScroll">
       <block wx:for="{{categories}}" wx:key="id" wx:for-index="catIndex">
         <view class="category-header" id="cat-{{catIndex}}">{{item.name}}</view>
-        <view class="food-item" wx:for="{{item.dishes}}" wx:key="id" wx:for-item="dish">
+        <view class="food-item {{dish.isHighlighted ? 'highlighted' : ''}}" 
+              id="dish-{{catIndex}}-{{dishIndex}}"
+              wx:for="{{item.dishes}}" 
+              wx:key="id" 
+              wx:for-item="dish"
+              wx:for-index="dishIndex">
           <image class="food-img" src="{{dish.image || defaultDishImg}}" mode="aspectFill" bindtap="showDetail" data-dish="{{dish}}"></image>
           <view class="food-info">
             <text class="food-name">{{dish.name}}</text>

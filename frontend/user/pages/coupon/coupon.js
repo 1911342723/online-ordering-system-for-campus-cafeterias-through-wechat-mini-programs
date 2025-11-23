@@ -49,18 +49,24 @@ Page({
     try {
       const { formatTime } = require('../../utils/util')
       
+      // 构建请求参数，避免传递 null
+      const params = {}
+      if (this.data.currentTab !== 0) {
+        params.status = this.data.currentTab - 1
+      }
+      
       const result = await request({
         url: '/coupon/my',
         method: 'GET',
-        data: { status: this.data.currentTab === 0 ? null : this.data.currentTab - 1 }
+        data: params
       })
       
       if (result && Array.isArray(result)) {
         const coupons = result.map(item => ({
           id: item.id,
           name: item.couponName,
-          amount: parseFloat(item.amount).toFixed(0),
-          minAmount: parseFloat(item.minAmount).toFixed(0),
+          amount: Math.floor(parseFloat(item.amount) / 100), // 转为整数
+          minAmount: Math.floor(parseFloat(item.minAmount) / 100), // 转为整数
           description: item.description || '全场通用',
           expireTime: formatTime(item.expireTime).split(' ')[0],
           status: item.status === 0 ? 'unused' : item.status === 1 ? 'used' : 'expired'

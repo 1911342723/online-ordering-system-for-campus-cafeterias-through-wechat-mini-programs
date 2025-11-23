@@ -3,14 +3,14 @@
  */
 
 /**
- * 格式化价格 - 后端返回的已经是元，直接格式化
- * @param {number} price - 价格（元）
+ * 格式化价格 - 后端返回的是分，需要转换为元
+ * @param {number} price - 价格（分）
  * @returns {string} 格式化后的价格
  */
 function formatPrice(price) {
   if (!price && price !== 0) return '0.00'
-  // 后端返回的是元（BigDecimal），不需要除以100
-  return parseFloat(price).toFixed(2)
+  // 后端返回的是分（BigDecimal），需要除以100转换为元
+  return (parseFloat(price) / 100).toFixed(2)
 }
 
 /**
@@ -106,7 +106,8 @@ function throttle(func, wait = 500) {
 function getImageUrl(name, defaultImg = '') {
   if (!name) return defaultImg
   if (name.startsWith('http')) return name
-  return `http://localhost:8080/common/download?name=${name}`
+  const { DOWNLOAD_URL_PREFIX } = require('./config')
+  return `${DOWNLOAD_URL_PREFIX}${name}`
 }
 
 /**

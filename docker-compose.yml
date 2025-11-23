@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: canteen-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: reggie
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./backend/db.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./backend/数据库升级-预订单和配置.sql:/docker-entrypoint-initdb.d/02-upgrade.sql
+      - ./backend/测试账号.sql:/docker-entrypoint-initdb.d/03-test-accounts.sql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - canteen-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: canteen-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - canteen-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # 后端服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: canteen-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/reggie?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - canteen-network
+    restart: unless-stopped
+
+  # 管理端前端
+  admin-frontend:
+    build:
+      context: ./frontend/admin
+      dockerfile: Dockerfile
+    container_name: canteen-admin
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - canteen-network
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  canteen-network:
+    driver: bridge
+    name: canteen-network
+

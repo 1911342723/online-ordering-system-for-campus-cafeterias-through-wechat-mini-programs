@@ -1,16 +1,16 @@
 // pages/index/index.js
 const request = require('../../utils/request')
 const { DEFAULT_IMAGES } = require('../../utils/config')
-const { getImageUrl, showLoading, hideLoading, showError, checkLogin, navigateToLogin } = require('../../utils/util')
+const { getImageUrl, showLoading, hideLoading, showError, checkLogin, navigateToLogin, formatPrice } = require('../../utils/util')
 
 // SVG Icons
 const ICONS = {
-  location: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FF5000'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E",
-  scan: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231A1A1A'%3E%3Cpath d='M3 3h6v2H5v4H3V3zm2 12H3v6h6v-2H5v-4zm14 4h-4v2h6v-6h-2v4zm2-16h-6v2h4v4h2V3zm-8 6h2v2h-2V9zm-2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm2 2h2v2h-2v-2zm2-2h2v2h-2v-2z'/%3E%3C/svg%3E",
-  search: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999999'%3E%3Cpath d='M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E",
+  location: "/assets/icons/location.png",
+  scan: "/assets/icons/scan.png",
+  search: "/assets/icons/search.png",
   star: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FFC833'%3E%3Cpath d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z'/%3E%3C/svg%3E",
   ai: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%236366F1;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23A855F7;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='28' fill='url(%23grad)' opacity='0.1'/%3E%3Cpath fill='url(%23grad)' d='M42,24c0,1.1-0.9,2-2,2h-4v4c0,1.1-0.9,2-2,2s-2-0.9-2-2v-4h-4c-1.1,0-2-0.9-2-2s0.9-2,2-2h4v-4c0-1.1,0.9-2,2-2s2,0.9,2,2v4h4C41.1,22,42,22.9,42,24z M46.5,39h-2.2c-0.4,0-0.7-0.2-0.9-0.5L41,34.8c-0.2-0.3-0.2-0.7,0-1l2.4-3.7c0.2-0.3,0.5-0.5,0.9-0.5h2.2c0.8,0,1.3,0.9,0.9,1.6l-2.4,3.7l2.4,3.7C47.8,39.1,47.3,39,46.5,39z M22,42c0,2.2-1.8,4-4,4s-4-1.8-4-4s1.8-4,4-4S22,39.8,22,42z'/%3E%3Cpath fill='white' d='M32,14l4,9l9,4l-9,4l-4,9l-4-9l-9-4l9-4L32,14z'/%3E%3C/svg%3E",
-  announcement: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FF5000'%3E%3Cpath d='M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z'/%3E%3C/svg%3E"
+  announcement: "/assets/icons/announcement.png"
 }
 
 Page({
@@ -19,6 +19,8 @@ Page({
     canteens: [],
     announcements: [],
     todayRecommendations: [],
+    coupons: [],
+    showCouponDialog: false,
     defaultBanner: DEFAULT_IMAGES.banner,
     defaultCanteen: DEFAULT_IMAGES.canteen,
     currentHour: new Date().getHours(),
@@ -31,12 +33,14 @@ Page({
     this.loadCanteens()
     this.loadAnnouncements()
     this.loadTodayRecommendations()
+    this.loadCoupons() // 加载优惠券用于显示入口
   },
 
   onShow() {
     // 每次显示页面时刷新数据
     this.loadCanteens()
     this.loadAnnouncements()
+    this.checkCouponDialog()
   },
 
   /**
@@ -154,8 +158,17 @@ Page({
   },
 
   /**
-   * 跳转到菜单页
+   * 跳转到商家列表页
    */
+  /**
+   * 跳转到食堂列表页
+   */
+  goToCanteenList() {
+    wx.navigateTo({
+      url: '/pages/canteen-list/canteen-list'
+    })
+  },
+
   goToMenu(e) {
     const { id, name, isopen } = e.currentTarget.dataset
     
@@ -165,7 +178,7 @@ Page({
     }
     
     wx.navigateTo({
-      url: `/pages/menu/menu?canteenId=${id}&name=${name}`
+      url: `/pages/merchant/list?canteenId=${id}&canteenName=${name}`
     })
   },
 
@@ -220,7 +233,9 @@ Page({
    * 搜索功能
    */
   onSearch() {
-    showError('搜索功能开发中...')
+    wx.navigateTo({
+      url: '/pages/search/search'
+    })
   },
 
   /**
@@ -295,7 +310,7 @@ Page({
       const processedRecommendations = recommendations.map(dish => ({
         ...dish,
         image: getImageUrl(dish.image, DEFAULT_IMAGES.dish),
-        price: dish.price ? Number(dish.price).toFixed(2) : '0.00',
+        price: formatPrice(dish.price),
         categoryName: dish.categoryName || '美食'
       }))
 
@@ -340,7 +355,7 @@ Page({
           id: dish.id,
           name: dish.name,
           image: getImageUrl(dish.image, DEFAULT_IMAGES.dish),
-          price: dish.price ? (typeof dish.price === 'number' ? dish.price.toFixed(2) : Number(dish.price).toFixed(2)) : '0.00',
+          price: formatPrice(dish.price),
           categoryName: dish.categoryName || '美食'
         }))
         
@@ -376,9 +391,19 @@ Page({
    */
   goToDishDetail(e) {
     const dish = e.currentTarget.dataset.dish
-    wx.navigateTo({
-      url: `/pages/menu/menu?dishId=${dish.id}`
-    })
+    console.log('点击菜品跳转:', dish)
+    
+    // 优先使用 merchantId 直接跳转到商家页并定位菜品
+    if (dish.merchantId) {
+      wx.navigateTo({
+        url: `/pages/menu/menu?merchantId=${dish.merchantId}&dishId=${dish.id}`
+      })
+    } else {
+      // 如果没有merchantId，通过dishId让菜单页自动查询并跳转
+      wx.navigateTo({
+        url: `/pages/menu/menu?dishId=${dish.id}`
+      })
+    }
   },
 
   /**
@@ -408,7 +433,7 @@ Page({
           dishId: dish.id,
           name: dish.name,
           image: dish.image,
-          amount: dish.price
+          amount: parseFloat(dish.price) * 100 // 转换为分
         }
       })
 
@@ -421,5 +446,96 @@ Page({
       showError('添加失败，请重试')
       console.error('添加到购物车失败:', error)
     }
+  },
+
+  /**
+   * 加载优惠券（平台券）
+   */
+  async loadCoupons() {
+    try {
+      const coupons = await request({
+        url: '/coupon/available',
+        method: 'GET',
+        data: {
+          type: 1 // 只查询平台券
+        }
+      })
+
+      console.log('首页加载平台券:', coupons)
+
+      if (coupons && coupons.length > 0) {
+        // 格式化优惠券数据
+        const formattedCoupons = coupons.slice(0, 3).map(coupon => ({
+          ...coupon,
+          amount: Math.floor(parseFloat(coupon.amount) / 100), // 转为整数
+          minAmount: Math.floor(parseFloat(coupon.minAmount) / 100) // 转为整数
+        }))
+        
+        this.setData({ coupons: formattedCoupons })
+      } else {
+        // 即使没有优惠券，也显示入口（可以引导用户查看）
+        this.setData({ coupons: [] })
+      }
+    } catch (error) {
+      console.error('加载优惠券失败:', error)
+      // 加载失败也设置为空数组，保持入口可见
+      this.setData({ coupons: [] })
+    }
+  },
+
+  /**
+   * 检查是否显示优惠券弹窗
+   */
+  async checkCouponDialog() {
+    // 先加载优惠券
+    await this.loadCoupons()
+    
+    // 检查今天是否已显示过
+    const today = new Date().toDateString()
+    const lastShow = wx.getStorageSync('coupon_dialog_date')
+    
+    if (lastShow !== today && this.data.coupons.length > 0 && checkLogin()) {
+      this.setData({ showCouponDialog: true })
+      wx.setStorageSync('coupon_dialog_date', today)
+    }
+  },
+
+  /**
+   * 关闭优惠券弹窗
+   */
+  closeCouponDialog() {
+    this.setData({ showCouponDialog: false })
+  },
+
+  /**
+   * 去领券中心
+   */
+  goToCouponCenter() {
+    if (!checkLogin()) {
+      navigateToLogin()
+      return
+    }
+    
+    // 如果弹窗打开，先关闭
+    if (this.data.showCouponDialog) {
+      this.closeCouponDialog()
+    }
+    
+    wx.navigateTo({
+      url: '/pages/coupon-center/coupon-center'
+    })
+  },
+
+  /**
+   * 点击优惠券活动
+   */
+  onCouponClick() {
+    if (!checkLogin()) {
+      navigateToLogin()
+      return
+    }
+    wx.navigateTo({
+      url: '/pages/coupon-center/coupon-center'
+    })
   }
 })
