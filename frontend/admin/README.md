@@ -1,108 +1,59 @@
-# 智慧食堂管理端
+# 智慧食堂管理端 (Admin)
 
-基于 Vue 3 + Vite + Element Plus 开发的智慧食堂管理系统。
-
-## 快速开始
-
-### 安装依赖
-
-```bash
-npm install
-```
-
-### 开发环境
-
-```bash
-npm run dev
-```
-
-访问 http://localhost:3000
-
-### 生产打包
-
-```bash
-npm run build
-```
-
-### 预览生产构建
-
-```bash
-npm run preview
-```
+基于 Vue 3 + Vite + Element Plus 开发的智慧食堂后台管理系统，主要用于管理员对平台、食堂、商户和用户的综合管理。
 
 ## 技术栈
 
-- **框架：** Vue 3.3
-- **构建工具：** Vite 4.4
-- **UI 组件：** Element Plus 2.4
-- **路由：** Vue Router 4.2
-- **HTTP 客户端：** Axios 1.6
-- **图表：** ECharts 5.4
-- **样式：** Sass 1.69
+- **核心框架**：Vue 3.3 (Composition API)
+- **构建工具**：Vite 4.4
+- **UI 组件库**：Element Plus 2.4
+- **路由管理**：Vue Router 4.2
+- **HTTP 客户端**：Axios 1.6
+- **图表可视化**：ECharts 5.4
+- **CSS 预处理**：Sass 1.69
 
 ## 功能模块
 
-- ✅ 登录/登出
-- ✅ 数据概览（Dashboard）
-- ✅ 订单管理
-- ✅ 菜品管理
-- ✅ 分类管理
-- ✅ 员工管理
-
-## 默认账号
-
-- 超级管理员：admin / 123456
-- 食堂经理：manager / 123456
-- 员工测试：staff / 123456
+- **登录/鉴权**：账号密码登录，JWT Token 认证
+- **数据概览 (Dashboard)**：平台关键指标展示 (用户数、订单数、营业额等)
+- **员工管理**：平台管理员账号的增删改查
+- **用户管理**：管理C端注册用户，查看用户信息及状态
+- **食堂管理**：管理学校食堂信息 (名称、位置、简介等)
+- **商家管理**：商家入驻审核、信息维护、状态管理
+- **公告管理**：发布和维护系统公告
 
 ## 项目结构
 
 ```
-src/
-├── api/              # API 接口
-├── layout/           # 布局组件
+frontend/admin/src/
+├── api/              # API 接口定义 (按模块分类)
+├── layout/           # 页面布局组件 (侧边栏、顶栏)
 ├── router/           # 路由配置
-├── styles/           # 全局样式
-├── views/            # 页面组件
+├── styles/           # 全局样式 (Sass)
+├── views/            # 页面视图组件
+│   ├── dashboard/    # 数据概览
+│   ├── member/       # 员工管理
+│   ├── user/         # 用户管理
+│   ├── canteen/      # 食堂管理
+│   ├── merchant/     # 商家管理
+│   └── announcement/ # 公告管理
 ├── App.vue           # 根组件
 └── main.js           # 入口文件
 ```
 
-## 开发规范
+## 接口代理配置
 
-- 使用 Composition API
-- 使用 `<script setup>` 语法
-- 组件命名使用 PascalCase
-- API 按模块分文件管理
-
-## 配置说明
-
-### API 代理
-
-开发环境通过 Vite 代理转发到后端服务（默认 http://localhost:8080）
-
-配置文件：`vite.config.js`
+开发环境通过 `vite.config.js` 配置了反向代理，以解决跨域问题：
 
 ```javascript
 server: {
   port: 3000,
   proxy: {
     '/api': {
-      target: 'http://localhost:8080',
+      target: 'http://localhost:8080', // 后端服务地址
       changeOrigin: true,
       rewrite: (path) => path.replace(/^\/api/, '')
     }
   }
 }
 ```
-
-## 浏览器支持
-
-- Chrome（推荐）
-- Firefox
-- Safari
-- Edge
-
-## License
-
-MIT

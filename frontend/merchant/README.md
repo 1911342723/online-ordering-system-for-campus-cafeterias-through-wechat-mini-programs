@@ -1,108 +1,58 @@
-# 智慧食堂管理端
+# 智慧食堂商家端 (Merchant)
 
-基于 Vue 3 + Vite + Element Plus 开发的智慧食堂管理系统。
-
-## 快速开始
-
-### 安装依赖
-
-```bash
-npm install
-```
-
-### 开发环境
-
-```bash
-npm run dev
-```
-
-访问 http://localhost:3000
-
-### 生产打包
-
-```bash
-npm run build
-```
-
-### 预览生产构建
-
-```bash
-npm run preview
-```
+基于 Vue 3 + Vite + Element Plus 开发的商家后台管理系统，专为食堂档口商家设计，提供订单处理、菜品管理和经营数据统计等功能。
 
 ## 技术栈
 
-- **框架：** Vue 3.3
-- **构建工具：** Vite 4.4
-- **UI 组件：** Element Plus 2.4
-- **路由：** Vue Router 4.2
-- **HTTP 客户端：** Axios 1.6
-- **图表：** ECharts 5.4
-- **样式：** Sass 1.69
+- **核心框架**：Vue 3.3 (Composition API)
+- **构建工具**：Vite 4.4
+- **UI 组件库**：Element Plus 2.4
+- **路由管理**：Vue Router 4.2
+- **HTTP 客户端**：Axios 1.6
+- **图表可视化**：ECharts 5.4
+- **CSS 预处理**：Sass 1.69
+- **实时通讯**：WebSocket (订单实时提醒)
 
 ## 功能模块
 
-- ✅ 登录/登出
-- ✅ 数据概览（Dashboard）
-- ✅ 订单管理
-- ✅ 菜品管理
-- ✅ 分类管理
-- ✅ 员工管理
-
-## 默认账号
-
-- 超级管理员：admin / 123456
-- 食堂经理：manager / 123456
-- 员工测试：staff / 123456
+- **登录/鉴权**：商家账号登录，自动识别商家身份
+- **工作台 (Dashboard)**：今日数据概览 (待处理订单、营业额、销量)
+- **订单管理**：
+  - 实时接收新订单提醒
+  - 订单状态流转 (接单、制作、配送/取餐、完成)
+  - 订单详情查看与打印
+- **菜品管理**：
+  - 菜品增删改查
+  - 菜品口味/规格配置
+  - 菜品上下架控制
+- **分类管理**：菜品分类和套餐分类维护
+- **评价管理**：查看用户评价，支持商家回复
+- **消息中心**：与用户进行实时消息沟通
+- **店铺设置**：店铺基本信息维护、营业状态切换
 
 ## 项目结构
 
 ```
-src/
-├── api/              # API 接口
-├── layout/           # 布局组件
+frontend/merchant/src/
+├── api/              # API 接口定义
+├── layout/           # 商家端布局组件
 ├── router/           # 路由配置
 ├── styles/           # 全局样式
-├── views/            # 页面组件
+├── utils/            # 工具函数 (含 WebSocket 封装)
+├── views/            # 页面视图组件
+│   ├── dashboard/    # 商家工作台
+│   ├── order/        # 订单管理
+│   ├── food/         # 菜品管理
+│   ├── category/     # 分类管理
+│   ├── review/       # 评价管理
+│   ├── message/      # 消息中心
+│   └── ...
 ├── App.vue           # 根组件
 └── main.js           # 入口文件
 ```
 
-## 开发规范
+## 特色功能
 
-- 使用 Composition API
-- 使用 `<script setup>` 语法
-- 组件命名使用 PascalCase
-- API 按模块分文件管理
-
-## 配置说明
-
-### API 代理
-
-开发环境通过 Vite 代理转发到后端服务（默认 http://localhost:8080）
-
-配置文件：`vite.config.js`
-
-```javascript
-server: {
-  port: 3000,
-  proxy: {
-    '/api': {
-      target: 'http://localhost:8080',
-      changeOrigin: true,
-      rewrite: (path) => path.replace(/^\/api/, '')
-    }
-  }
-}
-```
-
-## 浏览器支持
-
-- Chrome（推荐）
-- Firefox
-- Safari
-- Edge
-
-## License
-
-MIT
+- **WebSocket 实时订单**：集成 WebSocket 客户端，实现新订单语音播报和实时弹窗提醒。
+- **现代化 UI 设计**：采用 Premium Vibrant 配色方案，界面简洁高效。
+- **响应式布局**：适配不同尺寸的屏幕，方便商家操作。
