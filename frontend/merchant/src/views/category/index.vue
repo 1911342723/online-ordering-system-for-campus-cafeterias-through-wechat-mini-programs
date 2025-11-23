@@ -1,27 +1,36 @@
 <template>
   <div class="app-container">
-    <!-- Header Actions -->
-    <div class="card-header-action">
-      <div class="left">
-        <el-select 
-          v-model="queryParams.type" 
-          placeholder="分类类型" 
-          style="width: 150px"
-          clearable
-        >
-          <el-option label="菜品分类" :value="1" />
-          <el-option label="套餐分类" :value="2" />
-        </el-select>
-        <el-button type="primary" @click="fetchData" style="margin-left: 10px;">查询</el-button>
-      </div>
-      <div class="right">
-        <el-button type="success" icon="Plus" @click="handleAdd">新建分类</el-button>
-      </div>
-    </div>
+    <el-card shadow="never" class="main-card">
+      <template #header>
+        <div class="card-header">
+          <div class="header-left">
+            <div class="page-title">分类管理</div>
+          </div>
+          <div class="header-right">
+            <el-select 
+              v-model="queryParams.type" 
+              placeholder="分类类型" 
+              style="width: 140px"
+              clearable
+              @change="handleSearch"
+            >
+              <el-option label="菜品分类" :value="1" />
+              <el-option label="套餐分类" :value="2" />
+            </el-select>
+            <el-button type="primary" icon="Search" @click="handleSearch" style="margin-left: 12px;">查询</el-button>
+            <el-button icon="Refresh" @click="handleReset">重置</el-button>
+            <el-divider direction="vertical" />
+            <el-button type="primary" icon="Plus" class="add-btn" @click="handleAdd">新建分类</el-button>
+          </div>
+        </div>
+      </template>
 
-    <!-- Table Card -->
-    <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" style="width: 100%">
+      <el-table 
+        :data="tableData" 
+        v-loading="loading" 
+        style="width: 100%"
+        :header-cell-style="{ background: '#f8f9fa', color: '#606266' }"
+      >
         <el-table-column prop="name" label="分类名称" min-width="150" />
         <el-table-column prop="type" label="分类类型" width="120" align="center">
           <template #default="{ row }">
@@ -246,6 +255,19 @@ const resetForm = () => {
   formRef.value?.clearValidate()
 }
 
+// 查询按钮
+const handleSearch = () => {
+  queryParams.page = 1
+  fetchData()
+}
+
+// 重置按钮
+const handleReset = () => {
+  queryParams.type = null
+  queryParams.page = 1
+  fetchData()
+}
+
 onMounted(() => {
   fetchData()
 })
@@ -253,26 +275,62 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .app-container {
-  padding: 0;
-}
-
-.card-header-action {
-  background: #fff;
   padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-.table-card {
-  border: none;
+.main-card {
   border-radius: 8px;
+  
+  :deep(.el-card__header) {
+    padding: 16px 20px;
+    border-bottom: 1px solid #ebeef5;
+  }
   
   :deep(.el-card__body) {
     padding: 20px;
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .header-left {
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #303133;
+      position: relative;
+      padding-left: 12px;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 16px;
+        background: var(--primary-color);
+        border-radius: 2px;
+      }
+    }
+  }
+  
+  .header-right {
+    display: flex;
+    align-items: center;
+    
+    .add-btn {
+      background: linear-gradient(to right, #4f46e5, #6366f1);
+      border: none;
+      
+      &:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+    }
   }
 }
 

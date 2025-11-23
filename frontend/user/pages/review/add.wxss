@@ -15,10 +15,36 @@
   margin-bottom: 30rpx;
 }
 
+.detail-rating {
+  padding: 20rpx 40rpx;
+  margin-bottom: 15rpx;
+}
+
 .section-title {
   font-size: 32rpx;
   font-weight: bold;
   margin-bottom: 30rpx;
+}
+
+.rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.rating-label {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  width: 80rpx;
+}
+
+.rating-score {
+  font-size: 24rpx;
+  color: #666;
+  width: 60rpx;
+  text-align: right;
 }
 
 .stars {
@@ -27,9 +53,18 @@
   margin-bottom: 20rpx;
 }
 
+.stars.small {
+  gap: 10rpx;
+  margin-bottom: 0;
+}
+
 .star {
   font-size: 60rpx;
   color: #FFC107;
+}
+
+.stars.small .star {
+  font-size: 40rpx;
 }
 
 .rating-text {

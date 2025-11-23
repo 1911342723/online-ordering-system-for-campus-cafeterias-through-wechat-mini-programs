@@ -1,53 +1,70 @@
 <template>
   <div class="app-container">
-    <!-- 统计卡片 -->
-    <el-row :gutter="20" class="stats-row">
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="总评价数" :value="stats.total" />
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="平均评分" :value="stats.avgRating" :precision="1" suffix="分" />
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="好评率" :value="stats.goodRate" suffix="%" />
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="待回复" :value="stats.pending">
-            <template #suffix>
-              <el-tag type="warning" size="small">条</el-tag>
-            </template>
-          </el-statistic>
-        </el-card>
-      </el-col>
-    </el-row>
+    <el-card shadow="never" class="main-card">
+      <template #header>
+        <div class="card-header">
+          <div class="header-left">
+            <div class="page-title">评价管理</div>
+          </div>
+          <div class="header-right">
+            <el-radio-group v-model="queryParams.rating" @change="fetchData" size="default">
+              <el-radio-button :label="null">全部</el-radio-button>
+              <el-radio-button :label="5">5星</el-radio-button>
+              <el-radio-button :label="4">4星</el-radio-button>
+              <el-radio-button :label="3">3星</el-radio-button>
+              <el-radio-button :label="2">2星及以下</el-radio-button>
+            </el-radio-group>
+            
+            <el-select 
+              v-model="queryParams.hasReply" 
+              placeholder="回复状态" 
+              style="width: 120px; margin-left: 12px;" 
+              clearable 
+              @change="fetchData"
+            >
+              <el-option label="未回复" :value="0" />
+              <el-option label="已回复" :value="1" />
+            </el-select>
+            
+            <el-button type="primary" icon="Refresh" @click="fetchData" style="margin-left: 12px;">刷新</el-button>
+          </div>
+        </div>
+      </template>
 
-    <!-- 筛选和表格 -->
-    <el-card shadow="never" style="margin-top: 20px;">
-      <div class="filter-bar">
-        <el-radio-group v-model="queryParams.rating" @change="fetchData" style="margin-right: 20px;">
-          <el-radio-button :label="null">全部评价</el-radio-button>
-          <el-radio-button :label="5">5星</el-radio-button>
-          <el-radio-button :label="4">4星</el-radio-button>
-          <el-radio-button :label="3">3星</el-radio-button>
-          <el-radio-button :label="2">2星及以下</el-radio-button>
-        </el-radio-group>
-        
-        <el-select v-model="queryParams.hasReply" placeholder="回复状态" style="width: 150px; margin-right: 10px;" clearable @change="fetchData">
-          <el-option label="未回复" :value="0" />
-          <el-option label="已回复" :value="1" />
-        </el-select>
-        
-        <el-button type="primary" icon="Refresh" @click="fetchData">刷新</el-button>
-      </div>
+      <!-- 统计卡片 -->
+      <el-row :gutter="20" class="stats-row">
+        <el-col :span="6">
+          <div class="stat-item">
+            <div class="stat-title">总评价数</div>
+            <div class="stat-value">{{ stats.total }}</div>
+          </div>
+        </el-col>
+        <el-col :span="6">
+          <div class="stat-item">
+            <div class="stat-title">平均评分</div>
+            <div class="stat-value">{{ stats.avgRating.toFixed(1) }} <span class="unit">分</span></div>
+          </div>
+        </el-col>
+        <el-col :span="6">
+          <div class="stat-item">
+            <div class="stat-title">好评率</div>
+            <div class="stat-value">{{ stats.goodRate }} <span class="unit">%</span></div>
+          </div>
+        </el-col>
+        <el-col :span="6">
+          <div class="stat-item">
+            <div class="stat-title">待回复</div>
+            <div class="stat-value warning">{{ stats.pending }} <span class="unit">条</span></div>
+          </div>
+        </el-col>
+      </el-row>
 
-      <el-table :data="tableData" v-loading="loading" style="width: 100%; margin-top: 20px;">
+      <el-table 
+        :data="tableData" 
+        v-loading="loading" 
+        style="width: 100%; margin-top: 20px;"
+        :header-cell-style="{ background: '#f8f9fa', color: '#606266' }"
+      >
         <el-table-column prop="orderNumber" label="订单号" width="180" />
         <el-table-column label="评分" width="150">
           <template #default="{ row }">
@@ -55,12 +72,12 @@
           </template>
         </el-table-column>
         <el-table-column prop="content" label="评价内容" min-width="200" show-overflow-tooltip />
-        <el-table-column label="评价详情" width="120">
+        <el-table-column label="评价详情" width="150">
           <template #default="{ row }">
             <div style="font-size: 12px; color: #909399;">
-              <div>口味: {{ row.tasteRating }}分</div>
-              <div>服务: {{ row.serviceRating }}分</div>
-              <div>速度: {{ row.speedRating }}分</div>
+              <div>口味: {{ row.tasteRating != null ? row.tasteRating + '分' : '未评' }}</div>
+              <div>服务: {{ row.serviceRating != null ? row.serviceRating + '分' : '未评' }}</div>
+              <div>速度: {{ row.speedRating != null ? row.speedRating + '分' : '未评' }}</div>
             </div>
           </template>
         </el-table-column>
@@ -304,13 +321,90 @@ onMounted(() => {
   padding: 20px;
 }
 
-.stats-row {
-  margin-bottom: 20px;
+.main-card {
+  border-radius: 8px;
+  
+  :deep(.el-card__header) {
+    padding: 16px 20px;
+    border-bottom: 1px solid #ebeef5;
+  }
+  
+  :deep(.el-card__body) {
+    padding: 20px;
+  }
 }
 
-.filter-bar {
+.card-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
+  
+  .header-left {
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #303133;
+      position: relative;
+      padding-left: 12px;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 16px;
+        background: var(--primary-color);
+        border-radius: 2px;
+      }
+    }
+  }
+  
+  .header-right {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.stats-row {
+  margin-bottom: 24px;
+  
+  .stat-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s;
+    
+    &:hover {
+      background: #f0f9ff;
+      transform: translateY(-2px);
+    }
+    
+    .stat-title {
+      font-size: 14px;
+      color: #909399;
+      margin-bottom: 8px;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #303133;
+      
+      .unit {
+        font-size: 14px;
+        font-weight: normal;
+        color: #909399;
+        margin-left: 4px;
+      }
+      
+      &.warning {
+        color: #e6a23c;
+      }
+    }
+  }
 }
 
 .pagination-container {
@@ -321,19 +415,22 @@ onMounted(() => {
 
 .review-detail {
   .review-info {
-    padding: 10px;
-    background: #f5f7fa;
-    border-radius: 4px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
     
     .review-content {
-      margin: 10px 0;
+      margin: 12px 0;
       color: #303133;
       line-height: 1.6;
+      font-size: 15px;
     }
     
     .review-meta {
-      font-size: 12px;
+      font-size: 13px;
       color: #909399;
+      display: flex;
+      justify-content: space-between;
     }
   }
 }

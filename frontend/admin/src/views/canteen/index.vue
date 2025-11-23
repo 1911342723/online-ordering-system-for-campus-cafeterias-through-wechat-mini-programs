@@ -1,25 +1,33 @@
 <template>
   <div class="app-container">
-    <!-- Header Actions -->
-    <div class="card-header-action">
-      <div class="left">
-        <el-input 
-          v-model="queryParams.name" 
-          placeholder="搜索食堂名称" 
-          prefix-icon="Search" 
-          style="width: 240px"
-          clearable
-        />
-        <el-button type="primary" @click="fetchData" style="margin-left: 10px;">查询</el-button>
-      </div>
-      <div class="right">
-        <el-button type="success" icon="Plus" @click="handleAdd">新建食堂</el-button>
-      </div>
-    </div>
+    <el-card shadow="never" class="main-card">
+      <template #header>
+        <div class="card-header">
+          <div class="header-left">
+            <div class="page-title">食堂管理</div>
+          </div>
+          <div class="header-right">
+            <el-input 
+              v-model="queryParams.name" 
+              placeholder="搜索食堂名称" 
+              prefix-icon="Search" 
+              style="width: 200px"
+              clearable
+              @keyup.enter="fetchData"
+            />
+            <el-button type="primary" icon="Search" @click="fetchData" style="margin-left: 12px;">查询</el-button>
+            <el-divider direction="vertical" />
+            <el-button type="primary" icon="Plus" class="add-btn" @click="handleAdd">新建食堂</el-button>
+          </div>
+        </div>
+      </template>
 
-    <!-- Table Card -->
-    <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" style="width: 100%">
+      <el-table 
+        :data="tableData" 
+        v-loading="loading" 
+        style="width: 100%"
+        :header-cell-style="{ background: '#f8f9fa', color: '#606266' }"
+      >
         <el-table-column prop="name" label="食堂名称" min-width="150" />
         <el-table-column prop="location" label="位置" min-width="150" />
         <el-table-column prop="description" label="简介" min-width="200" show-overflow-tooltip />
@@ -337,7 +345,63 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .app-container {
-  padding: 0;
+  padding: 20px;
+}
+
+.main-card {
+  border-radius: 8px;
+  
+  :deep(.el-card__header) {
+    padding: 16px 20px;
+    border-bottom: 1px solid #ebeef5;
+  }
+  
+  :deep(.el-card__body) {
+    padding: 20px;
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .header-left {
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #303133;
+      position: relative;
+      padding-left: 12px;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 16px;
+        background: var(--primary-color);
+        border-radius: 2px;
+      }
+    }
+  }
+  
+  .header-right {
+    display: flex;
+    align-items: center;
+    
+    .add-btn {
+      background: linear-gradient(to right, #4f46e5, #6366f1);
+      border: none;
+      
+      &:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+    }
+  }
 }
 
 .canteen-uploader {
@@ -350,7 +414,7 @@ onMounted(() => {
     transition: all 0.2s;
 
     &:hover {
-      border-color: #409eff;
+      border-color: var(--primary-color);
     }
   }
 
@@ -375,26 +439,6 @@ onMounted(() => {
   font-size: 12px;
   color: #909399;
   margin-top: 8px;
-}
-
-.card-header-action {
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
-
-.table-card {
-  border: none;
-  border-radius: 8px;
-  
-  :deep(.el-card__body) {
-    padding: 20px;
-  }
 }
 
 .pagination-container {

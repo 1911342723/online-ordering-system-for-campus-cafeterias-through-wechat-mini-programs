@@ -83,16 +83,39 @@ Page({
       })
 
       if (result && result.records) {
-        const formattedOrders = result.records.map(order => ({
-          ...order,
-          formattedPrice: formatPrice(order.amount),
-          formattedTime: formatTime(order.orderTime),
-          statusText: getOrderStatusText(order.status, order.deliveryType),
-          orderDishes: order.orderDetails ? order.orderDetails.map(detail => ({
-            ...detail,
-            image: getImageUrl(detail.image, DEFAULT_IMAGES.order)
-          })) : []
-        }))
+        // 【关键修复】使用与 loadOrders 完全相同的格式化逻辑
+        const formattedOrders = result.records.map(order => {
+          // 获取第一个菜品信息
+          const firstDish = order.orderDetails && order.orderDetails.length > 0 
+            ? order.orderDetails[0] 
+            : null
+          
+          const deliveryType = order.deliveryType || 1
+          const statusText = getOrderStatusText(order.status, deliveryType)
+          
+          // 格式化菜品名称显示
+          let dishNameText = '订单商品'
+          if (firstDish) {
+            if (order.orderDetails.length > 1) {
+              dishNameText = `${firstDish.name} 等${order.orderDetails.length}件商品`
+            } else {
+              dishNameText = firstDish.name
+            }
+          }
+          
+          return {
+            id: order.id || order.number,
+            shopName: order.canteenName || '第一食堂',
+            status: order.status,
+            deliveryType: deliveryType,
+            statusText: statusText,
+            firstDishName: dishNameText,
+            count: order.sumNum || 1,
+            amount: formatPrice(order.amount),
+            orderTime: formatTime(order.orderTime),
+            image: firstDish ? getImageUrl(firstDish.image, DEFAULT_IMAGES.order) : DEFAULT_IMAGES.order
+          }
+        })
 
         this.setData({
           orders: formattedOrders
@@ -190,13 +213,23 @@ Page({
           const deliveryType = order.deliveryType || 1
           const statusText = getOrderStatusText(order.status, deliveryType)
           
+          // 格式化菜品名称显示
+          let dishNameText = '订单商品'
+          if (firstDish) {
+            if (order.orderDetails.length > 1) {
+              dishNameText = `${firstDish.name} 等${order.orderDetails.length}件商品`
+            } else {
+              dishNameText = firstDish.name
+            }
+          }
+          
           return {
             id: order.id || order.number,
             shopName: order.canteenName || '第一食堂',
             status: order.status,
             deliveryType: deliveryType,
             statusText: statusText,
-            firstDishName: firstDish ? firstDish.name : '订单商品',
+            firstDishName: dishNameText,
             count: order.sumNum || 1,
             amount: formatPrice(order.amount),
             orderTime: formatTime(order.orderTime),

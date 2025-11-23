@@ -166,7 +166,7 @@ const handleCommand = async (command) => {
 <style scoped lang="scss">
 .layout-container {
   height: 100vh;
-  background-color: #f3f4f6;
+  background-color: var(--bg-color);
 }
 
 .el-container {

@@ -134,9 +134,18 @@ public class OrderController {
     @Autowired
     private com.java_project.reggie.service.EmployeeService employeeService;
 
-    /*管理端的订单明细 - 支持商家数据隔离*/
+    @Autowired
+    private com.java_project.reggie.service.UserService userService;
+    
+    @Autowired
+    private com.java_project.reggie.service.MerchantService merchantService;
+    
+    @Autowired
+    private com.java_project.reggie.service.CanteenService canteenService;
+
+    /*管理端的订单明细 - 支持商家数据隔离，返回完整信息*/
     @GetMapping("/page")
-    public R<Page> page2(
+    public R<Page<OrderDto>> page2(
             Integer page,
             Integer pagesize,
             @RequestParam(required = false) Integer status,
@@ -149,11 +158,14 @@ public class OrderController {
             page = 1;
         }
         
-        //构建分页构造器，基于Mybatis-plus的插件
-        Page pageInfo = new Page(page,pagesize);
+        log.info("订单分页查询：page={}, pagesize={}, status={}, number={}, orderType={}", 
+                page, pagesize, status, number, orderType);
+        
+        //构建分页构造器
+        Page<Orders> pageInfo = new Page<>(page, pagesize);
 
         //构造条件构造器
-        LambdaQueryWrapper<Orders> queryWrapper =new LambdaQueryWrapper();
+        LambdaQueryWrapper<Orders> queryWrapper = new LambdaQueryWrapper<>();
         
         // 商家数据隔离：商家只能看到自己的订单
         if (authHelper.isMerchant()) {
@@ -163,7 +175,7 @@ public class OrderController {
                 log.info("商家{}查询订单", merchantId);
             } else {
                 log.warn("商家角色但未找到关联的商家ID");
-                return R.success(new Page()); // 返回空页面
+                return R.success(new Page<>()); // 返回空页面
             }
         }
         // 管理员可以看到所有订单，不添加额外条件
@@ -177,8 +189,70 @@ public class OrderController {
         queryWrapper.orderByDesc(Orders::getOrderTime);
         
         //执行查询
-        orderService.page(pageInfo,queryWrapper);
-        return R.success(pageInfo);
+        orderService.page(pageInfo, queryWrapper);
+        
+        log.info("查询到{}条订单记录", pageInfo.getRecords().size());
+        
+        // 转换为OrderDto并填充关联信息
+        Page<OrderDto> dtoPage = new Page<>();
+        BeanUtils.copyProperties(pageInfo, dtoPage, "records");
+        
+        List<OrderDto> orderDtoList = pageInfo.getRecords().stream().map(order -> {
+            OrderDto orderDto = new OrderDto();
+            BeanUtils.copyProperties(order, orderDto);
+            
+            // 填充用户名
+            if (order.getUserId() != null) {
+                try {
+                    com.java_project.reggie.entity.User user = userService.getById(order.getUserId());
+                    if (user != null) {
+                        orderDto.setUserName(user.getName());
+                    }
+                } catch (Exception e) {
+                    log.warn("获取用户信息失败: userId={}", order.getUserId());
+                }
+            }
+            
+            // 填充商家名
+            if (order.getMerchantId() != null) {
+                try {
+                    com.java_project.reggie.entity.Merchant merchant = merchantService.getById(order.getMerchantId());
+                    if (merchant != null) {
+                        orderDto.setMerchantName(merchant.getName());
+                    }
+                } catch (Exception e) {
+                    log.warn("获取商家信息失败: merchantId={}", order.getMerchantId());
+                }
+            }
+            
+            // 填充食堂名
+            if (order.getCanteenId() != null) {
+                try {
+                    com.java_project.reggie.entity.Canteen canteen = canteenService.getById(order.getCanteenId());
+                    if (canteen != null) {
+                        orderDto.setCanteenName(canteen.getName());
+                    }
+                } catch (Exception e) {
+                    log.warn("获取食堂信息失败: canteenId={}", order.getCanteenId());
+                }
+            }
+            
+            // 查询订单详情
+            LambdaQueryWrapper<OrderDetail> detailWrapper = new LambdaQueryWrapper<>();
+            detailWrapper.eq(OrderDetail::getOrderId, order.getId());
+            List<OrderDetail> orderDetails = orderDtailService.list(detailWrapper);
+            orderDto.setOrderDetails(orderDetails);
+            
+            // 计算总数量
+            int sumNum = orderDetails.stream().mapToInt(OrderDetail::getNumber).sum();
+            orderDto.setSumNum(sumNum);
+            
+            return orderDto;
+        }).collect(Collectors.toList());
+        
+        dtoPage.setRecords(orderDtoList);
+        
+        return R.success(dtoPage);
     }
 
     /*管理端点击派送*/
@@ -192,6 +266,40 @@ public class OrderController {
         } else {
             return R.error("修改失败");
         }
+    }
+
+    /**
+     * 删除订单（管理端/商家端）
+     */
+    @DeleteMapping("/{id}")
+    public R<String> deleteOrder(@PathVariable Long id) {
+        log.info("删除订单: id={}", id);
+        
+        Orders order = orderService.getById(id);
+        if (order == null) {
+            return R.error("订单不存在");
+        }
+        
+        // 只允许删除已完成或已取消的订单
+        if (order.getStatus() != 5 && order.getStatus() != 6) {
+            return R.error("只能删除已完成或已取消的订单");
+        }
+        
+        // 商家权限检查
+        if (authHelper.isMerchant()) {
+            Long merchantId = authHelper.getCurrentMerchantId();
+            if (merchantId != null && !order.getMerchantId().equals(merchantId)) {
+                return R.error("无权删除此订单");
+            }
+        }
+        
+        boolean deleted = orderService.removeById(id);
+        
+        if (deleted) {
+            return R.success("订单删除成功");
+        }
+        
+        return R.error("删除失败");
     }
 
     /**

@@ -1,15 +1,24 @@
 <template>
-  <div class="message-container">
-    <el-row :gutter="20" style="height: 100%;">
-      <!-- 对话列表 -->
-      <el-col :span="8">
-        <el-card shadow="never" class="conversation-list" body-style="padding: 0; height: 100%;">
-          <template #header>
-            <div class="card-header">
-              <span>消息列表</span>
-              <el-badge :value="unreadCount" :hidden="unreadCount === 0" />
-            </div>
-          </template>
+  <div class="app-container">
+    <el-card shadow="never" class="main-card">
+      <template #header>
+        <div class="card-header">
+          <div class="header-left">
+            <div class="page-title">消息中心</div>
+          </div>
+          <div class="header-right">
+            <!-- 可以添加一些消息相关的操作 -->
+          </div>
+        </div>
+      </template>
+
+      <div class="chat-layout">
+        <!-- 对话列表 -->
+        <div class="conversation-sidebar">
+          <div class="sidebar-header">
+            <span class="title">消息列表</span>
+            <el-badge :value="unreadCount" :hidden="unreadCount === 0" type="danger" />
+          </div>
           
           <div class="conversation-scroll">
             <div 
@@ -19,11 +28,11 @@
               :class="{ active: currentConversation?.id === conv.id }"
               @click="selectConversation(conv)"
             >
-              <el-avatar :size="45" class="avatar">
+              <el-avatar :size="48" class="avatar">
                 {{ conv.userName?.charAt(0) || 'U' }}
               </el-avatar>
               <div class="conversation-info">
-                <div class="conversation-header">
+                <div class="conversation-top">
                   <span class="user-name">{{ conv.userName }}</span>
                   <span class="time">{{ formatTime(conv.lastMessageTime) }}</span>
                 </div>
@@ -34,64 +43,73 @@
               <el-badge v-if="conv.unreadCount > 0" :value="conv.unreadCount" class="unread-badge" />
             </div>
             
-            <el-empty v-if="conversations.length === 0" description="暂无消息" />
+            <el-empty v-if="conversations.length === 0" description="暂无消息" :image-size="100" />
           </div>
-        </el-card>
-      </el-col>
+        </div>
 
-      <!-- 聊天区域 -->
-      <el-col :span="16">
-        <el-card shadow="never" class="chat-area" body-style="padding: 0; height: 100%;">
-          <template #header v-if="currentConversation">
+        <!-- 聊天区域 -->
+        <div class="chat-main">
+          <template v-if="currentConversation">
             <div class="chat-header">
-              <el-avatar :size="35">{{ currentConversation.userName?.charAt(0) }}</el-avatar>
-              <span style="margin-left: 10px; font-weight: 500;">{{ currentConversation.userName }}</span>
+              <div class="chat-user">
+                <el-avatar :size="40">{{ currentConversation.userName?.charAt(0) }}</el-avatar>
+                <div class="user-info">
+                  <span class="name">{{ currentConversation.userName }}</span>
+                  <span class="status">在线</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="chat-content">
+              <!-- 消息列表 -->
+              <div ref="messageListRef" class="message-list">
+                <div 
+                  v-for="msg in messages" 
+                  :key="msg.id"
+                  class="message-item"
+                  :class="msg.fromMerchant ? 'message-right' : 'message-left'"
+                >
+                  <el-avatar :size="36" class="message-avatar" v-if="!msg.fromMerchant">
+                    {{ currentConversation.userName?.charAt(0) || 'U' }}
+                  </el-avatar>
+                  <div class="message-content">
+                    <div class="message-bubble">
+                      {{ msg.content }}
+                    </div>
+                    <div class="message-time">{{ formatTime(msg.createTime) }}</div>
+                  </div>
+                  <el-avatar :size="36" class="message-avatar" v-if="msg.fromMerchant">
+                    商
+                  </el-avatar>
+                </div>
+                
+                <el-empty v-if="messages.length === 0" description="暂无消息" :image-size="100" />
+              </div>
+
+              <!-- 输入框 -->
+              <div class="message-input">
+                <el-input
+                  v-model="inputMessage"
+                  type="textarea"
+                  :rows="3"
+                  placeholder="输入消息..."
+                  resize="none"
+                  @keyup.enter.ctrl="handleSend"
+                />
+                <div class="input-actions">
+                  <el-text type="info" size="small">Ctrl + Enter 发送</el-text>
+                  <el-button type="primary" @click="handleSend" :loading="sending">发送</el-button>
+                </div>
+              </div>
             </div>
           </template>
           
-          <div v-if="currentConversation" class="chat-content">
-            <!-- 消息列表 -->
-            <div ref="messageListRef" class="message-list">
-              <div 
-                v-for="msg in messages" 
-                :key="msg.id"
-                class="message-item"
-                :class="msg.fromMerchant ? 'message-right' : 'message-left'"
-              >
-                <el-avatar :size="35" class="message-avatar">
-                  {{ msg.fromMerchant ? '商' : (currentConversation.userName?.charAt(0) || 'U') }}
-                </el-avatar>
-                <div class="message-content">
-                  <div class="message-bubble">
-                    {{ msg.content }}
-                  </div>
-                  <div class="message-time">{{ formatTime(msg.createTime) }}</div>
-                </div>
-              </div>
-              
-              <el-empty v-if="messages.length === 0" description="暂无消息" />
-            </div>
-
-            <!-- 输入框 -->
-            <div class="message-input">
-              <el-input
-                v-model="inputMessage"
-                type="textarea"
-                :rows="3"
-                placeholder="输入消息..."
-                @keyup.enter.ctrl="handleSend"
-              />
-              <div class="input-actions">
-                <el-text type="info" size="small">Ctrl + Enter 发送</el-text>
-                <el-button type="primary" @click="handleSend" :loading="sending">发送</el-button>
-              </div>
-            </div>
+          <div v-else class="empty-chat">
+            <el-empty description="请选择一个对话开始聊天" />
           </div>
-          
-          <el-empty v-else description="请选择一个对话" />
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
+      </div>
+    </el-card>
   </div>
 </template>
 
@@ -284,17 +302,27 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.message-container {
+.app-container {
   padding: 20px;
-  height: calc(100vh - 140px);
+  height: calc(100vh - 84px);
+  box-sizing: border-box;
 }
 
-.conversation-list,
-.chat-area {
+.main-card {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  
+  :deep(.el-card__header) {
+    padding: 16px 20px;
+    border-bottom: 1px solid #ebeef5;
+    flex-shrink: 0;
+  }
   
   :deep(.el-card__body) {
-    height: calc(100% - 60px);
+    padding: 0;
+    flex: 1;
     overflow: hidden;
   }
 }
@@ -303,155 +331,280 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.conversation-scroll {
-  height: 100%;
-  overflow-y: auto;
-}
-
-.conversation-item {
-  display: flex;
-  align-items: center;
-  padding: 15px 20px;
-  cursor: pointer;
-  border-bottom: 1px solid #f0f0f0;
-  transition: background 0.2s;
-  position: relative;
   
-  &:hover {
-    background: #f5f7fa;
-  }
-  
-  &.active {
-    background: #e6f7ff;
-  }
-  
-  .avatar {
-    flex-shrink: 0;
-    background: #4f46e5;
-  }
-  
-  .conversation-info {
-    flex: 1;
-    margin-left: 12px;
-    min-width: 0;
-    
-    .conversation-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 5px;
-      
-      .user-name {
-        font-weight: 500;
-        color: #303133;
-      }
-      
-      .time {
-        font-size: 12px;
-        color: #909399;
-      }
-    }
-    
-    .last-message {
-      font-size: 13px;
-      color: #606266;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
-  
-  .unread-badge {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-}
-
-.chat-header {
-  display: flex;
-  align-items: center;
-}
-
-.chat-content {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.message-list {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.message-item {
-  display: flex;
-  margin-bottom: 20px;
-  
-  &.message-left {
-    .message-bubble {
-      background: #f0f0f0;
+  .header-left {
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
       color: #303133;
+      position: relative;
+      padding-left: 12px;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 16px;
+        background: var(--primary-color);
+        border-radius: 2px;
+      }
     }
   }
+}
+
+.chat-layout {
+  display: flex;
+  height: 100%;
   
-  &.message-right {
-    flex-direction: row-reverse;
-    
-    .message-content {
-      align-items: flex-end;
-    }
-    
-    .message-avatar {
-      margin-left: 10px;
-      margin-right: 0;
-    }
-    
-    .message-bubble {
-      background: #4f46e5;
-      color: #fff;
-    }
-  }
-  
-  .message-avatar {
-    flex-shrink: 0;
-    margin-right: 10px;
-    background: #4f46e5;
-  }
-  
-  .message-content {
+  .conversation-sidebar {
+    width: 320px;
+    border-right: 1px solid #ebeef5;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    max-width: 60%;
+    background: #fff;
+    
+    .sidebar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f5f7fa;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      
+      .title {
+        font-weight: 600;
+        color: #303133;
+      }
+    }
+    
+    .conversation-scroll {
+      flex: 1;
+      overflow-y: auto;
+      
+      &::-webkit-scrollbar {
+        width: 4px;
+      }
+    }
+    
+    .conversation-item {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      
+      &:hover {
+        background-color: #f5f7fa;
+      }
+      
+      &.active {
+        background-color: #f0f9ff;
+        border-right: 3px solid var(--primary-color);
+        
+        .user-name {
+          color: var(--primary-color);
+        }
+      }
+      
+      .avatar {
+        flex-shrink: 0;
+        margin-right: 12px;
+        background: linear-gradient(135deg, #818cf8 0%, #4f46e5 100%);
+        font-size: 18px;
+        font-weight: 600;
+      }
+      
+      .conversation-info {
+        flex: 1;
+        min-width: 0;
+        
+        .conversation-top {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 6px;
+          
+          .user-name {
+            font-weight: 600;
+            color: #303133;
+            font-size: 15px;
+          }
+          
+          .time {
+            font-size: 12px;
+            color: #909399;
+          }
+        }
+        
+        .last-message {
+          font-size: 13px;
+          color: #909399;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+      
+      .unread-badge {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+    }
   }
   
-  .message-bubble {
-    padding: 10px 15px;
-    border-radius: 8px;
-    word-break: break-word;
-    line-height: 1.5;
-  }
-  
-  .message-time {
-    font-size: 12px;
-    color: #909399;
-    margin-top: 5px;
-  }
-}
-
-.message-input {
-  padding: 20px;
-  border-top: 1px solid #e5e7eb;
-  
-  .input-actions {
+  .chat-main {
+    flex: 1;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 10px;
+    flex-direction: column;
+    background-color: #fff;
+    
+    .empty-chat {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f9fafb;
+    }
+    
+    .chat-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #ebeef5;
+      background: #fff;
+      
+      .chat-user {
+        display: flex;
+        align-items: center;
+        
+        .user-info {
+          margin-left: 12px;
+          display: flex;
+          flex-direction: column;
+          
+          .name {
+            font-weight: 600;
+            font-size: 16px;
+            color: #303133;
+          }
+          
+          .status {
+            font-size: 12px;
+            color: #67c23a;
+            margin-top: 2px;
+          }
+        }
+      }
+    }
+    
+    .chat-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      
+      .message-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        background-color: #f9fafb;
+        
+        .message-item {
+          display: flex;
+          margin-bottom: 24px;
+          
+          &.message-left {
+            .message-content {
+              align-items: flex-start;
+              
+              .message-bubble {
+                background: #fff;
+                color: #303133;
+                border-bottom-left-radius: 4px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+              }
+            }
+          }
+          
+          &.message-right {
+            flex-direction: row-reverse;
+            
+            .message-content {
+              align-items: flex-end;
+              
+              .message-bubble {
+                background: var(--primary-color);
+                color: #fff;
+                border-bottom-right-radius: 4px;
+                box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+              }
+            }
+            
+            .message-avatar {
+              margin-left: 12px;
+              margin-right: 0;
+              background-color: var(--primary-color);
+            }
+          }
+          
+          .message-avatar {
+            flex-shrink: 0;
+            margin-right: 12px;
+            margin-top: 4px;
+          }
+          
+          .message-content {
+            display: flex;
+            flex-direction: column;
+            max-width: 70%;
+            
+            .message-bubble {
+              padding: 12px 16px;
+              border-radius: 12px;
+              font-size: 14px;
+              line-height: 1.6;
+              word-break: break-word;
+            }
+            
+            .message-time {
+              font-size: 12px;
+              color: #9ca3af;
+              margin-top: 6px;
+              padding: 0 4px;
+            }
+          }
+        }
+      }
+      
+      .message-input {
+        padding: 20px 24px;
+        border-top: 1px solid #ebeef5;
+        background: #fff;
+        
+        :deep(.el-textarea__inner) {
+          border: none;
+          padding: 0;
+          box-shadow: none;
+          resize: none;
+          background: transparent;
+          
+          &:focus {
+            box-shadow: none;
+          }
+        }
+        
+        .input-actions {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 1px solid #f5f7fa;
+        }
+      }
+    }
   }
 }
 </style>

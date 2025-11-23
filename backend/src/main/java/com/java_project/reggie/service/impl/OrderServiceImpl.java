@@ -178,19 +178,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper,Orders> implements
         
         orders.setId(orderId);
         orders.setOrderTime(LocalDateTime.now());
-        orders.setCheckoutTime(LocalDateTime.now());
+        // 注意：checkout_time在支付成功后才设置，提交订单时不设置
+        // orders.setCheckoutTime(LocalDateTime.now());
         
-        // 检查商家是否开启自动接单
-        Integer initialStatus = 2; // 默认：待接单
-        if (orders.getMerchantId() != null) {
-            MerchantSettings settings = merchantSettingsService.getByMerchantId(orders.getMerchantId());
-            if (settings != null && settings.getAutoAcceptOrder() == 1) {
-                // 自动接单：直接进入制作中
-                initialStatus = 3;
-            }
-        }
-        
-        orders.setStatus(initialStatus); // 2-待接单 或 3-制作中（自动接单）
+        // 订单提交后状态为待付款(1)，支付成功后才变为待接单(2)或制作中(3)
+        orders.setStatus(1); // 1-待付款
         orders.setAmount(totalAmount); // 总金额（含配送费）
         orders.setUserId(userId);
         orders.setNumber(String.valueOf(orderId));
@@ -232,24 +224,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper,Orders> implements
         //清空购物车数据
         shoppingCartService.remove(wrapper);
         
-        // 发送WebSocket通知给商家（仅在非自动接单时发送）
-        if (orders.getMerchantId() != null && initialStatus == 2) {
-            try {
-                Map<String, Object> notificationData = new HashMap<>();
-                notificationData.put("orderId", orderId);
-                notificationData.put("orderNumber", orders.getNumber());
-                notificationData.put("amount", totalAmount);
-                notificationData.put("userName", orders.getConsignee());
-                notificationData.put("orderType", orders.getOrderType());
-                notificationData.put("scheduledTime", orders.getScheduledTime());
-                
-                OrderWebSocketHandler.sendNewOrderNotification(orders.getMerchantId(), notificationData);
-                log.info("已向商家{}发送新订单WebSocket通知", orders.getMerchantId());
-            } catch (Exception e) {
-                log.error("发送WebSocket通知失败", e);
-                // 不影响订单创建流程
-            }
-        }
+        // 订单提交成功，状态为待付款，WebSocket通知在支付成功后发送
+        log.info("订单{}创建成功，状态：待付款，总金额：{}元", orderId, totalAmount);
+        log.info("等待用户支付...");
     }
 
 

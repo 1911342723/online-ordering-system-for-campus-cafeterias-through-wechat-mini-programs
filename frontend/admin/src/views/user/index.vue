@@ -1,34 +1,42 @@
 <template>
   <div class="app-container">
-    <!-- Header Actions -->
-    <div class="card-header-action">
-      <div class="left">
-        <el-input 
-          v-model="queryParams.keyword" 
-          placeholder="搜索用户名/手机号" 
-          prefix-icon="Search" 
-          style="width: 240px"
-          clearable
-        />
-        <el-select 
-          v-model="queryParams.status" 
-          placeholder="账号状态" 
-          style="width: 150px; margin-left: 10px;"
-          clearable
-        >
-          <el-option label="正常" :value="1" />
-          <el-option label="已冻结" :value="0" />
-        </el-select>
-        <el-button type="primary" @click="fetchData" style="margin-left: 10px;">查询</el-button>
-      </div>
-      <div class="right">
-        <el-button icon="Refresh" @click="fetchData">刷新</el-button>
-      </div>
-    </div>
+    <el-card shadow="never" class="main-card">
+      <template #header>
+        <div class="card-header">
+          <div class="header-left">
+            <div class="page-title">用户管理</div>
+          </div>
+          <div class="header-right">
+            <el-input 
+              v-model="queryParams.keyword" 
+              placeholder="搜索用户名/手机号" 
+              prefix-icon="Search" 
+              style="width: 200px"
+              clearable
+              @keyup.enter="fetchData"
+            />
+            <el-select 
+              v-model="queryParams.status" 
+              placeholder="账号状态" 
+              style="width: 120px; margin-left: 12px;"
+              clearable
+              @change="fetchData"
+            >
+              <el-option label="正常" :value="1" />
+              <el-option label="已冻结" :value="0" />
+            </el-select>
+            <el-button type="primary" icon="Search" @click="fetchData" style="margin-left: 12px;">查询</el-button>
+            <el-button icon="Refresh" @click="fetchData" circle />
+          </div>
+        </div>
+      </template>
 
-    <!-- Table Card -->
-    <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" style="width: 100%">
+      <el-table 
+        :data="tableData" 
+        v-loading="loading" 
+        style="width: 100%"
+        :header-cell-style="{ background: '#f8f9fa', color: '#606266' }"
+      >
         <el-table-column prop="id" label="用户ID" width="80" />
         <el-table-column prop="openid" label="OpenID" width="150" show-overflow-tooltip />
         <el-table-column prop="nickname" label="昵称" min-width="120" />
@@ -234,32 +242,59 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .app-container {
-  padding: 0;
-}
-
-.card-header-action {
-  background: #fff;
   padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-.table-card {
-  border: none;
+.main-card {
   border-radius: 8px;
+  
+  :deep(.el-card__header) {
+    padding: 16px 20px;
+    border-bottom: 1px solid #ebeef5;
+  }
   
   :deep(.el-card__body) {
     padding: 20px;
   }
 }
 
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .header-left {
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #303133;
+      position: relative;
+      padding-left: 12px;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 16px;
+        background: var(--primary-color);
+        border-radius: 2px;
+      }
+    }
+  }
+  
+  .header-right {
+    display: flex;
+    align-items: center;
+  }
+}
+
 .balance-text {
   color: #f56c6c;
   font-weight: bold;
+  font-family: DIN, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .pagination-container {

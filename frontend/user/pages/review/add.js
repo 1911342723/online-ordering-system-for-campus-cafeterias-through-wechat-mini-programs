@@ -7,6 +7,9 @@ Page({
     orderId: '',
     merchantId: '',
     rating: 5,
+    tasteRating: 5,    // 口味评分
+    serviceRating: 5,  // 服务评分
+    speedRating: 5,    // 速度评分
     content: '',
     ratingText: {
       1: '非常差',
@@ -27,8 +30,9 @@ Page({
   },
 
   setRating(e) {
-    const value = e.currentTarget.dataset.value
-    this.setData({ rating: value })
+    const value = parseInt(e.currentTarget.dataset.value)
+    const type = e.currentTarget.dataset.type || 'rating'
+    this.setData({ [type]: value })
   },
 
   onInput(e) {
@@ -51,6 +55,9 @@ Page({
           orderId: this.data.orderId,
           merchantId: this.data.merchantId,
           rating: this.data.rating,
+          tasteRating: this.data.tasteRating,
+          serviceRating: this.data.serviceRating,
+          speedRating: this.data.speedRating,
           content: this.data.content
         }
       })

@@ -1,46 +1,108 @@
 <template>
   <div class="app-container">
-    <!-- Header Actions -->
-    <div class="card-header-action">
-      <div class="left">
-        <el-radio-group v-model="queryParams.orderType" @change="fetchData" style="margin-right: 10px;">
-          <el-radio-button :label="null">全部</el-radio-button>
-          <el-radio-button :label="1">即时订单</el-radio-button>
-          <el-radio-button :label="2">预订单</el-radio-button>
-        </el-radio-group>
-        <el-input 
-          v-model="queryParams.number" 
-          placeholder="搜索订单号" 
-          prefix-icon="Search" 
-          style="width: 200px"
-          clearable
-        />
-        <el-select 
-          v-model="queryParams.status" 
-          placeholder="订单状态" 
-          style="width: 150px; margin-left: 10px;"
-          clearable
-        >
-          <el-option label="待付款" :value="1" />
-          <el-option label="待接单" :value="2" />
-          <el-option label="制作中" :value="3" />
-          <el-option label="待取餐" :value="4" />
-          <el-option label="已完成" :value="5" />
-          <el-option label="已取消" :value="6" />
-        </el-select>
-        <el-button type="primary" @click="fetchData" style="margin-left: 10px;">查询</el-button>
-      </div>
-      <div class="right">
-        <el-badge :value="pendingCount" :hidden="pendingCount === 0" type="danger">
-          <el-button icon="Bell" @click="showPendingOrders">待处理</el-button>
-        </el-badge>
-        <el-button icon="Refresh" @click="fetchData" style="margin-left: 10px;">刷新</el-button>
-      </div>
-    </div>
+    <el-card shadow="never" class="main-card">
+      <template #header>
+        <div class="card-header">
+          <div class="header-left">
+            <div class="page-title">订单管理</div>
+          </div>
+          <div class="header-right">
+            <el-radio-group v-model="queryParams.orderType" @change="fetchData" size="default">
+              <el-radio-button :label="null">全部</el-radio-button>
+              <el-radio-button :label="1">即时</el-radio-button>
+              <el-radio-button :label="2">预订</el-radio-button>
+            </el-radio-group>
+            
+            <el-select 
+              v-model="queryParams.status" 
+              placeholder="订单状态" 
+              style="width: 120px; margin-left: 12px;"
+              clearable
+              @change="fetchData"
+            >
+              <el-option label="待付款" :value="1" />
+              <el-option label="待接单" :value="2" />
+              <el-option label="制作中" :value="3" />
+              <el-option label="待取餐" :value="4" />
+              <el-option label="已完成" :value="5" />
+              <el-option label="已取消" :value="6" />
+            </el-select>
 
-    <!-- Table Card -->
-    <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" style="width: 100%">
+            <el-input 
+              v-model="queryParams.number" 
+              placeholder="搜索订单号" 
+              prefix-icon="Search" 
+              style="width: 180px; margin-left: 12px;"
+              clearable
+              @keyup.enter="handleSearch"
+            />
+            
+            <el-button type="primary" icon="Search" @click="handleSearch" style="margin-left: 12px;">查询</el-button>
+            <el-button icon="Refresh" @click="fetchData" circle />
+            
+            <el-divider direction="vertical" />
+            
+            <el-badge :value="pendingCount" :hidden="pendingCount === 0" type="danger">
+              <el-button type="danger" plain icon="Bell" @click="showPendingOrders">待处理</el-button>
+            </el-badge>
+          </div>
+        </div>
+      </template>
+
+      <!-- 批量操作工具栏 -->
+      <transition name="el-zoom-in-top">
+        <div v-if="selectedRows.length > 0" class="batch-toolbar">
+          <div class="batch-left">
+            <el-icon class="batch-icon"><List /></el-icon>
+            <span class="selected-info">已选择 <span class="num">{{ selectedRows.length }}</span> 个订单</span>
+            <el-divider direction="vertical" />
+            <el-button link type="primary" @click="clearSelection">取消选择</el-button>
+          </div>
+          <div class="batch-right">
+            <el-button 
+              v-if="selectedRows.every(row => row.status === 2)" 
+              type="success" 
+              plain
+              size="small" 
+              @click="handleBatchAccept"
+            >
+              <el-icon><Select /></el-icon> 批量接单
+            </el-button>
+            <el-popconfirm
+              v-if="selectedRows.every(row => row.status === 2)"
+              title="确认批量拒绝这些订单吗？"
+              @confirm="handleBatchReject"
+            >
+              <template #reference>
+                <el-button type="danger" plain size="small" style="margin-left: 8px;">
+                  <el-icon><Close /></el-icon> 批量拒单
+                </el-button>
+              </template>
+            </el-popconfirm>
+            <el-popconfirm
+              v-if="selectedRows.every(row => row.status === 5 || row.status === 6)"
+              title="确认批量删除这些订单吗？"
+              @confirm="handleBatchDeleteOrders"
+            >
+              <template #reference>
+                <el-button type="danger" plain size="small" style="margin-left: 8px;">
+                  <el-icon><Delete /></el-icon> 批量删除
+                </el-button>
+              </template>
+            </el-popconfirm>
+          </div>
+        </div>
+      </transition>
+
+      <el-table 
+        ref="tableRef"
+        :data="tableData" 
+        v-loading="loading" 
+        style="width: 100%"
+        :header-cell-style="{ background: '#f8f9fa', color: '#606266' }"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55" :selectable="row => row.status === 2 || row.status === 5 || row.status === 6" />
         <el-table-column prop="number" label="订单号" width="180">
           <template #default="{ row }">
             <div>
@@ -112,11 +174,20 @@
             </el-button>
             <el-popconfirm
               v-if="row.status === 2"
-              title="确认取消该订单吗？"
+              title="确认拒绝该订单吗？"
               @confirm="handleCancelOrder(row)"
             >
               <template #reference>
-                <el-button link type="danger">取消</el-button>
+                <el-button link type="warning">拒单</el-button>
+              </template>
+            </el-popconfirm>
+            <el-popconfirm
+              v-if="row.status === 6 || row.status === 5"
+              title="确认删除该订单吗？删除后无法恢复"
+              @confirm="handleDeleteOrder(row)"
+            >
+              <template #reference>
+                <el-button link type="danger">删除</el-button>
               </template>
             </el-popconfirm>
           </template>
@@ -223,6 +294,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { getOrderPage, updateOrderStatus, getOrderById } from '@/api/order'
 import { getImageUrl } from '@/api/common'
+import request from '@/api/request'
 import { ElMessage } from 'element-plus'
 
 const loading = ref(false)
@@ -231,6 +303,10 @@ const total = ref(0)
 const detailVisible = ref(false)
 const orderDetail = ref(null)
 const pendingCount = ref(0)
+const tableRef = ref(null)
+
+// 批量操作相关
+const selectedRows = ref([])
 
 const queryParams = reactive({
   page: 1,
@@ -272,13 +348,18 @@ const fetchData = async () => {
   try {
     const params = {
       page: queryParams.page,
-      pagesize: queryParams.pageSize,
-      number: queryParams.number,
-      status: queryParams.status
+      pagesize: queryParams.pageSize, // 后端期望 pagesize（小写）
+      number: queryParams.number || undefined,
+      status: queryParams.status || undefined,
+      orderType: queryParams.orderType !== null ? queryParams.orderType : undefined
     }
-    if (queryParams.orderType !== null) {
-      params.orderType = queryParams.orderType
-    }
+    
+    // 移除 undefined 的参数
+    Object.keys(params).forEach(key => {
+      if (params[key] === undefined) {
+        delete params[key]
+      }
+    })
     
     const res = await getOrderPage(params)
     if (res.code === 1) {
@@ -388,19 +469,198 @@ const handleCompleteOrder = async (row) => {
   }
 }
 
-// 取消订单
+// 拒单/取消订单
 const handleCancelOrder = async (row) => {
   try {
     const res = await updateOrderStatus({ id: row.id, status: 6 })
     if (res.code === 1) {
       ElMessage.success('订单已取消')
       fetchData()
+      fetchPendingCount()
     } else {
       ElMessage.error(res.msg || '取消失败')
     }
   } catch (err) {
     console.error(err)
     ElMessage.error('取消失败')
+  }
+}
+
+// 删除订单
+const handleDeleteOrder = async (row) => {
+  try {
+    loading.value = true
+    // 调用后端删除接口
+    const res = await request({
+      url: `/order/${row.id}`,
+      method: 'delete'
+    })
+    
+    if (res.code === 1) {
+      ElMessage.success('订单删除成功')
+      await fetchData()
+    } else {
+      ElMessage.error(res.msg || '删除失败')
+    }
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('删除失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 查询按钮
+const handleSearch = () => {
+  queryParams.page = 1
+  fetchData()
+}
+
+// 重置按钮
+const handleReset = () => {
+  queryParams.number = ''
+  queryParams.status = null
+  queryParams.orderType = null
+  queryParams.page = 1
+  fetchData()
+}
+
+// ========== 批量操作方法 ==========
+
+// 处理表格选择变化
+const handleSelectionChange = (selection) => {
+  selectedRows.value = selection
+}
+
+// 清空选择
+const clearSelection = () => {
+  tableRef.value?.clearSelection()
+  selectedRows.value = []
+}
+
+// 批量接单
+const handleBatchAccept = async () => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要接单的订单')
+    return
+  }
+  
+  try {
+    loading.value = true
+    let successCount = 0
+    let failCount = 0
+    
+    // 逐个处理订单（可优化为批量API）
+    for (const row of selectedRows.value) {
+      try {
+        const res = await updateOrderStatus({ id: row.id, status: 3 })
+        if (res.code === 1) {
+          successCount++
+        } else {
+          failCount++
+        }
+      } catch {
+        failCount++
+      }
+    }
+    
+    if (successCount > 0) {
+      ElMessage.success(`成功接单 ${successCount} 个订单${failCount > 0 ? `，失败 ${failCount} 个` : ''}`)
+      clearSelection()
+      await fetchData()
+      await fetchPendingCount()
+    } else {
+      ElMessage.error('批量接单失败')
+    }
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('批量接单失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 批量拒单
+const handleBatchReject = async () => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要拒绝的订单')
+    return
+  }
+  
+  try {
+    loading.value = true
+    let successCount = 0
+    let failCount = 0
+    
+    for (const row of selectedRows.value) {
+      try {
+        const res = await updateOrderStatus({ id: row.id, status: 6 })
+        if (res.code === 1) {
+          successCount++
+        } else {
+          failCount++
+        }
+      } catch {
+        failCount++
+      }
+    }
+    
+    if (successCount > 0) {
+      ElMessage.success(`成功拒单 ${successCount} 个订单${failCount > 0 ? `，失败 ${failCount} 个` : ''}`)
+      clearSelection()
+      await fetchData()
+      await fetchPendingCount()
+    } else {
+      ElMessage.error('批量拒单失败')
+    }
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('批量拒单失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 批量删除订单
+const handleBatchDeleteOrders = async () => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要删除的订单')
+    return
+  }
+  
+  try {
+    loading.value = true
+    let successCount = 0
+    let failCount = 0
+    
+    for (const row of selectedRows.value) {
+      try {
+        const res = await request({
+          url: `/order/${row.id}`,
+          method: 'delete'
+        })
+        if (res.code === 1) {
+          successCount++
+        } else {
+          failCount++
+        }
+      } catch {
+        failCount++
+      }
+    }
+    
+    if (successCount > 0) {
+      ElMessage.success(`成功删除 ${successCount} 个订单${failCount > 0 ? `，失败 ${failCount} 个` : ''}`)
+      clearSelection()
+      await fetchData()
+    } else {
+      ElMessage.error('批量删除失败')
+    }
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('批量删除失败')
+  } finally {
+    loading.value = false
   }
 }
 
@@ -417,32 +677,98 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .app-container {
-  padding: 0;
-}
-
-.card-header-action {
-  background: #fff;
   padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-.table-card {
-  border: none;
+.main-card {
   border-radius: 8px;
+  
+  :deep(.el-card__header) {
+    padding: 16px 20px;
+    border-bottom: 1px solid #ebeef5;
+  }
   
   :deep(.el-card__body) {
     padding: 20px;
   }
 }
 
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .header-left {
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #303133;
+      position: relative;
+      padding-left: 12px;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 16px;
+        background: var(--primary-color);
+        border-radius: 2px;
+      }
+    }
+  }
+  
+  .header-right {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.batch-toolbar {
+  margin-bottom: 16px;
+  padding: 12px 20px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .batch-left {
+    display: flex;
+    align-items: center;
+    color: #606266;
+    
+    .batch-icon {
+      font-size: 18px;
+      color: var(--primary-color);
+      margin-right: 8px;
+    }
+    
+    .selected-info {
+      font-size: 14px;
+      
+      .num {
+        color: var(--primary-color);
+        font-weight: bold;
+        font-size: 16px;
+        margin: 0 4px;
+      }
+    }
+  }
+  
+  .batch-right {
+    display: flex;
+    align-items: center;
+  }
+}
+
 .price-text {
   color: #f56c6c;
   font-weight: bold;
+  font-family: DIN, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .pagination-container {
@@ -464,6 +790,8 @@ onMounted(() => {
       font-size: 16px;
       color: #303133;
       font-weight: 600;
+      border-left: 4px solid var(--primary-color);
+      padding-left: 10px;
     }
   }
 

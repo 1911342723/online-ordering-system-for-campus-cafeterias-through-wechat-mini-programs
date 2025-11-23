@@ -1,20 +1,78 @@
 <template>
   <div class="app-container">
-    <div class="card-header-action">
-      <div class="left">
-        <el-input v-model="queryParams.name" placeholder="搜索菜品名称" prefix-icon="Search" style="width: 240px" clearable />
-        <el-select v-model="queryParams.categoryId" placeholder="菜品分类" style="width: 150px; margin-left: 10px;" clearable>
-          <el-option v-for="cat in categoryList" :key="cat.id" :label="cat.name" :value="cat.id" />
-        </el-select>
-        <el-button type="primary" @click="fetchData" style="margin-left: 10px;">查询</el-button>
-      </div>
-      <div class="right">
-        <el-button type="success" icon="Plus" @click="handleAdd">新建菜品</el-button>
-      </div>
-    </div>
+    <el-card shadow="never" class="main-card">
+      <template #header>
+        <div class="card-header">
+          <div class="header-left">
+            <div class="page-title">菜品管理</div>
+          </div>
+          <div class="header-right">
+            <el-input 
+              v-model="queryParams.name" 
+              placeholder="搜索菜品名称" 
+              prefix-icon="Search" 
+              style="width: 200px" 
+              clearable 
+              @keyup.enter="handleSearch" 
+            />
+            <el-select 
+              v-model="queryParams.categoryId" 
+              placeholder="全部分类" 
+              style="width: 140px; margin-left: 12px;" 
+              clearable
+              @change="handleSearch"
+            >
+              <el-option v-for="cat in categoryList" :key="cat.id" :label="cat.name" :value="cat.id" />
+            </el-select>
+            <el-button type="primary" icon="Search" @click="handleSearch" style="margin-left: 12px;">查询</el-button>
+            <el-button icon="Refresh" @click="handleReset">重置</el-button>
+            <el-divider direction="vertical" />
+            <el-button type="primary" icon="Plus" class="add-btn" @click="handleAdd">新建菜品</el-button>
+          </div>
+        </div>
+      </template>
 
-    <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" style="width: 100%">
+      <!-- 批量操作工具栏 -->
+      <transition name="el-zoom-in-top">
+        <div v-if="selectedRows.length > 0" class="batch-toolbar">
+          <div class="batch-left">
+            <el-icon class="batch-icon"><List /></el-icon>
+            <span class="selected-info">已选择 <span class="num">{{ selectedRows.length }}</span> 项</span>
+            <el-divider direction="vertical" />
+            <el-button link type="primary" @click="clearSelection">取消选择</el-button>
+          </div>
+          <div class="batch-right">
+            <el-button-group>
+              <el-button type="success" plain size="small" @click="handleBatchStatus(1)">
+                <el-icon><Top /></el-icon> 批量上架
+              </el-button>
+              <el-button type="warning" plain size="small" @click="handleBatchStatus(0)">
+                <el-icon><Bottom /></el-icon> 批量下架
+              </el-button>
+            </el-button-group>
+            <el-popconfirm
+              title="确认删除选中的菜品吗？"
+              @confirm="handleBatchDelete"
+            >
+              <template #reference>
+                <el-button type="danger" plain size="small" style="margin-left: 12px;">
+                  <el-icon><Delete /></el-icon> 批量删除
+                </el-button>
+              </template>
+            </el-popconfirm>
+          </div>
+        </div>
+      </transition>
+
+      <el-table 
+        ref="tableRef"
+        :data="tableData" 
+        v-loading="loading" 
+        style="width: 100%"
+        :header-cell-style="{ background: '#f8f9fa', color: '#606266' }"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="image" label="图片" width="100">
           <template #default="{ row }">
             <el-image 
@@ -170,8 +228,12 @@ const categoryList = ref([])
 const dialogVisible = ref(false)
 const submitLoading = ref(false)
 const formRef = ref(null)
+const tableRef = ref(null)
 const isEdit = ref(false)
 const currentMerchantId = ref(null)
+
+// 批量操作相关
+const selectedRows = ref([])
 
 // 上传地址
 const uploadUrl = import.meta.env.VITE_API_BASE_URL ? 
@@ -327,6 +389,88 @@ const beforeUpload = (file) => {
   return true
 }
 
+// 查询按钮
+const handleSearch = () => {
+  queryParams.page = 1
+  fetchData()
+}
+
+// 重置按钮
+const handleReset = () => {
+  queryParams.name = ''
+  queryParams.categoryId = null
+  queryParams.page = 1
+  fetchData()
+}
+
+// ========== 批量操作方法 ==========
+
+// 处理表格选择变化
+const handleSelectionChange = (selection) => {
+  selectedRows.value = selection
+}
+
+// 清空选择
+const clearSelection = () => {
+  tableRef.value?.clearSelection()
+  selectedRows.value = []
+}
+
+// 批量修改状态（上架/下架）
+const handleBatchStatus = async (status) => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要操作的菜品')
+    return
+  }
+  
+  const ids = selectedRows.value.map(row => row.id)
+  const statusText = status === 1 ? '上架' : '下架'
+  
+  try {
+    loading.value = true
+    const res = await changeDishStatus(status, ids)
+    if (res.code === 1) {
+      ElMessage.success(`批量${statusText}成功`)
+      clearSelection()
+      await fetchData()
+    } else {
+      ElMessage.error(res.msg || `批量${statusText}失败`)
+    }
+  } catch (err) {
+    console.error(err)
+    ElMessage.error(`批量${statusText}失败`)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 批量删除
+const handleBatchDelete = async () => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要删除的菜品')
+    return
+  }
+  
+  const ids = selectedRows.value.map(row => row.id)
+  
+  try {
+    loading.value = true
+    const res = await deleteDish(ids)
+    if (res.code === 1) {
+      ElMessage.success(`成功删除 ${ids.length} 个菜品`)
+      clearSelection()
+      await fetchData()
+    } else {
+      ElMessage.error(res.msg || '批量删除失败')
+    }
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('批量删除失败')
+  } finally {
+    loading.value = false
+  }
+}
+
 // 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return
@@ -406,32 +550,103 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .app-container {
-  padding: 0;
-}
-
-.card-header-action {
-  background: #fff;
   padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-.table-card {
-  border: none;
+.main-card {
   border-radius: 8px;
+  
+  :deep(.el-card__header) {
+    padding: 16px 20px;
+    border-bottom: 1px solid #ebeef5;
+  }
   
   :deep(.el-card__body) {
     padding: 20px;
   }
 }
 
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .header-left {
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #303133;
+      position: relative;
+      padding-left: 12px;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 16px;
+        background: var(--primary-color);
+        border-radius: 2px;
+      }
+    }
+  }
+  
+  .header-right {
+    display: flex;
+    align-items: center;
+    
+    .add-btn {
+      background: linear-gradient(to right, #4f46e5, #6366f1);
+      border: none;
+      
+      &:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+    }
+  }
+}
+
+.batch-toolbar {
+  margin-bottom: 16px;
+  padding: 12px 20px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .batch-left {
+    display: flex;
+    align-items: center;
+    color: #606266;
+    
+    .batch-icon {
+      font-size: 18px;
+      color: var(--primary-color);
+      margin-right: 8px;
+    }
+    
+    .selected-info {
+      font-size: 14px;
+      
+      .num {
+        color: var(--primary-color);
+        font-weight: bold;
+        font-size: 16px;
+        margin: 0 4px;
+      }
+    }
+  }
+}
+
 .price-text {
   color: #f56c6c;
   font-weight: bold;
+  font-family: DIN, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .image-slot {
@@ -461,7 +676,7 @@ onMounted(() => {
     transition: all 0.2s;
 
     &:hover {
-      border-color: #409eff;
+      border-color: var(--primary-color);
     }
   }
 

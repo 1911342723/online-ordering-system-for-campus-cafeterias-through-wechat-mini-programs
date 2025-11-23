@@ -1,25 +1,69 @@
 <template>
   <div class="app-container">
-    <!-- Header Actions -->
-    <div class="card-header-action">
-      <div class="left">
-        <el-input 
-          v-model="queryParams.title" 
-          placeholder="搜索公告标题" 
-          prefix-icon="Search" 
-          style="width: 240px"
-          clearable
-        />
-        <el-button type="primary" @click="fetchData" style="margin-left: 10px;">查询</el-button>
-      </div>
-      <div class="right">
-        <el-button type="success" icon="Plus" @click="handleAdd">发布公告</el-button>
-      </div>
-    </div>
+    <el-card shadow="never" class="main-card">
+      <template #header>
+        <div class="card-header">
+          <div class="header-left">
+            <div class="page-title">公告管理</div>
+          </div>
+          <div class="header-right">
+            <el-input 
+              v-model="queryParams.title" 
+              placeholder="搜索公告标题" 
+              prefix-icon="Search" 
+              style="width: 200px"
+              clearable
+              @keyup.enter="handleSearch"
+            />
+            <el-button type="primary" icon="Search" @click="handleSearch" style="margin-left: 12px;">查询</el-button>
+            <el-button icon="Refresh" @click="handleReset">重置</el-button>
+            <el-divider direction="vertical" />
+            <el-button type="primary" icon="Plus" class="add-btn" @click="handleAdd">发布公告</el-button>
+          </div>
+        </div>
+      </template>
 
-    <!-- Table Card -->
-    <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" style="width: 100%">
+      <!-- 批量操作工具栏 -->
+      <transition name="el-zoom-in-top">
+        <div v-if="selectedRows.length > 0" class="batch-toolbar">
+          <div class="batch-left">
+            <el-icon class="batch-icon"><List /></el-icon>
+            <span class="selected-info">已选择 <span class="num">{{ selectedRows.length }}</span> 个公告</span>
+            <el-divider direction="vertical" />
+            <el-button link type="primary" @click="clearSelection">取消选择</el-button>
+          </div>
+          <div class="batch-right">
+            <el-button-group>
+              <el-button type="success" plain size="small" @click="handleBatchStatus(1)">
+                <el-icon><CircleCheck /></el-icon> 批量启用
+              </el-button>
+              <el-button type="warning" plain size="small" @click="handleBatchStatus(0)">
+                <el-icon><CircleClose /></el-icon> 批量停用
+              </el-button>
+            </el-button-group>
+            <el-popconfirm
+              title="确认删除选中的公告吗？"
+              @confirm="handleBatchDelete"
+            >
+              <template #reference>
+                <el-button type="danger" plain size="small" style="margin-left: 12px;">
+                  <el-icon><Delete /></el-icon> 批量删除
+                </el-button>
+              </template>
+            </el-popconfirm>
+          </div>
+        </div>
+      </transition>
+
+      <el-table 
+        ref="tableRef"
+        :data="tableData" 
+        v-loading="loading" 
+        style="width: 100%"
+        :header-cell-style="{ background: '#f8f9fa', color: '#606266' }"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="title" label="公告标题" min-width="200" />
         <el-table-column prop="content" label="公告内容" min-width="300" show-overflow-tooltip />
         <el-table-column prop="sort" label="优先级" width="100" align="center">
@@ -178,6 +222,8 @@ import { getMerchantByEmployeeId } from '@/api/merchant'
 import { ElMessage } from 'element-plus'
 
 const loading = ref(false)
+const tableRef = ref(null)
+const selectedRows = ref([])
 const tableData = ref([])
 const total = ref(0)
 const dialogVisible = ref(false)
@@ -361,6 +407,114 @@ const resetForm = () => {
   formRef.value?.clearValidate()
 }
 
+// 查询按钮
+const handleSearch = () => {
+  queryParams.page = 1
+  fetchData()
+}
+
+// 重置按钮
+const handleReset = () => {
+  queryParams.title = ''
+  queryParams.page = 1
+  fetchData()
+}
+
+// ========== 批量操作方法 ==========
+
+// 处理表格选择变化
+const handleSelectionChange = (selection) => {
+  selectedRows.value = selection
+}
+
+// 清空选择
+const clearSelection = () => {
+  tableRef.value?.clearSelection()
+  selectedRows.value = []
+}
+
+// 批量修改状态
+const handleBatchStatus = async (status) => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要操作的公告')
+    return
+  }
+  
+  const statusText = status === 1 ? '启用' : '停用'
+  
+  try {
+    loading.value = true
+    let successCount = 0
+    let failCount = 0
+    
+    for (const row of selectedRows.value) {
+      try {
+        const res = await updateAnnouncementStatus(row.id, status)
+        if (res.code === 1) {
+          successCount++
+        } else {
+          failCount++
+        }
+      } catch {
+        failCount++
+      }
+    }
+    
+    if (successCount > 0) {
+      ElMessage.success(`成功${statusText} ${successCount} 个公告${failCount > 0 ? `，失败 ${failCount} 个` : ''}`)
+      clearSelection()
+      await fetchData()
+    } else {
+      ElMessage.error(`批量${statusText}失败`)
+    }
+  } catch (err) {
+    console.error(err)
+    ElMessage.error(`批量${statusText}失败`)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 批量删除
+const handleBatchDelete = async () => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要删除的公告')
+    return
+  }
+  
+  try {
+    loading.value = true
+    let successCount = 0
+    let failCount = 0
+    
+    for (const row of selectedRows.value) {
+      try {
+        const res = await deleteAnnouncement(row.id)
+        if (res.code === 1) {
+          successCount++
+        } else {
+          failCount++
+        }
+      } catch {
+        failCount++
+      }
+    }
+    
+    if (successCount > 0) {
+      ElMessage.success(`成功删除 ${successCount} 个公告${failCount > 0 ? `，失败 ${failCount} 个` : ''}`)
+      clearSelection()
+      await fetchData()
+    } else {
+      ElMessage.error('批量删除失败')
+    }
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('批量删除失败')
+  } finally {
+    loading.value = false
+  }
+}
+
 onMounted(async () => {
   await fetchMerchantInfo()
   fetchData()
@@ -369,26 +523,96 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .app-container {
-  padding: 0;
-}
-
-.card-header-action {
-  background: #fff;
   padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-.table-card {
-  border: none;
+.main-card {
   border-radius: 8px;
+  
+  :deep(.el-card__header) {
+    padding: 16px 20px;
+    border-bottom: 1px solid #ebeef5;
+  }
   
   :deep(.el-card__body) {
     padding: 20px;
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .header-left {
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #303133;
+      position: relative;
+      padding-left: 12px;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 16px;
+        background: var(--primary-color);
+        border-radius: 2px;
+      }
+    }
+  }
+  
+  .header-right {
+    display: flex;
+    align-items: center;
+    
+    .add-btn {
+      background: linear-gradient(to right, #4f46e5, #6366f1);
+      border: none;
+      
+      &:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+    }
+  }
+}
+
+.batch-toolbar {
+  margin-bottom: 16px;
+  padding: 12px 20px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .batch-left {
+    display: flex;
+    align-items: center;
+    color: #606266;
+    
+    .batch-icon {
+      font-size: 18px;
+      color: var(--primary-color);
+      margin-right: 8px;
+    }
+    
+    .selected-info {
+      font-size: 14px;
+      
+      .num {
+        color: var(--primary-color);
+        font-weight: bold;
+        font-size: 16px;
+        margin: 0 4px;
+      }
+    }
   }
 }
 

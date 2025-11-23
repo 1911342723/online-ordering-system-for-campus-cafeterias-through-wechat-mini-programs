@@ -19,7 +19,7 @@
           <view class="order-items">
             <image src="{{item.image || defaultOrderImg}}" class="order-img" lazy-load></image>
             <view class="item-desc">
-              <text class="item-name">{{item.firstDishName}} 等{{item.count}}件商品</text>
+              <text class="item-name">{{item.firstDishName}}</text>
               <text class="order-time">⏰ {{item.orderTime}}</text>
             </view>
           </view>

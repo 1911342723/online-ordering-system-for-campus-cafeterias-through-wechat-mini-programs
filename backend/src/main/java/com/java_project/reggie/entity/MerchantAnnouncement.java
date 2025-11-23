@@ -72,6 +72,18 @@ public class MerchantAnnouncement implements Serializable {
     private LocalDateTime updateTime;
     
     /**
+     * 创建人
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private Long createUser;
+    
+    /**
+     * 更新人
+     */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Long updateUser;
+    
+    /**
      * 商家名称（查询时关联）
      */
     @TableField(exist = false)

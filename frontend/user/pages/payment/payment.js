@@ -97,12 +97,12 @@ Page({
       hideLoading()
       
       if (result.code === 1) {
-        showSuccess('支付成功')
+        showSuccess('支付成功！')
         
-        // 跳转到订单详情页
+        // 跳转到订单列表页，避免重复支付
         setTimeout(() => {
-          wx.redirectTo({
-            url: `/pages/order/detail?id=${this.data.orderId}`
+          wx.switchTab({
+            url: '/pages/order/order'
           })
         }, 1500)
       } else {

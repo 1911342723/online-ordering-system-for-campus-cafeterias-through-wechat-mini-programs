@@ -1,19 +1,60 @@
 <!--pages/review/add.wxml-->
 <view class="container">
+  <!-- 总体评价 -->
   <view class="rating-section">
     <text class="section-title">总体评价</text>
     <view class="stars">
-      <view class="star" wx:for="{{[1,2,3,4,5]}}" wx:key="*this" bindtap="setRating" data-value="{{item}}">
+      <view class="star" wx:for="{{[1,2,3,4,5]}}" wx:key="*this" bindtap="setRating" data-value="{{item}}" data-type="rating">
         {{item <= rating ? '⭐' : '☆'}}
       </view>
     </view>
     <text class="rating-text">{{ratingText[rating]}}</text>
   </view>
 
+  <!-- 口味评分 -->
+  <view class="rating-section detail-rating">
+    <view class="rating-row">
+      <text class="rating-label">口味</text>
+      <view class="stars small">
+        <view class="star" wx:for="{{[1,2,3,4,5]}}" wx:key="*this" bindtap="setRating" data-value="{{item}}" data-type="tasteRating">
+          {{item <= tasteRating ? '⭐' : '☆'}}
+        </view>
+      </view>
+      <text class="rating-score">{{tasteRating}}分</text>
+    </view>
+  </view>
+
+  <!-- 服务评分 -->
+  <view class="rating-section detail-rating">
+    <view class="rating-row">
+      <text class="rating-label">服务</text>
+      <view class="stars small">
+        <view class="star" wx:for="{{[1,2,3,4,5]}}" wx:key="*this" bindtap="setRating" data-value="{{item}}" data-type="serviceRating">
+          {{item <= serviceRating ? '⭐' : '☆'}}
+        </view>
+      </view>
+      <text class="rating-score">{{serviceRating}}分</text>
+    </view>
+  </view>
+
+  <!-- 速度评分 -->
+  <view class="rating-section detail-rating">
+    <view class="rating-row">
+      <text class="rating-label">速度</text>
+      <view class="stars small">
+        <view class="star" wx:for="{{[1,2,3,4,5]}}" wx:key="*this" bindtap="setRating" data-value="{{item}}" data-type="speedRating">
+          {{item <= speedRating ? '⭐' : '☆'}}
+        </view>
+      </view>
+      <text class="rating-score">{{speedRating}}分</text>
+    </view>
+  </view>
+
+  <!-- 评价内容 -->
   <view class="input-section">
     <textarea class="review-input" placeholder="说说您对商家的评价吧..." bindinput="onInput" value="{{content}}" maxlength="200"></textarea>
     <view class="word-count">{{content.length}}/200</view>
   </view>
 
-  <button class="submit-btn" bindtap="submitReview" disabled="{{!content && rating === 0}}">提交评价</button>
+  <button class="submit-btn" bindtap="submitReview">提交评价</button>
 </view>

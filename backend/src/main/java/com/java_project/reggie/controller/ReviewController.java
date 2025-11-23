@@ -285,6 +285,25 @@ public class ReviewController {
         
         reviewService.page(pageInfo, wrapper);
         
+        // 填充订单号和用户信息
+        pageInfo.getRecords().forEach(review -> {
+            // 填充订单号
+            Orders order = orderService.getById(review.getOrderId());
+            if (order != null) {
+                review.setOrderNumber(order.getNumber());
+            }
+            
+            // 填充用户信息
+            if (review.getIsAnonymous() == 0) {
+                User user = userService.getById(review.getUserId());
+                if (user != null) {
+                    review.setUserName(user.getName());
+                }
+            } else {
+                review.setUserName("匿名用户");
+            }
+        });
+        
         return R.success(pageInfo);
     }
 
