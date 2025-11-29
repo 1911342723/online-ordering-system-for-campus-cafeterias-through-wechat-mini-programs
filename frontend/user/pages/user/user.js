@@ -1,16 +1,17 @@
 // pages/user/user.js
+const request = require('../../utils/request')
 const { DEFAULT_IMAGES } = require('../../utils/config')
-const { showError, showSuccess, navigateToLogin, getImageUrl } = require('../../utils/util')
+const { showError, showSuccess, navigateToLogin, getImageUrl, checkLogin } = require('../../utils/util')
 
-// SVG Icons - Updated for premium look
-const ICONS = {
-  address: "/assets/icons/address.svg",
-  feedback: "/assets/icons/feedback.svg",
-  service: "/assets/icons/service.svg",
-  settings: "/assets/icons/settings.svg",
-  admin: "/assets/icons/admin.svg"
-}
-
+// 等级配置
+const LEVEL_CONFIG = [
+  { level: 1, title: '美食小白', icon: '🌱', minExp: 0, maxExp: 100, tips: '再发布1篇帖子即可升级' },
+  { level: 2, title: '美食学徒', icon: '🌿', minExp: 100, maxExp: 300, tips: '多发帖、评论可以快速升级哦' },
+  { level: 3, title: '美食达人', icon: '🌳', minExp: 300, maxExp: 600, tips: '你已经是美食达人啦！' },
+  { level: 4, title: '美食专家', icon: '⭐', minExp: 600, maxExp: 1000, tips: '继续加油，即将成为美食大师！' },
+  { level: 5, title: '美食大师', icon: '🏆', minExp: 1000, maxExp: 2000, tips: '恭喜成为美食大师！' },
+  { level: 6, title: '美食之神', icon: '👑', minExp: 2000, maxExp: 999999, tips: '你已经是传说中的美食之神！' }
+]
 
 Page({
   data: {
@@ -18,37 +19,22 @@ Page({
     userInfo: {},
     defaultAvatar: DEFAULT_IMAGES.avatar,
     stats: {
-      balance: 0,
+      balance: '0.00',
       coupon: 0,
-      points: 0
+      posts: 0,
+      collects: 0,
+      likes: 0
     },
-    menuItems: [
-      {
-        icon: ICONS.address,
-        title: '我的地址',
-        action: 'goToAddress'
-      },
-      {
-        icon: ICONS.feedback,
-        title: '意见反馈',
-        action: 'goToFeedback'
-      },
-      {
-        icon: ICONS.service,
-        title: '联系客服',
-        action: 'contactService'
-      },
-      {
-        icon: ICONS.settings,
-        title: '设置',
-        action: 'goToSettings'
-      },
-      {
-        icon: ICONS.admin,
-        title: '商家/管理员入口',
-        action: 'goToAdmin'
-      }
-    ]
+    userLevel: {
+      level: 1,
+      title: '美食小白',
+      icon: '🌱',
+      currentExp: 0,
+      nextExp: 100,
+      progress: 0,
+      tips: '发布帖子、下单可以获得经验哦'
+    },
+    unreadCount: 0
   },
 
   onShow() {
@@ -68,45 +54,62 @@ Page({
         isLoggedIn: true,
         userInfo: {
           ...userInfo,
-          nickName: userInfo.name || `用户${phone ? phone.substr(-4) : '****'}`,
+          nickName: userInfo.name || userInfo.nickName || `学生-${phone || '****'}`,
           phone: phone,
-          avatarUrl: getImageUrl(userInfo.avatar, DEFAULT_IMAGES.avatar)
+          avatarUrl: getImageUrl(userInfo.avatar, DEFAULT_IMAGES.avatar),
+          signature: userInfo.signature || ''
         }
       })
       
-      // 加载用户统计数据（可选）
+      // 加载用户统计数据
       this.loadUserStats()
+      // 加载未读消息数
+      this.loadUnreadCount()
     } else {
       this.setData({
         isLoggedIn: false,
-        userInfo: {}
+        userInfo: {},
+        stats: {
+          balance: '0.00',
+          coupon: 0,
+          posts: 0,
+          collects: 0,
+          likes: 0
+        }
       })
     }
   },
 
   /**
-   * 加载用户统计数据 - 从后端获取
+   * 加载用户统计数据
    */
   async loadUserStats() {
     try {
-      const request = require('../../utils/request')
-      
-      // 先尝试获取用户基本信息
+      // 获取用户基本信息
       const userInfo = await request({
         url: '/user/info',
         method: 'GET'
       })
       
       if (userInfo) {
-        // 更新用户信息和基础统计
+        // 计算等级
+        const exp = userInfo.exp || 0
+        const levelInfo = this.calculateLevel(exp)
+        
         this.setData({
           stats: {
             balance: (userInfo.balance || 0).toFixed(2),
-            coupon: userInfo.couponCount || 0
+            coupon: userInfo.couponCount || 0,
+            posts: userInfo.postCount || 0,
+            collects: userInfo.collectCount || 0,
+            likes: userInfo.likeCount || 0
           },
+          userLevel: levelInfo,
           userInfo: {
             ...this.data.userInfo,
-            ...userInfo
+            ...userInfo,
+            nickName: userInfo.name || this.data.userInfo.nickName,
+            signature: userInfo.signature || ''
           }
         })
         
@@ -115,25 +118,72 @@ Page({
       }
     } catch (error) {
       console.error('加载用户统计数据失败:', error)
-      
-      // 使用本地缓存的数据作为降级
-      const cachedUserInfo = wx.getStorageSync('userInfo')
-      if (cachedUserInfo) {
-        this.setData({
-          stats: {
-            balance: (cachedUserInfo.balance || 0).toFixed(2),
-            coupon: cachedUserInfo.couponCount || 0
-          }
-        })
-      } else {
-        // 如果没有缓存且请求失败，显示默认值
-        this.setData({
-          stats: {
-            balance: '0.00',
-            coupon: 0
-          }
-        })
+      // 使用模拟数据
+      this.loadMockStats()
+    }
+  },
+
+  /**
+   * 加载模拟统计数据
+   */
+  loadMockStats() {
+    const mockExp = 150
+    const levelInfo = this.calculateLevel(mockExp)
+    
+    this.setData({
+      stats: {
+        balance: '0.00',
+        coupon: 2,
+        posts: 5,
+        collects: 12,
+        likes: 28
+      },
+      userLevel: levelInfo
+    })
+  },
+
+  /**
+   * 计算用户等级
+   */
+  calculateLevel(exp) {
+    let currentLevel = LEVEL_CONFIG[0]
+    
+    for (let i = LEVEL_CONFIG.length - 1; i >= 0; i--) {
+      if (exp >= LEVEL_CONFIG[i].minExp) {
+        currentLevel = LEVEL_CONFIG[i]
+        break
       }
+    }
+    
+    const nextLevel = LEVEL_CONFIG.find(l => l.level === currentLevel.level + 1) || currentLevel
+    const expInLevel = exp - currentLevel.minExp
+    const expNeeded = currentLevel.maxExp - currentLevel.minExp
+    const progress = Math.min(100, Math.round((expInLevel / expNeeded) * 100))
+    
+    return {
+      level: currentLevel.level,
+      title: currentLevel.title,
+      icon: currentLevel.icon,
+      currentExp: exp,
+      nextExp: currentLevel.maxExp,
+      progress: progress,
+      tips: currentLevel.tips
+    }
+  },
+
+  /**
+   * 加载未读消息数
+   */
+  async loadUnreadCount() {
+    try {
+      const res = await request({
+        url: '/message/unread/count',
+        method: 'GET'
+      })
+      this.setData({ unreadCount: res || 0 })
+    } catch (error) {
+      console.error('加载未读消息数失败:', error)
+      this.setData({ unreadCount: 0 })
     }
   },
 
@@ -160,13 +210,117 @@ Page({
             isLoggedIn: false,
             userInfo: {},
             stats: {
-              balance: 0,
-              coupon: 0
-            }
+              balance: '0.00',
+              coupon: 0,
+              posts: 0,
+              collects: 0,
+              likes: 0
+            },
+            unreadCount: 0
           })
           showSuccess('已退出登录')
         }
       }
+    })
+  },
+
+  /**
+   * 跳转到个人信息设置页面
+   */
+  goToProfile() {
+    if (!this.data.isLoggedIn) {
+      this.login()
+      return
+    }
+    wx.navigateTo({
+      url: '/pages/user/profile'
+    })
+  },
+
+  /**
+   * 跳转到我的帖子
+   */
+  goToMyPosts() {
+    if (!this.data.isLoggedIn) {
+      this.login()
+      return
+    }
+    wx.navigateTo({
+      url: '/pages/user/posts'
+    })
+  },
+
+  /**
+   * 跳转到我的收藏
+   */
+  goToMyCollects() {
+    if (!this.data.isLoggedIn) {
+      this.login()
+      return
+    }
+    wx.navigateTo({
+      url: '/pages/user/collects'
+    })
+  },
+
+  /**
+   * 跳转到获赞页面
+   */
+  goToMyLikes() {
+    if (!this.data.isLoggedIn) {
+      this.login()
+      return
+    }
+    wx.navigateTo({
+      url: '/pages/user/likes'
+    })
+  },
+
+  /**
+   * 跳转到消息中心
+   */
+  goToMessages() {
+    if (!this.data.isLoggedIn) {
+      this.login()
+      return
+    }
+    wx.navigateTo({
+      url: '/pages/user/messages'
+    })
+  },
+
+  /**
+   * 跳转到订单列表
+   */
+  goToOrders() {
+    wx.switchTab({
+      url: '/pages/order/order'
+    })
+  },
+
+  /**
+   * 跳转到优惠券
+   */
+  goToCoupon() {
+    if (!this.data.isLoggedIn) {
+      this.login()
+      return
+    }
+    wx.navigateTo({
+      url: '/pages/coupon/coupon'
+    })
+  },
+
+  /**
+   * 跳转到等级详情
+   */
+  goToLevelDetail() {
+    if (!this.data.isLoggedIn) {
+      this.login()
+      return
+    }
+    wx.navigateTo({
+      url: '/pages/user/level'
     })
   },
 
@@ -221,50 +375,6 @@ Page({
   },
 
   /**
-   * 商家/管理员入口
-   */
-  goToAdmin() {
-    wx.showModal({
-      title: '提示',
-      content: '请使用电脑浏览器访问管理后台\n\n地址：http://localhost:3000',
-      confirmText: '我知道了',
-      showCancel: false
-    })
-  },
-
-  /**
-   * 统一菜单项点击处理
-   */
-  handleMenuClick(e) {
-    const { action } = e.currentTarget.dataset
-    if (this[action]) {
-      this[action]()
-    }
-  },
-
-  /**
-   * 点击统计项
-   */
-  handleStatClick(e) {
-    const { type } = e.currentTarget.dataset
-    if (!this.data.isLoggedIn) {
-      this.login()
-      return
-    }
-    
-    const routes = {
-      balance: '/pages/recharge/recharge',
-      coupon: '/pages/coupon/coupon'
-    }
-    
-    if (routes[type]) {
-      wx.navigateTo({
-        url: routes[type]
-      })
-    }
-  },
-
-  /**
    * 去充值
    */
   goRecharge() {
@@ -272,7 +382,6 @@ Page({
       this.login()
       return
     }
-    
     wx.navigateTo({
       url: '/pages/recharge/recharge'
     })

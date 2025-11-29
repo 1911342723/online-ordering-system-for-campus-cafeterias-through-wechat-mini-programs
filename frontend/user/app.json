@@ -1,11 +1,22 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/radar/radar",
+    "pages/community/community",
+    "pages/community/detail",
+    "pages/community/publish",
+    "pages/order/order",
+    "pages/user/user",
+    "pages/user/profile",
+    "pages/user/posts",
+    "pages/user/collects",
+    "pages/user/messages",
+    "pages/user/likes",
+    "pages/user/level",
+    "pages/category/list",
     "pages/canteen-list/canteen-list",
     "pages/merchant/list",
     "pages/menu/menu",
-    "pages/order/order",
-    "pages/user/user",
     "pages/ai/chat",
     "pages/login/login",
     "pages/cart/cart",
@@ -25,14 +36,14 @@
   "window": {
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#ffffff",
-    "navigationBarTitleText": "校园智慧食堂",
+    "navigationBarTitleText": "校园美食",
     "navigationBarTextStyle": "black"
   },
   "tabBar": {
-    "color": "#999999",
-    "selectedColor": "#FF6B00",
+    "color": "#9ca3af",
+    "selectedColor": "#0284c7",
     "backgroundColor": "#ffffff",
-    "borderStyle": "black",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/index/index",
@@ -41,10 +52,16 @@
         "selectedIconPath": "assets/icons/home.png"
       },
       {
-        "pagePath": "pages/cart/cart",
-        "text": "购物车",
-        "iconPath": "assets/icons/cart.png",
-        "selectedIconPath": "assets/icons/cart.png"
+        "pagePath": "pages/radar/radar",
+        "text": "雷达",
+        "iconPath": "assets/icons/search.png",
+        "selectedIconPath": "assets/icons/search.png"
+      },
+      {
+        "pagePath": "pages/community/community",
+        "text": "交流圈",
+        "iconPath": "assets/icons/icons8-公告-100.png",
+        "selectedIconPath": "assets/icons/icons8-公告-100.png"
       },
       {
         "pagePath": "pages/order/order",
@@ -62,4 +79,3 @@
   },
   "sitemapLocation": "sitemap.json"
 }
-

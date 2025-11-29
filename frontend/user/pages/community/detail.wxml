@@ -1,0 +1,135 @@
+<!--pages/community/detail.wxml-->
+<view class="container">
+  <!-- Scrollable Content -->
+  <scroll-view scroll-y class="content-scroll" enhanced show-scrollbar="{{false}}">
+    <!-- Image Swiper -->
+    <swiper class="image-swiper" indicator-dots="{{note.imageList.length > 1}}" indicator-active-color="#0ea5e9" indicator-color="rgba(255,255,255,0.5)">
+      <swiper-item wx:for="{{note.imageList}}" wx:key="*this">
+        <image src="{{item}}" mode="aspectFill" class="swiper-img" bindtap="previewImage" data-url="{{item}}"></image>
+      </swiper-item>
+      <swiper-item wx:if="{{note.imageList.length === 0}}">
+        <image src="{{note.coverImage || note.image}}" mode="aspectFill" class="swiper-img"></image>
+      </swiper-item>
+    </swiper>
+
+    <!-- Author Info -->
+    <view class="author-section">
+      <image class="author-avatar" src="{{note.userAvatar || defaultAvatar}}"></image>
+      <view class="author-info">
+        <text class="author-name">{{note.userName || '匿名用户'}}</text>
+        <text class="author-time">{{note.createTimeStr || note.time}}</text>
+      </view>
+      <view class="follow-btn" wx:if="{{!isAuthor}}">关注</view>
+    </view>
+
+    <!-- Content Section -->
+    <view class="content-section">
+      <view class="note-title">{{note.title}}</view>
+      <view class="note-desc">{{note.content}}</view>
+      <view class="note-tags" wx:if="{{note.tagList.length > 0 || note.tags}}">
+        <text class="tag" wx:for="{{note.tagList || []}}" wx:key="*this"># {{item}}</text>
+        <block wx:if="{{!note.tagList && note.tags}}">
+          <text class="tag" wx:for="{{note.tags}}" wx:key="*this"># {{item}}</text>
+        </block>
+      </view>
+    </view>
+
+    <view class="divider"></view>
+
+    <!-- Comments Section -->
+    <view class="comment-section">
+      <view class="comment-header">
+        <text class="comment-title">评论</text>
+        <text class="comment-count">{{note.commentCount || note.comments.length || 0}}</text>
+      </view>
+      
+      <!-- Empty Comments -->
+      <view class="empty-comments" wx:if="{{(!note.comments || note.comments.length === 0) && !loading}}">
+        <text class="empty-icon">💬</text>
+        <text class="empty-text">暂无评论，快来抢沙发吧~</text>
+      </view>
+      
+      <!-- Comment List -->
+      <view class="comment-list" wx:if="{{note.comments && note.comments.length > 0}}">
+        <view class="comment-item" wx:for="{{note.comments}}" wx:key="id">
+          <image class="comment-avatar" src="{{item.userAvatar || item.avatar || defaultAvatar}}"></image>
+          <view class="comment-content-box">
+            <view class="comment-user">{{item.userName || item.user}}</view>
+            <view class="comment-text">
+              <text wx:if="{{item.replyUserName}}">回复 @{{item.replyUserName}}：</text>
+              {{item.content}}
+            </view>
+            <view class="comment-footer">
+              <text class="comment-time">{{item.createTimeStr || item.time}}</text>
+              <view class="comment-actions">
+                <view class="action-btn" bindtap="onReplyComment" data-comment="{{item}}">
+                  <text>回复</text>
+                </view>
+                <view class="action-btn" bindtap="onLikeComment" data-id="{{item.id}}">
+                  <text>{{item.isLiked ? '❤️' : '🤍'}} {{item.likeCount || item.likes || 0}}</text>
+                </view>
+              </view>
+            </view>
+            
+            <!-- Replies -->
+            <view class="reply-list" wx:if="{{item.replies && item.replies.length > 0}}">
+              <view class="reply-item" wx:for="{{item.replies}}" wx:for-item="reply" wx:key="id">
+                <text class="reply-user">{{reply.userName}}</text>
+                <text wx:if="{{reply.replyUserName}}"> 回复 @{{reply.replyUserName}}</text>
+                <text>：{{reply.content}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+    
+    <view class="footer-spacer"></view>
+  </scroll-view>
+
+  <!-- Fixed Bottom Action Bar -->
+  <view class="bottom-bar">
+    <view class="input-box" bindtap="showCommentInput">
+      <text class="input-icon">✏️</text>
+      <text class="placeholder">{{replyTo ? '回复 @' + replyTo.userName : '说点什么...'}}</text>
+    </view>
+    <view class="action-icons">
+      <view class="action-item {{note.isLiked ? 'active' : ''}}" bindtap="onLike">
+        <text class="icon">{{note.isLiked ? '❤️' : '🤍'}}</text>
+        <text class="count">{{note.likeCount || note.likes || 0}}</text>
+      </view>
+      <view class="action-item {{note.isCollected ? 'active' : ''}}" bindtap="onCollect">
+        <text class="icon">{{note.isCollected ? '⭐' : '☆'}}</text>
+        <text class="count">{{note.collectCount || note.collects || 0}}</text>
+      </view>
+      <view class="action-item" bindtap="onShare">
+        <text class="icon">↗️</text>
+        <text class="count">{{note.shareCount || 0}}</text>
+      </view>
+    </view>
+  </view>
+  
+  <!-- Comment Input Modal -->
+  <view class="comment-modal {{showCommentModal ? 'show' : ''}}" catchtouchmove="preventMove">
+    <view class="modal-mask" bindtap="hideCommentInput"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">{{replyTo ? '回复 @' + replyTo.userName : '发表评论'}}</text>
+        <text class="modal-close" bindtap="hideCommentInput">✕</text>
+      </view>
+      <textarea 
+        class="comment-textarea" 
+        placeholder="{{replyTo ? '回复 @' + replyTo.userName + '...' : '写下你的评论...'}}"
+        value="{{commentText}}"
+        bindinput="onCommentInput"
+        focus="{{showCommentModal}}"
+        auto-height
+        maxlength="500"
+      ></textarea>
+      <view class="modal-footer">
+        <text class="char-count">{{commentText.length}}/500</text>
+        <button class="send-btn {{commentText.length > 0 ? 'active' : ''}}" bindtap="submitComment" disabled="{{commentText.length === 0}}">发送</button>
+      </view>
+    </view>
+  </view>
+</view>

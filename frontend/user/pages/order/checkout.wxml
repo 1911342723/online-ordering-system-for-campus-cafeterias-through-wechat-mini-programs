@@ -63,7 +63,7 @@
     <view class="section-title">订单明细</view>
     <view class="order-items">
       <view class="order-item" wx:for="{{orderItems}}" wx:key="id">
-        <image class="item-image" src="{{item.image}}" mode="aspectFill"></image>
+        <image class="item-image" src="{{item.image}}" mode="aspectFill" lazy-load="true"></image>
         <view class="item-info">
           <text class="item-name">{{item.name}}</text>
           <view class="item-bottom">

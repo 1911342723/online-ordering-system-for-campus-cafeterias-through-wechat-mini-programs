@@ -3,22 +3,24 @@
   <scroll-view scroll-y class="chat-list" scroll-into-view="{{toView}}" scroll-with-animation>
     <view class="message {{item.role === 'user' ? 'user' : 'ai'}}" wx:for="{{messages}}" wx:key="id" id="msg-{{index}}">
       
-      <!-- AI Avatar (Left side for AI messages) -->
+      <!-- AI Avatar -->
       <view class="avatar ai-avatar" wx:if="{{item.role === 'ai'}}">
-        <image src="{{geminiStarUrl}}" mode="aspectFit" class="avatar-icon"></image>
+        <text class="avatar-icon">🤖</text>
       </view>
       
-      <view class="bubble">
-        <text class="content">{{item.content}}</text>
+      <view class="bubble-wrapper">
+        <view class="bubble">
+          <text class="content">{{item.content}}</text>
+        </view>
         
-        <!-- Dish Recommendations Card (Horizontal Scroll) -->
+        <!-- Dish Recommendations -->
         <scroll-view class="dish-scroll" scroll-x wx:if="{{item.dishes && item.dishes.length > 0}}">
           <view class="dish-list">
             <view class="dish-card" wx:for="{{item.dishes}}" wx:for-item="dish" wx:key="id" bindtap="goToDish" data-dish="{{dish}}">
               <image class="dish-img" src="{{dish.image}}" mode="aspectFill"></image>
               <view class="dish-info">
                 <text class="dish-name">{{dish.name}}</text>
-                <view class="dish-bottom">
+                <view class="dish-footer">
                   <text class="dish-price">¥{{dish.price}}</text>
                   <view class="add-btn" catchtap="addToCart" data-dish="{{dish}}">+</view>
                 </view>
@@ -28,39 +30,47 @@
         </scroll-view>
       </view>
       
-      <!-- User Avatar (Right side for User messages) -->
-      <view class="avatar user-avatar" wx:if="{{item.role === 'user'}}">👤</view>
+      <!-- User Avatar -->
+      <view class="avatar user-avatar" wx:if="{{item.role === 'user'}}">
+        <text class="avatar-icon">👤</text>
+      </view>
     </view>
     
-    <!-- AI Thinking State -->
+    <!-- Loading State -->
     <view class="message ai" wx:if="{{isAIThinking}}">
       <view class="avatar ai-avatar">
-        <image src="{{geminiStarUrl}}" mode="aspectFit" class="avatar-icon"></image>
+        <text class="avatar-icon">🤖</text>
       </view>
       <view class="bubble thinking">
-        <view class="dots">
-          <view class="dot"></view>
-          <view class="dot"></view>
-          <view class="dot"></view>
-        </view>
+        <view class="typing-dot"></view>
+        <view class="typing-dot"></view>
+        <view class="typing-dot"></view>
       </view>
     </view>
     
-    <view id="scroll-bottom" style="height: 20rpx;"></view>
+    <view id="scroll-bottom" style="height: 40rpx;"></view>
   </scroll-view>
 
-  <!-- Quick Questions (Show if messages are few) -->
-  <view class="quick-questions" wx:if="{{messages.length <= 1 && !isAIThinking}}">
-    <view class="quick-item" bindtap="quickQuestion" data-question="推荐一些辣的菜">🌶️ 推荐辣的</view>
-    <view class="quick-item" bindtap="quickQuestion" data-question="有什么清淡的菜">🥗 清淡的菜</view>
-    <view class="quick-item" bindtap="quickQuestion" data-question="营养套餐推荐">🍱 营养套餐</view>
-    <view class="quick-item" bindtap="quickQuestion" data-question="实惠的菜品">💰 实惠菜品</view>
+  <!-- Suggestion Chips -->
+  <view class="suggestion-chips" wx:if="{{messages.length <= 1 && !isAIThinking}}">
+    <view class="chip" bindtap="quickQuestion" data-question="推荐一些辣的菜">🌶️ 推荐辣的</view>
+    <view class="chip" bindtap="quickQuestion" data-question="有什么清淡的菜">🥗 清淡的菜</view>
+    <view class="chip" bindtap="quickQuestion" data-question="营养套餐推荐">🍱 营养套餐</view>
+    <view class="chip" bindtap="quickQuestion" data-question="实惠的菜品">💰 实惠菜品</view>
   </view>
 
-  <view class="input-area">
-    <input class="input" placeholder="我想吃..." bindinput="onInput" value="{{inputValue}}" confirm-type="send" bindconfirm="sendMessage" maxlength="100" cursor-spacing="20"/>
-    <button class="send-btn" bindtap="sendMessage" disabled="{{!inputValue || isAIThinking}}">
-      {{isAIThinking ? '...' : '发送'}}
-    </button>
+  <!-- Input Area -->
+  <view class="input-area safe-area-bottom">
+    <view class="input-wrapper">
+      <input class="chat-input" 
+             placeholder="想吃什么？问问我..." 
+             bindinput="onInput" 
+             value="{{inputValue}}" 
+             confirm-type="send" 
+             bindconfirm="sendMessage"/>
+      <view class="send-btn {{inputValue.length > 0 ? 'active' : ''}}" bindtap="sendMessage">
+        <text class="send-icon">↑</text>
+      </view>
+    </view>
   </view>
 </view>

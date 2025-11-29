@@ -1,126 +1,171 @@
 <!--pages/menu/menu.wxml-->
 <view class="container">
   <!-- Merchant Header -->
-  <view class="header">
-    <view class="merchant-info-row">
-      <image wx:if="{{merchantInfo.image}}" class="merchant-logo" src="{{merchantInfo.image}}" mode="aspectFill"></image>
-      <view class="merchant-text">
+  <view class="header-bg">
+    <image class="header-bg-img" src="{{merchantInfo.image || defaultDishImg}}" mode="aspectFill"></image>
+    <view class="header-mask"></view>
+  </view>
+  
+  <view class="merchant-card">
+    <view class="merchant-main">
+      <image class="merchant-logo" src="{{merchantInfo.image || defaultDishImg}}" mode="aspectFill"></image>
+      <view class="merchant-info">
         <text class="merchant-name">{{merchantName}}</text>
-        <view class="merchant-stats" wx:if="{{merchantInfo}}">
-          <text class="stat-item" wx:if="{{merchantInfo.avgPrice}}">人均¥{{merchantInfo.avgPrice}}</text>
-          <text class="stat-divider" wx:if="{{merchantInfo.avgPrice && merchantInfo.rating}}">|</text>
-          <text class="stat-item" wx:if="{{merchantInfo.rating}}">⭐{{merchantInfo.rating}}</text>
-          <text class="stat-divider" wx:if="{{merchantInfo.rating && merchantInfo.salesCount}}">|</text>
-          <text class="stat-item" wx:if="{{merchantInfo.salesCount}}">月售{{merchantInfo.salesCount}}</text>
+        <view class="merchant-meta">
+          <view class="meta-tag rating">
+            <text class="icon">⭐</text>
+            <text>{{merchantInfo.rating || '4.8'}}</text>
+          </view>
+          <text class="meta-text">月售 {{merchantInfo.salesCount || '1000+'}}</text>
+          <text class="meta-text">约 {{merchantInfo.deliveryTime || '30'}} 分钟</text>
+        </view>
+        <view class="merchant-notice" wx:if="{{merchantInfo.description}}" bindtap="showShopDetail">
+          <text class="notice-icon">📢</text>
+          <text class="notice-text">{{merchantInfo.description}}</text>
+          <text class="notice-arrow">›</text>
+        </view>
+        <!-- 联系商家按钮 -->
+        <view class="contact-merchant-btn" bindtap="contactMerchant">
+          <text class="contact-icon">💬</text>
+          <text class="contact-text">联系商家</text>
         </view>
       </view>
     </view>
-    <view class="header-info" wx:if="{{merchantInfo.description}}">
-      <text class="merchant-desc">{{merchantInfo.description}}</text>
+    
+    <!-- Coupon Section (if any) -->
+    <view class="coupon-list" wx:if="{{merchantCoupons.length > 0}}">
+      <scroll-view scroll-x class="coupon-scroll" show-scrollbar="{{false}}">
+        <view class="coupon-item" wx:for="{{merchantCoupons}}" wx:key="id">
+          <view class="coupon-left">
+            <text class="symbol">¥</text>
+            <text class="amount">{{item.amount}}</text>
+          </view>
+          <view class="coupon-right">
+            <text class="condition">满{{item.minAmount}}可用</text>
+            <text class="action {{item.received ? 'disabled' : ''}}" 
+                  catchtap="receiveMerchantCoupon" 
+                  data-id="{{item.id}}" 
+                  data-index="{{index}}">{{item.received ? '已领' : '领取'}}</text>
+          </view>
+        </view>
+      </scroll-view>
     </view>
   </view>
 
-  <!-- Merchant Announcements -->
-  <view class="announcement-section" wx:if="{{announcements.length > 0}}">
-    <swiper class="announcement-swiper" autoplay circular interval="3000" vertical>
-      <swiper-item wx:for="{{announcements}}" wx:key="id">
-        <view class="announcement-item" bindtap="showAnnouncementDetail" data-announcement="{{item}}">
-          <view class="announcement-icon">📢</view>
-          <view class="announcement-content">
-            <text class="announcement-type">{{item.typeText}}</text>
-            <text class="announcement-title">{{item.title}}</text>
-          </view>
-          <view class="announcement-arrow">›</view>
-        </view>
-      </swiper-item>
-    </swiper>
-  </view>
-
-  <!-- Merchant Coupons -->
-  <view class="merchant-coupons-section" wx:if="{{merchantCoupons.length > 0}}">
-    <view class="coupons-header">
-      <text class="coupons-title">🎫 本店优惠券</text>
-    </view>
-    <scroll-view scroll-x class="coupons-scroll" show-scrollbar="{{false}}">
-      <view class="coupon-mini-card" wx:for="{{merchantCoupons}}" wx:key="id">
-        <view class="coupon-mini-left">
-          <text class="coupon-amount">¥{{item.amount}}</text>
-          <text class="coupon-condition">满{{item.minAmount}}</text>
-        </view>
-        <view class="coupon-mini-right">
-          <text class="coupon-name">{{item.name}}</text>
-          <text class="coupon-valid">{{item.validDays}}天有效</text>
-          <view class="coupon-receive-btn {{item.received ? 'received' : ''}}" 
-                catchtap="receiveMerchantCoupon" 
-                data-id="{{item.id}}" 
-                data-index="{{index}}">
-            {{item.received ? '已领取' : '领取'}}
-          </view>
-        </view>
-      </view>
-    </scroll-view>
-  </view>
-
-  <!-- Main Content -->
-  <view class="content">
-    <!-- Left Category Sidebar -->
-    <scroll-view scroll-y class="category-sidebar">
-      <view wx:for="{{categories}}" wx:key="id" 
-            class="category-item {{activeCategory === index ? 'active' : ''}}"
+  <!-- Main Content (Menu) -->
+  <view class="menu-container">
+    <!-- Sidebar -->
+    <scroll-view scroll-y class="sidebar" show-scrollbar="{{false}}">
+      <view class="sidebar-item {{activeCategory === index ? 'active' : ''}}" 
+            wx:for="{{categories}}" wx:key="id" 
             bindtap="switchCategory" data-index="{{index}}" data-id="{{item.id}}">
-        <text>{{item.name}}</text>
+        <text class="sidebar-name">{{item.name}}</text>
+        <view class="category-badge" wx:if="{{item.count > 0}}">{{item.count}}</view>
       </view>
+      <view class="sidebar-spacer"></view>
     </scroll-view>
 
-    <!-- Right Food List -->
-    <scroll-view scroll-y class="food-list" scroll-into-view="{{toView}}" scroll-with-animation bindscroll="onFoodScroll">
-      <block wx:for="{{categories}}" wx:key="id" wx:for-index="catIndex">
-        <view class="category-header" id="cat-{{catIndex}}">{{item.name}}</view>
-        <view class="food-item {{dish.isHighlighted ? 'highlighted' : ''}}" 
-              id="dish-{{catIndex}}-{{dishIndex}}"
-              wx:for="{{item.dishes}}" 
-              wx:key="id" 
-              wx:for-item="dish"
-              wx:for-index="dishIndex">
-          <image class="food-img" src="{{dish.image || defaultDishImg}}" mode="aspectFill" bindtap="showDetail" data-dish="{{dish}}"></image>
-          <view class="food-info">
-            <text class="food-name">{{dish.name}}</text>
-            <text class="food-desc">{{dish.description || '暂无描述'}}</text>
-            <text class="food-sales">月售 {{dish.sales || 0}}</text>
-            <view class="price-action">
-              <text class="price">¥{{dish.price}}</text>
-              <view class="action-btn">
-                <view class="minus-btn" wx:if="{{dish.cartCount > 0}}" catchtap="updateCart" data-dish="{{dish}}" data-action="minus">-</view>
-                <text class="count" wx:if="{{dish.cartCount > 0}}">{{dish.cartCount}}</text>
-                <view class="add-btn" catchtap="updateCart" data-dish="{{dish}}" data-action="add">+</view>
+    <!-- Dish List -->
+    <scroll-view scroll-y class="dish-scroll" scroll-into-view="{{toView}}" scroll-with-animation bindscroll="onFoodScroll">
+      <view class="category-section" wx:for="{{categories}}" wx:key="id" wx:for-index="catIndex" id="cat-{{catIndex}}">
+        <view class="category-title">{{item.name}}</view>
+        
+        <view class="dish-item" wx:for="{{item.dishes}}" wx:key="id" wx:for-item="dish" wx:for-index="dishIndex" bindtap="showDetail" data-dish="{{dish}}">
+          <image class="dish-img" src="{{dish.image || defaultDishImg}}" mode="aspectFill" lazy-load="true"></image>
+          <view class="dish-content">
+            <text class="dish-name">{{dish.name}}</text>
+            <text class="dish-desc">{{dish.description || '暂无描述'}}</text>
+            <view class="dish-sales">
+              <text>月售 {{dish.sales || 0}}</text>
+              <text class="divider" wx:if="{{dish.rating}}">|</text>
+              <text wx:if="{{dish.rating}}">好评度 {{dish.rating}}%</text>
+            </view>
+            
+            <view class="dish-footer">
+              <view class="price-box">
+                <text class="currency">¥</text>
+                <text class="price">{{dish.price}}</text>
+                <text class="original-price" wx:if="{{dish.originalPrice}}">¥{{dish.originalPrice}}</text>
+              </view>
+              
+              <!-- Add Button -->
+              <view class="add-action">
+                <block wx:if="{{dish.cartCount > 0}}">
+                  <view class="btn-minus" catchtap="updateCart" data-dish="{{dish}}" data-action="minus">
+                    <text>-</text>
+                  </view>
+                  <text class="cart-num">{{dish.cartCount}}</text>
+                </block>
+                <view class="btn-add" catchtap="updateCart" data-dish="{{dish}}" data-action="add">
+                  <text>+</text>
+                </view>
               </view>
             </view>
           </view>
         </view>
-      </block>
-      <view style="height: 100rpx;"></view> <!-- Spacer -->
+      </view>
+      <view class="list-spacer"></view>
     </scroll-view>
   </view>
 
   <!-- Cart Bar -->
-  <view class="cart-bar" wx:if="{{cartTotal > 0}}">
-    <view class="cart-icon-wrapper" bindtap="showCartDetail">
-      <image src="{{icons.cart}}" class="cart-icon"></image>
-      <view class="badge">{{cartCount}}</view>
+  <view class="cart-bar-wrapper" wx:if="{{cartTotal > 0}}">
+    <view class="cart-bar">
+      <view class="cart-left" bindtap="showCartDetail">
+        <view class="cart-icon-box">
+          <image class="cart-img" src="{{icons.cart}}"></image>
+          <view class="cart-badge" wx:if="{{cartCount > 0}}">{{cartCount}}</view>
+        </view>
+        <view class="cart-info">
+          <view class="cart-total">
+            <text class="currency">¥</text>
+            <text class="amount">{{cartTotal}}</text>
+          </view>
+          <text class="delivery-tip">另需配送费 ¥{{merchantInfo.deliveryFee || 0}}</text>
+        </view>
+      </view>
+      <view class="cart-right" bindtap="goToPay">
+        <text>去结算</text>
+      </view>
     </view>
-    <view class="cart-price">
-      <text class="total">¥{{cartTotal}}</text>
-      <text class="delivery-fee">另需配送费 ¥1</text>
-    </view>
-    <view class="pay-btn" bindtap="goToPay">去结算</view>
   </view>
   
-  <!-- Empty Cart Bar (Optional, usually hidden) -->
-  <view class="cart-bar empty" wx:else>
-    <view class="cart-icon-wrapper disabled">
-      <image src="{{icons.cartEmpty}}" class="cart-icon"></image>
+  <!-- Empty Cart Bar Placeholder -->
+  <view class="cart-bar-wrapper empty" wx:else>
+    <view class="cart-bar disabled">
+      <view class="cart-left">
+        <view class="cart-icon-box disabled">
+          <image class="cart-img" src="{{icons.cartEmpty}}"></image>
+        </view>
+        <text class="empty-tip">未选购商品</text>
+      </view>
+      <view class="cart-right disabled">
+        <text>¥{{merchantInfo.minDeliveryPrice || 0}}起送</text>
+      </view>
     </view>
-    <text class="empty-text">未选购商品</text>
+  </view>
+
+  <!-- 商家微信社群弹窗 -->
+  <view class="qrcode-modal {{showQrcodeModal ? 'show' : ''}}" catchtouchmove="preventMove">
+    <view class="qrcode-mask" bindtap="hideQrcodeModal"></view>
+    <view class="qrcode-content">
+      <view class="qrcode-header">
+        <text class="qrcode-title">扫码加入商家群</text>
+        <text class="qrcode-close" bindtap="hideQrcodeModal">✕</text>
+      </view>
+      <view class="qrcode-body">
+        <image class="qrcode-img" src="{{merchantInfo.wechatGroupQrcode || defaultQrcode}}" mode="aspectFit" show-menu-by-longpress="{{true}}"></image>
+        <text class="qrcode-hint">长按识别二维码加入群聊</text>
+        <text class="qrcode-desc">加入商家群可获得：</text>
+        <view class="qrcode-benefits">
+          <text>• 第一时间获取优惠信息</text>
+          <text>• 直接与商家沟通反馈</text>
+          <text>• 专属会员福利</text>
+        </view>
+      </view>
+      <view class="qrcode-footer">
+        <button class="save-qrcode-btn" bindtap="saveQrcode">保存到相册</button>
+      </view>
+    </view>
   </view>
 </view>
-

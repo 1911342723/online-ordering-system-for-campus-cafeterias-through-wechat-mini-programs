@@ -1,230 +1,581 @@
 /* pages/order/order.wxss */
+/* 参考 Font Awesome + 美团风格重新设计 */
+
 page {
-  background-color: #f8f8f8;
-  min-height: 100vh;
+  background-color: var(--bg-color);
+  height: 100vh;
+  overflow: hidden;
 }
 
 .container {
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
-.tabs {
-  display: flex;
-  background: #fff;
-  padding: 0 0 10rpx;
-  position: sticky;
-  top: 0;
+/* ============================================
+   Header Tabs - 均匀分布版本
+   ============================================ */
+.header-tabs {
+  background: var(--white);
+  padding: 20rpx 0;
+  box-shadow: var(--shadow-md);
   z-index: 100;
-  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
+  position: relative;
+}
+
+/* 顶部高光线 */
+.header-tabs::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.3), transparent);
+}
+
+.tabs-scroll {
+  width: 100%;
+}
+
+/* 关键改动：使用 flex 均匀分布 */
+.tabs-wrapper {
+  display: flex;
+  justify-content: space-around; /* 均匀分布 */
+  align-items: center;
+  padding: 0 20rpx;
 }
 
 .tab {
-  flex: 1;
+  flex: 1; /* 每个tab占据相等空间 */
   text-align: center;
   font-size: 28rpx;
-  color: #666;
+  color: var(--text-grey);
+  padding: 20rpx 0;
   position: relative;
-  padding: 24rpx 0 20rpx;
-  white-space: nowrap;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
 }
 
 .tab.active {
-  color: #FF6B00;
-  font-weight: bold;
+  color: var(--primary-color);
+  font-weight: 800;
   font-size: 30rpx;
+  transform: scale(1.02);
 }
 
 .tab.active::after {
   content: '';
   position: absolute;
-  bottom: 0;
+  bottom: 4rpx;
   left: 50%;
   transform: translateX(-50%);
-  width: 40rpx;
+  width: 48rpx;
   height: 6rpx;
-  background-color: #FF6B00;
-  border-radius: 4rpx;
+  background: linear-gradient(90deg, var(--primary-light), var(--primary-color));
+  border-radius: 3rpx;
+  box-shadow: 0 2rpx 8rpx rgba(14, 165, 233, 0.4);
 }
 
-/* 移除scroll-view样式，改为普通布局 */
+/* Tab点击波纹效果 */
+.tab:active {
+  background: rgba(14, 165, 233, 0.05);
+  border-radius: var(--radius-md);
+}
+
+/* ============================================
+   Order Scroll
+   ============================================ */
+.order-scroll {
+  flex: 1;
+  background-color: var(--bg-color);
+}
+
 .order-list {
-  padding: 24rpx 30rpx;
-  padding-bottom: 120rpx; /* 底部留白 */
-}
-
-.order-card {
-  background: #fff;
-  border-radius: 24rpx;
   padding: 24rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+  padding-bottom: 120rpx;
 }
 
-.card-header {
+/* ============================================
+   Active Order Card - 高级设计
+   ============================================ */
+.active-card {
+  background: var(--white);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg);
+  border: 3rpx solid rgba(14, 165, 233, 0.15);
+  margin-bottom: 32rpx;
+  position: relative;
+  overflow: hidden;
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* 卡片顶部渐变装饰 */
+.active-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4rpx;
+  background: linear-gradient(90deg, var(--primary-light), var(--primary-color), var(--primary-dark));
+}
+
+/* 状态彩带 */
+.status-ribbon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+  font-size: 22rpx;
+  padding: 12rpx 28rpx;
+  border-bottom-left-radius: var(--radius-xl);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2rpx;
+  box-shadow: var(--shadow-primary);
+}
+
+.card-content {
+  padding: 48rpx 36rpx 28rpx;
+}
+
+/* 店铺信息行 */
+.shop-info-row {
   display: flex;
-  justify-content: space-between;
-  border-bottom: 1rpx solid #f5f5f5;
-  padding-bottom: 20rpx;
-  margin-bottom: 20rpx;
+  gap: 24rpx;
+  margin-bottom: 32rpx;
   align-items: center;
+}
+
+.shop-avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  border: 2rpx solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.shop-text {
+  flex: 1;
 }
 
 .shop-name {
-  font-weight: bold;
-  font-size: 30rpx;
-  color: #333;
+  font-size: 36rpx;
+  font-weight: 900;
+  color: var(--text-main);
+  margin-bottom: 8rpx;
+  letter-spacing: -0.5rpx;
 }
 
-.status {
-  font-size: 24rpx;
-  padding: 6rpx 16rpx;
-  border-radius: 24rpx;
+.wait-time {
+  font-size: 26rpx;
+  color: var(--text-sub);
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.wait-time .highlight {
+  color: var(--primary-color);
+  font-weight: 800;
+  background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+  padding: 4rpx 12rpx;
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================
+   Progress Bar - 精美进度条
+   ============================================ */
+.progress-section {
+  margin: 36rpx 0;
+  padding: 24rpx;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: var(--radius-lg);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 12rpx;
+  background: var(--border-color);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: 16rpx;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-light), var(--primary-color));
+  border-radius: var(--radius-full);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow: 0 0 12rpx rgba(14, 165, 233, 0.5);
+}
+
+/* 进度条闪光动画 */
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 22rpx;
+  color: var(--text-grey);
   font-weight: 500;
 }
 
-/* 订单状态颜色 */
-.status-1 { /* 待付款 */
-  color: #FF5000;
-  background-color: rgba(255, 80, 0, 0.1);
+.progress-labels text {
+  transition: all 0.3s;
 }
 
-.status-2 { /* 制作中 */
-  color: #FF8F40;
-  background-color: rgba(255, 143, 64, 0.1);
+.progress-labels text.active {
+  color: var(--primary-color);
+  font-weight: 700;
 }
 
-.status-3 { /* 配送中 */
-  color: #1890FF;
-  background-color: rgba(24, 144, 255, 0.1);
+/* ============================================
+   虚线分隔
+   ============================================ */
+.divider-dashed {
+  height: 0;
+  border-top: 2rpx dashed var(--border-color);
+  margin: 32rpx 0;
+  position: relative;
 }
 
-.status-4 { /* 已完成 */
-  color: #52C41A;
-  background-color: rgba(82, 196, 26, 0.1);
+/* 分隔线两端装饰圆点 */
+.divider-dashed::before,
+.divider-dashed::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20rpx;
+  height: 20rpx;
+  background: var(--bg-color);
+  border-radius: 50%;
 }
 
-.status-5 { /* 已取消 */
-  color: #999;
-  background-color: #F5F5F5;
-}
+.divider-dashed::before { left: -36rpx; }
+.divider-dashed::after { right: -36rpx; }
 
-.card-body {
+/* ============================================
+   Pickup Code - 取餐码展示
+   ============================================ */
+.pickup-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24rpx;
+  padding: 20rpx 0;
 }
 
-.order-items {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  max-width: 65%;
-}
-
-.order-img {
-  width: 120rpx;
-  height: 120rpx;
-  background: #f8f8f8;
-  margin-right: 24rpx;
-  border-radius: 12rpx;
-  flex-shrink: 0;
-}
-
-.item-desc {
+.pickup-left {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  flex: 1;
-  height: 120rpx;
-  padding: 4rpx 0;
 }
 
-.item-name {
-  font-size: 28rpx;
-  margin-bottom: 8rpx;
-  color: #333;
-  font-weight: bold;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-}
-
-.order-time {
+.pickup-label {
   font-size: 22rpx;
-  color: #999;
+  color: var(--text-grey);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1rpx;
+  margin-bottom: 8rpx;
 }
 
-.order-total {
-  text-align: right;
-  flex-shrink: 0;
+.pickup-code {
+  font-size: 72rpx;
+  font-weight: 900;
+  color: var(--text-main);
+  letter-spacing: -4rpx;
+  line-height: 1;
+  font-family: 'SF Pro Display', -apple-system, sans-serif;
+}
+
+.qr-icon-box {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 16rpx;
+  border-radius: var(--radius-lg);
+  border: 2rpx solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.qr-modern {
+  width: 64rpx;
+  height: 64rpx;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-primary);
+}
+
+.qr-symbol {
+  font-size: 40rpx;
+  color: #fff;
+}
+
+.qr-icon {
+  font-size: 56rpx;
+}
+
+/* ============================================
+   Card Footer Action
+   ============================================ */
+.card-footer-action {
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  padding: 24rpx 36rpx;
+  border-top: 1px solid rgba(14, 165, 233, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-info {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
 }
 
-.total-label {
-  font-size: 24rpx;
-  color: #999;
-  margin-bottom: 4rpx;
+.total-info .label {
+  font-size: 22rpx;
+  color: var(--text-grey);
+  font-weight: 500;
 }
 
-.total-amount {
-  font-weight: 800;
+.total-info .amount {
   font-size: 36rpx;
-  color: #333;
+  font-weight: 900;
+  color: var(--text-main);
 }
 
-.card-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 20rpx;
-  border-top: 1rpx solid #f9f9f9;
-  padding-top: 20rpx;
-}
-
-.card-footer button {
+.btn-contact {
   margin: 0;
+  background: var(--white);
+  border: 2rpx solid var(--primary-color);
+  color: var(--primary-color);
   font-size: 26rpx;
-  border-radius: 32rpx;
-  padding: 0 32rpx;
-  line-height: 2.2;
+  border-radius: var(--radius-full);
+  padding: 16rpx 36rpx;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
 }
 
-.card-footer button[plain] {
-  border: 1rpx solid #ddd;
-  color: #666;
-  background: transparent;
+.btn-contact:active {
+  background: var(--primary-color);
+  color: white;
+  transform: scale(0.96);
 }
 
-.card-footer .btn-primary {
-  background: linear-gradient(135deg, #FF8C00, #FF6B00);
-  color: #fff;
+/* ============================================
+   History Card - 历史订单卡片
+   ============================================ */
+.history-card {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.history-card:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-xs);
+  background: #fafbfc;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.history-shop {
+  font-weight: 800;
+  font-size: 30rpx;
+  color: var(--text-main);
+}
+
+.history-status {
+  font-size: 22rpx;
+  padding: 8rpx 16rpx;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+}
+
+/* 状态颜色 */
+.history-status.status-1 { /* 待付款 */
+  background: linear-gradient(135deg, #fff7ed, #fed7aa);
+  color: #ea580c;
+}
+
+.history-status.status-5 { /* 已完成 */
+  background: linear-gradient(135deg, #f0fdf4, #bbf7d0);
+  color: #16a34a;
+}
+
+.history-status.status-6 { /* 已取消 */
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  color: #64748b;
+}
+
+.history-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding: 16rpx 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.history-desc {
+  font-size: 26rpx;
+  color: var(--text-sub);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 20rpx;
+}
+
+.history-amount {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.history-footer {
+  display: flex;
+  gap: 16rpx;
+}
+
+.btn-reorder {
+  flex: 1;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #b45309;
   border: none;
-  box-shadow: 0 4rpx 12rpx rgba(255, 107, 0, 0.2);
+  font-size: 26rpx;
+  font-weight: 700;
+  border-radius: var(--radius-lg);
+  padding: 18rpx 0;
+  box-shadow: var(--shadow-accent);
+  transition: all 0.2s;
 }
 
+.btn-reorder:active {
+  transform: scale(0.96);
+}
+
+.btn-outline {
+  flex: 1;
+  border: 2rpx solid var(--border-color);
+  color: var(--text-sub);
+  background: transparent;
+  font-size: 26rpx;
+  font-weight: 600;
+  border-radius: var(--radius-lg);
+  padding: 16rpx 0;
+  transition: all 0.2s;
+}
+
+.btn-outline:active {
+  background: var(--border-light);
+  transform: scale(0.96);
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 200rpx;
-  color: #999;
+  margin-top: 160rpx;
+  animation: fadeIn 0.5s ease-out;
 }
 
 .empty-img {
-  width: 300rpx;
-  height: 300rpx;
-  margin-bottom: 30rpx;
-  opacity: 0.8;
+  width: 280rpx;
+  height: 280rpx;
+  margin-bottom: 40rpx;
+  opacity: 0.7;
 }
 
+.empty-state text {
+  font-size: 30rpx;
+  color: var(--text-grey);
+  font-weight: 500;
+}
+
+.btn-go-shop {
+  margin-top: 48rpx;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+  padding: 24rpx 72rpx;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 30rpx;
+  box-shadow: var(--shadow-primary);
+  transition: all 0.2s;
+}
+
+.btn-go-shop:active {
+  transform: scale(0.96);
+}
+
+/* ============================================
+   Loading States
+   ============================================ */
 .loading-more, .no-more {
   text-align: center;
-  padding: 30rpx;
-  color: #999;
+  padding: 40rpx;
+  color: var(--text-grey);
   font-size: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+}
+
+.loading-spinner {
+  width: 32rpx;
+  height: 32rpx;
+  border: 3rpx solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20rpx); }
+  to { opacity: 1; transform: translateY(0); }
 }

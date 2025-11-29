@@ -1,39 +1,184 @@
 <!--pages/user/user.wxml-->
 <view class="container">
-  <view class="user-header">
-    <image class="avatar" src="{{userInfo.avatarUrl || defaultAvatar}}" mode="aspectFill"></image>
-    <view class="user-info" wx:if="{{isLoggedIn}}">
-      <text class="nickname">{{userInfo.nickName}}</text>
-      <text class="role">{{userInfo.role === 'teacher' ? '教师用户' : '学生用户'}}</text>
-    </view>
-    <view class="login-btn" wx:else bindtap="login">
-      <text>点击登录</text>
-    </view>
+  <!-- Header Background -->
+  <view class="header-bg">
+    <view class="header-deco"></view>
   </view>
 
-  <view class="stats-card" wx:if="{{isLoggedIn}}">
-    <view class="stat-item" bindtap="goRecharge">
-      <text class="num">¥{{stats.balance}}</text>
-      <text class="label">钱包余额</text>
-      <view class="recharge-btn-mini">充值</view>
-    </view>
-    <view class="stat-item" bindtap="handleStatClick" data-type="coupon">
-      <text class="num">{{stats.coupon}}</text>
-      <text class="label">优惠券</text>
-    </view>
-  </view>
-
-  <view class="menu-list">
-    <view class="menu-item" wx:for="{{menuItems}}" wx:key="title" bindtap="handleMenuClick" data-action="{{item.action}}">
-      <view class="left">
-        <image class="menu-icon" src="{{item.icon}}"></image>
-        <text class="menu-title">{{item.title}}</text>
+  <!-- Profile Card -->
+  <view class="profile-card-wrapper">
+    <view class="profile-card">
+      <!-- Avatar -->
+      <view class="avatar-section">
+        <view class="avatar-wrapper" bindtap="goToProfile">
+          <image class="avatar" src="{{userInfo.avatarUrl || defaultAvatar}}" mode="aspectFill"></image>
+          <view class="login-mask" wx:if="{{!isLoggedIn}}" catchtap="login">
+            <text>登录</text>
+          </view>
+          <view class="edit-badge" wx:if="{{isLoggedIn}}">
+            <text>✏️</text>
+          </view>
+        </view>
       </view>
-      <text class="arrow">></text>
+
+      <!-- User Info -->
+      <view class="user-meta" wx:if="{{isLoggedIn}}" bindtap="goToProfile">
+        <text class="nickname">{{userInfo.nickName}}</text>
+        <view class="signature" wx:if="{{userInfo.signature}}">
+          <text>{{userInfo.signature}}</text>
+        </view>
+        <view class="signature" wx:else>
+          <text class="signature-placeholder">点击设置个性签名~</text>
+        </view>
+        <view class="level-badge level-{{userLevel.level}}">
+          <text class="level-icon">{{userLevel.icon}}</text>
+          <text>Lv.{{userLevel.level}} {{userLevel.title}}</text>
+        </view>
+      </view>
+      <view class="user-meta" wx:else bindtap="login">
+        <text class="nickname">点击登录</text>
+        <text class="login-hint">登录体验更多功能</text>
+      </view>
+
+      <!-- Stats Row -->
+      <view class="stats-row">
+        <view class="stat-item" bindtap="goToMyPosts">
+          <text class="stat-num">{{stats.posts || 0}}</text>
+          <text class="stat-label">帖子</text>
+        </view>
+        <view class="stat-item" bindtap="goToMyCollects">
+          <text class="stat-num">{{stats.collects || 0}}</text>
+          <text class="stat-label">收藏</text>
+        </view>
+        <view class="stat-item" bindtap="goToMyLikes">
+          <text class="stat-num">{{stats.likes || 0}}</text>
+          <text class="stat-label">获赞</text>
+        </view>
+        <view class="stat-item" bindtap="goToCoupon">
+          <text class="stat-num">{{stats.coupon || 0}}</text>
+          <text class="stat-label">优惠券</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Level Progress Card -->
+  <view class="level-card" wx:if="{{isLoggedIn}}">
+    <view class="level-header">
+      <view class="level-info">
+        <text class="level-title">{{userLevel.title}}</text>
+        <text class="level-exp">{{userLevel.currentExp}}/{{userLevel.nextExp}} 经验</text>
+      </view>
+      <view class="level-detail" bindtap="goToLevelDetail">
+        <text>等级详情</text>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+    <view class="level-progress-bar">
+      <view class="level-progress" style="width: {{userLevel.progress}}%"></view>
+    </view>
+    <view class="level-tips">
+      <text>{{userLevel.tips}}</text>
+    </view>
+  </view>
+
+  <!-- Quick Actions -->
+  <view class="quick-actions">
+    <view class="action-item" bindtap="goToMyPosts">
+      <view class="action-icon" style="background: linear-gradient(135deg, #e0f2fe, #bae6fd);">
+        <text>📝</text>
+      </view>
+      <text class="action-text">我的帖子</text>
+    </view>
+    <view class="action-item" bindtap="goToMyCollects">
+      <view class="action-icon" style="background: linear-gradient(135deg, #fef3c7, #fde68a);">
+        <text>⭐</text>
+      </view>
+      <text class="action-text">我的收藏</text>
+    </view>
+    <view class="action-item" bindtap="goToMessages">
+      <view class="action-icon" style="background: linear-gradient(135deg, #fce7f3, #fbcfe8);">
+        <text>💬</text>
+      </view>
+      <text class="action-text">消息</text>
+      <view class="action-badge" wx:if="{{unreadCount > 0}}">{{unreadCount > 99 ? '99+' : unreadCount}}</view>
+    </view>
+    <view class="action-item" bindtap="goToOrders">
+      <view class="action-icon" style="background: linear-gradient(135deg, #d1fae5, #a7f3d0);">
+        <text>📋</text>
+      </view>
+      <text class="action-text">我的订单</text>
+    </view>
+  </view>
+
+  <!-- Action Menu -->
+  <view class="action-list">
+    <!-- Wallet Card -->
+    <view class="action-card" bindtap="goRecharge">
+      <view class="action-left">
+        <view class="icon-circle icon-wallet">
+          <text class="emoji-icon">💰</text>
+        </view>
+        <text class="action-title">我的钱包</text>
+      </view>
+      <view class="action-right">
+        <text class="balance-text">¥{{stats.balance || '0.00'}}</text>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+
+    <!-- Address Card -->
+    <view class="action-card" bindtap="goToAddress">
+      <view class="action-left">
+        <view class="icon-circle icon-address">
+          <text class="emoji-icon">📍</text>
+        </view>
+        <text class="action-title">收货地址</text>
+      </view>
+      <view class="action-right">
+        <text class="arrow">›</text>
+      </view>
+    </view>
+
+    <!-- Menu Group -->
+    <view class="menu-group">
+      <view class="menu-row" bindtap="goToProfile">
+        <view class="menu-left">
+          <text class="menu-emoji">👤</text>
+          <text>个人信息</text>
+        </view>
+        <text class="arrow">›</text>
+      </view>
+      <view class="menu-divider"></view>
+      <view class="menu-row" bindtap="goToFeedback">
+        <view class="menu-left">
+          <text class="menu-emoji">📮</text>
+          <text>意见反馈</text>
+        </view>
+        <text class="arrow">›</text>
+      </view>
+      <view class="menu-divider"></view>
+      <view class="menu-row" bindtap="contactService">
+        <view class="menu-left">
+          <text class="menu-emoji">🎧</text>
+          <text>联系客服</text>
+        </view>
+        <text class="arrow">›</text>
+      </view>
+      <view class="menu-divider"></view>
+      <view class="menu-row" bindtap="goToSettings">
+        <view class="menu-left">
+          <text class="menu-emoji">⚙️</text>
+          <text>系统设置</text>
+        </view>
+        <text class="arrow">›</text>
+      </view>
     </view>
   </view>
 
   <view class="logout-btn" wx:if="{{isLoggedIn}}" bindtap="logout">
     退出登录
   </view>
+  
+  <view class="footer-spacer"></view>
 </view>

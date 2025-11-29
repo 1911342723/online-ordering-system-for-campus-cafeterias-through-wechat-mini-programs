@@ -17,7 +17,7 @@ const DEFAULT_IMAGES = {
   dish: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80',
   
   // 用户头像默认图
-  avatar: 'https://ui-avatars.com/api/?name=User&background=FF5000&color=fff&rounded=true',
+  avatar: 'https://ui-avatars.com/api/?name=User&background=38bdf8&color=fff&rounded=true',
   
   // 空状态图
   empty: 'https://cdn-icons-png.flaticon.com/512/4076/4076432.png',
@@ -70,12 +70,12 @@ function getOrderStatusText(status, deliveryType) {
 
 // 订单状态颜色 - Updated to new palette
 const ORDER_STATUS_COLOR = {
-  1: '#FF5000', // Primary Orange
-  2: '#FF8F40', // Secondary Orange
-  3: '#1890FF', // Blue
-  4: '#52C41A', // Green
-  5: '#999999', // Grey
-  6: '#F5222D'  // Red
+  1: '#38bdf8', // Brand Blue
+  2: '#0284c7', // Dark Blue
+  3: '#fbbf24', // Yellow/Amber
+  4: '#34d399', // Green
+  5: '#9ca3af', // Grey
+  6: '#f87171'  // Red
 }
 
 // 菜品分类类型
@@ -95,4 +95,3 @@ module.exports = {
   CATEGORY_TYPE,
   getOrderStatusText
 }
-

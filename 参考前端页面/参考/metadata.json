@@ -1,0 +1,7 @@
+{
+  "name": "Stall Radar (Campus CBD)",
+  "description": "A Wechat Mini-program style app for campus food stalls featuring AI recommendations, radar tracking, and order management.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

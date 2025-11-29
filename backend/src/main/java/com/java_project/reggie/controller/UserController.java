@@ -137,12 +137,19 @@ public class UserController {
         if (userParam.getAvatar() != null) {
             user.setAvatar(userParam.getAvatar());
         }
+        // 支持更新个性签名
+        if (userParam.getSignature() != null) {
+            user.setSignature(userParam.getSignature());
+        }
         
         userService.updateById(user);
         
-        log.info("用户{}更新信息", userId);
+        // 返回更新后的用户信息（重新从数据库获取确保数据一致）
+        User updatedUser = userService.getById(userId);
         
-        return R.success(user);
+        log.info("用户{}更新信息成功", userId);
+        
+        return R.success(updatedUser);
     }
     
     /**

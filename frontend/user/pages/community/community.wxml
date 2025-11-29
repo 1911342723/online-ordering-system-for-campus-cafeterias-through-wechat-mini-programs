@@ -1,0 +1,221 @@
+<!--pages/community/community.wxml-->
+<view class="container">
+  <!-- 搜索栏 - 单独一行 -->
+  <view class="search-header">
+    <view class="search-bar" bindtap="goToSearch">
+      <text class="search-icon">🔍</text>
+      <text class="search-placeholder">搜索笔记、用户、话题</text>
+    </view>
+  </view>
+
+  <!-- Tab 栏 - 三个模块均匀分布 -->
+  <view class="tabs-wrapper">
+    <view class="tabs">
+      <view class="tab-item {{activeTab === 'follow' ? 'active' : ''}}" bindtap="switchTab" data-tab="follow">
+        <text class="tab-text">关注</text>
+        <view class="tab-indicator" wx:if="{{activeTab === 'follow'}}"></view>
+      </view>
+      <view class="tab-item {{activeTab === 'discover' ? 'active' : ''}}" bindtap="switchTab" data-tab="discover">
+        <text class="tab-text">发现</text>
+        <view class="tab-indicator" wx:if="{{activeTab === 'discover'}}"></view>
+      </view>
+      <view class="tab-item {{activeTab === 'nearby' ? 'active' : ''}}" bindtap="switchTab" data-tab="nearby">
+        <text class="tab-text">附近</text>
+        <view class="tab-indicator" wx:if="{{activeTab === 'nearby'}}"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 内容区域 -->
+  <scroll-view 
+    scroll-y 
+    class="content-scroll" 
+    bindscrolltolower="loadMore"
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onRefresh"
+  >
+    <!-- 关注 Tab - 无关注时显示推荐 -->
+    <view class="tab-content" wx:if="{{activeTab === 'follow'}}">
+      <view class="empty-follow" wx:if="{{followList.length === 0 && !loading}}">
+        <text class="empty-icon">👥</text>
+        <text class="empty-title">还没有关注的人</text>
+        <text class="empty-desc">去发现页看看，关注感兴趣的美食达人吧~</text>
+        <view class="empty-btn" bindtap="switchToDiscover">去发现</view>
+      </view>
+      
+      <view class="waterfall-content" wx:if="{{followList.length > 0}}">
+        <view class="column">
+          <block wx:for="{{followLeftCol}}" wx:key="id">
+            <view class="note-card" bindtap="onCardClick" data-note="{{item}}">
+              <image src="{{item.coverImage || item.image}}" mode="widthFix" class="note-img" lazy-load="true"></image>
+              <view class="note-info">
+                <text class="note-title">{{item.title}}</text>
+                <view class="note-footer">
+                  <view class="user-info">
+                    <image src="{{item.userAvatar || defaultAvatar}}" class="user-avatar"></image>
+                    <text class="user-name">{{item.userName || item.user}}</text>
+                  </view>
+                  <view class="like-info" catchtap="onLike" data-note="{{item}}">
+                    <text class="heart-icon">{{item.isLiked ? '❤️' : '🤍'}}</text>
+                    <text class="like-num">{{item.likeCount || item.likes || 0}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </block>
+        </view>
+        <view class="column">
+          <block wx:for="{{followRightCol}}" wx:key="id">
+            <view class="note-card" bindtap="onCardClick" data-note="{{item}}">
+              <image src="{{item.coverImage || item.image}}" mode="widthFix" class="note-img" lazy-load="true"></image>
+              <view class="note-info">
+                <text class="note-title">{{item.title}}</text>
+                <view class="note-footer">
+                  <view class="user-info">
+                    <image src="{{item.userAvatar || defaultAvatar}}" class="user-avatar"></image>
+                    <text class="user-name">{{item.userName || item.user}}</text>
+                  </view>
+                  <view class="like-info" catchtap="onLike" data-note="{{item}}">
+                    <text class="heart-icon">{{item.isLiked ? '❤️' : '🤍'}}</text>
+                    <text class="like-num">{{item.likeCount || item.likes || 0}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </block>
+        </view>
+      </view>
+    </view>
+
+    <!-- 发现 Tab -->
+    <view class="tab-content" wx:if="{{activeTab === 'discover'}}">
+      <!-- 热门话题 -->
+      <view class="hot-topics" wx:if="{{hotTopics.length > 0}}">
+        <scroll-view scroll-x class="topics-scroll" enhanced show-scrollbar="{{false}}">
+          <view class="topic-item" wx:for="{{hotTopics}}" wx:key="id" bindtap="onTopicClick" data-topic="{{item}}">
+            <text class="topic-icon">🔥</text>
+            <text class="topic-name">#{{item.name}}</text>
+          </view>
+        </scroll-view>
+      </view>
+      
+      <view class="waterfall-content">
+        <view class="column">
+          <block wx:for="{{discoverLeftCol}}" wx:key="id">
+            <view class="note-card" bindtap="onCardClick" data-note="{{item}}">
+              <view class="card-badge" wx:if="{{item.isFeatured}}">精选</view>
+              <image src="{{item.coverImage || item.image}}" mode="widthFix" class="note-img" lazy-load="true"></image>
+              <view class="note-info">
+                <text class="note-title">{{item.title}}</text>
+                <view class="note-footer">
+                  <view class="user-info">
+                    <image src="{{item.userAvatar || defaultAvatar}}" class="user-avatar"></image>
+                    <text class="user-name">{{item.userName || item.user}}</text>
+                  </view>
+                  <view class="like-info" catchtap="onLike" data-note="{{item}}">
+                    <text class="heart-icon">{{item.isLiked ? '❤️' : '🤍'}}</text>
+                    <text class="like-num">{{item.likeCount || item.likes || 0}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </block>
+        </view>
+        <view class="column">
+          <block wx:for="{{discoverRightCol}}" wx:key="id">
+            <view class="note-card" bindtap="onCardClick" data-note="{{item}}">
+              <view class="card-badge" wx:if="{{item.isFeatured}}">精选</view>
+              <image src="{{item.coverImage || item.image}}" mode="widthFix" class="note-img" lazy-load="true"></image>
+              <view class="note-info">
+                <text class="note-title">{{item.title}}</text>
+                <view class="note-footer">
+                  <view class="user-info">
+                    <image src="{{item.userAvatar || defaultAvatar}}" class="user-avatar"></image>
+                    <text class="user-name">{{item.userName || item.user}}</text>
+                  </view>
+                  <view class="like-info" catchtap="onLike" data-note="{{item}}">
+                    <text class="heart-icon">{{item.isLiked ? '❤️' : '🤍'}}</text>
+                    <text class="like-num">{{item.likeCount || item.likes || 0}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </block>
+        </view>
+      </view>
+    </view>
+
+    <!-- 附近 Tab -->
+    <view class="tab-content" wx:if="{{activeTab === 'nearby'}}">
+      <view class="location-bar" wx:if="{{location}}">
+        <text class="location-icon">📍</text>
+        <text class="location-text">{{location}}</text>
+        <text class="location-change" bindtap="changeLocation">切换</text>
+      </view>
+      
+      <view class="waterfall-content">
+        <view class="column">
+          <block wx:for="{{nearbyLeftCol}}" wx:key="id">
+            <view class="note-card" bindtap="onCardClick" data-note="{{item}}">
+              <view class="distance-badge">{{item.distance || '100m'}}</view>
+              <image src="{{item.coverImage || item.image}}" mode="widthFix" class="note-img" lazy-load="true"></image>
+              <view class="note-info">
+                <text class="note-title">{{item.title}}</text>
+                <view class="note-footer">
+                  <view class="user-info">
+                    <image src="{{item.userAvatar || defaultAvatar}}" class="user-avatar"></image>
+                    <text class="user-name">{{item.userName || item.user}}</text>
+                  </view>
+                  <view class="like-info" catchtap="onLike" data-note="{{item}}">
+                    <text class="heart-icon">{{item.isLiked ? '❤️' : '🤍'}}</text>
+                    <text class="like-num">{{item.likeCount || item.likes || 0}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </block>
+        </view>
+        <view class="column">
+          <block wx:for="{{nearbyRightCol}}" wx:key="id">
+            <view class="note-card" bindtap="onCardClick" data-note="{{item}}">
+              <view class="distance-badge">{{item.distance || '100m'}}</view>
+              <image src="{{item.coverImage || item.image}}" mode="widthFix" class="note-img" lazy-load="true"></image>
+              <view class="note-info">
+                <text class="note-title">{{item.title}}</text>
+                <view class="note-footer">
+                  <view class="user-info">
+                    <image src="{{item.userAvatar || defaultAvatar}}" class="user-avatar"></image>
+                    <text class="user-name">{{item.userName || item.user}}</text>
+                  </view>
+                  <view class="like-info" catchtap="onLike" data-note="{{item}}">
+                    <text class="heart-icon">{{item.isLiked ? '❤️' : '🤍'}}</text>
+                    <text class="like-num">{{item.likeCount || item.likes || 0}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </block>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading-more" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+      <text>加载中...</text>
+    </view>
+    
+    <view class="no-more" wx:if="{{!hasMore && !loading}}">
+      <text>— 没有更多了 —</text>
+    </view>
+    
+    <view class="bottom-spacer"></view>
+  </scroll-view>
+  
+  <!-- 发布按钮 -->
+  <view class="publish-btn" bindtap="onPublish">
+    <text class="publish-icon">✏️</text>
+    <text class="publish-text">发布</text>
+  </view>
+</view>

@@ -3,7 +3,6 @@ package com.java_project.reggie.entity;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -18,19 +17,19 @@ public class Message implements Serializable {
     private Long id;
     
     /**
-     * 商家ID
-     */
-    private Long merchantId;
-    
-    /**
-     * 用户ID
+     * 接收用户ID
      */
     private Long userId;
     
     /**
-     * 用户名称（冗余字段）
+     * 发送用户ID（系统消息为空）
      */
-    private String userName;
+    private Long fromUserId;
+    
+    /**
+     * 消息类型：like=点赞, comment=评论, collect=收藏, system=系统
+     */
+    private String type;
     
     /**
      * 消息内容
@@ -38,19 +37,38 @@ public class Message implements Serializable {
     private String content;
     
     /**
-     * 是否来自商家
+     * 关联笔记ID
      */
-    private Boolean fromMerchant;
+    private Long noteId;
     
     /**
-     * 状态 0-未读 1-已读
+     * 是否已读 0:未读 1:已读
      */
-    private Integer status;
+    private Integer isRead;
     
     /**
      * 创建时间
      */
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
+    
+    // ========== 非数据库字段 ==========
+    
+    /**
+     * 发送用户名称
+     */
+    @TableField(exist = false)
+    private String fromUserName;
+    
+    /**
+     * 发送用户头像
+     */
+    @TableField(exist = false)
+    private String fromUserAvatar;
+    
+    /**
+     * 关联笔记标题
+     */
+    @TableField(exist = false)
+    private String noteTitle;
 }
-

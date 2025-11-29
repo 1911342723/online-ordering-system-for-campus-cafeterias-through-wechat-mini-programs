@@ -1,0 +1,282 @@
+/* pages/user/profile.wxss */
+page {
+  background: #f1f5f9;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.container {
+  padding-bottom: 60rpx;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Avatar Section */
+.avatar-section {
+  display: flex;
+  justify-content: center;
+  padding: 60rpx 0 40rpx;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+}
+
+.avatar-wrapper {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.2);
+  border: 6rpx solid rgba(255, 255, 255, 0.8);
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+}
+
+.avatar-mask {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60rpx;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 22rpx;
+}
+
+/* Form Section */
+.form-section {
+  margin: 24rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.form-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32rpx;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.form-item:last-child {
+  border-bottom: none;
+}
+
+.form-label {
+  font-size: 30rpx;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.form-value {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 28rpx;
+  color: #64748b;
+}
+
+.form-value .placeholder {
+  color: #94a3b8;
+}
+
+.arrow {
+  color: #94a3b8;
+  font-size: 28rpx;
+}
+
+/* Level Section */
+.level-section {
+  margin: 24rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 16rpx;
+  padding-left: 8rpx;
+}
+
+.level-info-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.level-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+}
+
+.level-row:not(:last-child) {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.level-label {
+  font-size: 28rpx;
+  color: #64748b;
+}
+
+.level-value {
+  font-size: 28rpx;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.level-badge {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #b45309;
+  font-size: 24rpx;
+  font-weight: 700;
+  padding: 8rpx 16rpx;
+  border-radius: 12rpx;
+}
+
+/* Rules Section */
+.rules-section {
+  margin: 24rpx;
+}
+
+.rules-list {
+  background: #fff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.rule-item:last-child {
+  border-bottom: none;
+}
+
+.rule-icon {
+  font-size: 32rpx;
+  margin-right: 16rpx;
+}
+
+.rule-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #475569;
+}
+
+.rule-exp {
+  font-size: 26rpx;
+  color: #0ea5e9;
+  font-weight: 700;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: none;
+}
+
+.modal.show {
+  display: block;
+}
+
+.modal-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 32rpx;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32rpx;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.modal-close {
+  font-size: 36rpx;
+  color: #94a3b8;
+  padding: 10rpx;
+}
+
+.modal-input {
+  width: 100%;
+  height: 88rpx;
+  background: #f1f5f9;
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+  margin-bottom: 24rpx;
+}
+
+.modal-textarea {
+  width: 100%;
+  min-height: 160rpx;
+  background: #f1f5f9;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  font-size: 30rpx;
+  margin-bottom: 24rpx;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.char-count {
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+.save-btn {
+  padding: 16rpx 48rpx;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 700;
+  border-radius: 40rpx;
+  border: none;
+}
+

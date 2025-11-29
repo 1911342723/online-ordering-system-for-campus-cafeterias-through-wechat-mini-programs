@@ -1,0 +1,77 @@
+<!--pages/user/messages.wxml-->
+<view class="container">
+  <!-- Tabs -->
+  <view class="tabs">
+    <view class="tab {{activeTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-tab="all">
+      <text>全部</text>
+    </view>
+    <view class="tab {{activeTab === 'like' ? 'active' : ''}}" bindtap="switchTab" data-tab="like">
+      <text>点赞</text>
+      <view class="tab-badge" wx:if="{{likeUnread > 0}}">{{likeUnread}}</view>
+    </view>
+    <view class="tab {{activeTab === 'comment' ? 'active' : ''}}" bindtap="switchTab" data-tab="comment">
+      <text>评论</text>
+      <view class="tab-badge" wx:if="{{commentUnread > 0}}">{{commentUnread}}</view>
+    </view>
+    <view class="tab {{activeTab === 'system' ? 'active' : ''}}" bindtap="switchTab" data-tab="system">
+      <text>系统</text>
+      <view class="tab-badge" wx:if="{{systemUnread > 0}}">{{systemUnread}}</view>
+    </view>
+  </view>
+
+  <!-- Message List -->
+  <scroll-view 
+    scroll-y 
+    class="message-list" 
+    bindscrolltolower="loadMore"
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onRefresh"
+  >
+    <!-- Empty State -->
+    <view class="empty-state" wx:if="{{messages.length === 0 && !loading}}">
+      <text class="empty-icon">💬</text>
+      <text class="empty-title">暂无消息</text>
+      <text class="empty-desc">去发布帖子，和大家互动吧~</text>
+    </view>
+
+    <!-- Message Items -->
+    <view class="message-item {{item.isRead ? '' : 'unread'}}" wx:for="{{messages}}" wx:key="id" bindtap="goToDetail" data-message="{{item}}">
+      <view class="message-icon {{item.type}}">
+        <text wx:if="{{item.type === 'like'}}">❤️</text>
+        <text wx:elif="{{item.type === 'comment'}}">💬</text>
+        <text wx:elif="{{item.type === 'collect'}}">⭐</text>
+        <text wx:else>📢</text>
+      </view>
+      <view class="message-content">
+        <view class="message-header">
+          <text class="message-user">{{item.fromUserName || '系统消息'}}</text>
+          <text class="message-time">{{item.createTimeStr}}</text>
+        </view>
+        <text class="message-text">{{item.content}}</text>
+        <view class="message-target" wx:if="{{item.noteTitle}}">
+          <text>相关帖子：{{item.noteTitle}}</text>
+        </view>
+      </view>
+      <view class="unread-dot" wx:if="{{!item.isRead}}"></view>
+    </view>
+
+    <!-- Loading -->
+    <view class="loading" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+      <text>加载中...</text>
+    </view>
+
+    <view class="no-more" wx:if="{{!hasMore && messages.length > 0}}">
+      <text>— 没有更多了 —</text>
+    </view>
+    
+    <view class="bottom-spacer"></view>
+  </scroll-view>
+
+  <!-- Mark All Read -->
+  <view class="mark-read-btn" wx:if="{{totalUnread > 0}}" bindtap="markAllRead">
+    全部已读
+  </view>
+</view>
+

@@ -2,153 +2,129 @@
 <view class="container">
   <!-- Header -->
   <view class="header">
-    <view class="header-top">
-      <view class="location-wrapper">
-        <image class="icon-location" src="{{icons.location}}"></image>
-        <text class="location-text">本部校区</text>
-        <view class="arrow-down"></view>
-      </view>
-      <view class="scan-btn" bindtap="onScanCode">
-        <image class="icon-scan" src="{{icons.scan}}"></image>
-        <text>扫码点餐</text>
-      </view>
+    <view class="header-left">
+      <image class="icon-location" src="{{icons.location}}"></image>
+      <text class="location-text">本部校区 · 北门</text>
+      <view class="arrow-down"></view>
     </view>
-    
-    <!-- Search Bar -->
-    <view class="search-bar" bindtap="onSearch">
-      <image class="icon-search" src="{{icons.search}}"></image>
-      <text class="placeholder">搜索商家或菜品</text>
+    <view class="header-right">
+      <view class="scan-btn-circle" bindtap="onScanCode">
+        <image class="icon-scan-white" src="{{icons.scan}}"></image>
+      </view>
     </view>
   </view>
 
-  <scroll-view scroll-y class="main-scroll">
-    <!-- Banner -->
-    <view class="banner-wrapper">
-      <swiper class="banner" indicator-dots indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#fff" autoplay circular interval="4000" duration="500">
+  <scroll-view scroll-y class="main-scroll" show-scrollbar="{{false}}">
+    <!-- Search Bar -->
+    <view class="search-wrapper">
+      <view class="search-bar" bindtap="onSearch">
+        <image class="icon-search" src="{{icons.search}}"></image>
+        <text class="placeholder">搜索商家、菜品或饮料...</text>
+      </view>
+    </view>
+
+    <!-- Banner (Styled like Reference Night Market Card) -->
+    <view class="banner-section">
+      <swiper class="banner-swiper" indicator-dots="{{false}}" autoplay circular interval="4000" duration="500">
         <swiper-item wx:for="{{banners}}" wx:key="id">
-          <view class="banner-item">
-            <image src="{{item.url || defaultBanner}}" mode="aspectFill" class="banner-img"></image>
+          <view class="banner-card">
+            <view class="banner-content">
+              <view class="new-badge">NEW</view>
+              <view class="banner-title">{{item.title || '校园夜市'}}</view>
+              <view class="banner-subtitle">集章兑换精美周边！</view>
+            </view>
+            <image src="{{item.url || defaultBanner}}" mode="aspectFill" class="banner-bg-img"></image>
+            <view class="banner-overlay"></view>
           </view>
         </swiper-item>
       </swiper>
     </view>
 
-    <!-- Announcements -->
-    <view class="announcement-section" wx:if="{{announcements.length > 0}}">
-      <swiper class="announcement-swiper" autoplay circular interval="3000" vertical>
-        <swiper-item wx:for="{{announcements}}" wx:key="id">
-          <view class="announcement-item" bindtap="showAnnouncementDetail" data-announcement="{{item}}">
-            <image class="announcement-icon" src="{{icons.announcement}}"></image>
-            <view class="announcement-content">
-              <text class="announcement-type">{{item.typeText}}</text>
-              <text class="announcement-title">{{item.title}}</text>
-            </view>
-            <view class="announcement-arrow">></view>
+    <!-- AI Oracle Section -->
+    <view class="ai-section">
+      <view class="ai-card" bindtap="goToAI">
+        <view class="ai-deco-circle"></view>
+        <view class="ai-content">
+          <view class="ai-header">
+            <text class="ai-icon-text">✨</text>
+            <text class="ai-title">美食神谕</text>
           </view>
-        </swiper-item>
-      </swiper>
-    </view>
-
-    <!-- Coupon Center Entry - 领券中心入口（始终显示） -->
-    <view class="coupon-center-entry" bindtap="goToCouponCenter">
-      <view class="entry-left">
-        <view class="entry-icon">🎁</view>
-        <view class="entry-content">
-          <view class="entry-title">领券中心</view>
-          <view class="entry-subtitle" wx:if="{{coupons.length > 0}}">{{coupons.length}}张优惠券待领取</view>
-          <view class="entry-subtitle" wx:else>查看更多优惠券</view>
-        </view>
-      </view>
-      <view class="entry-right">
-        <view class="entry-coupons" wx:if="{{coupons.length > 0}}">
-          <view class="mini-coupon" wx:for="{{coupons.slice(0, 3)}}" wx:key="id">
-            <text class="mini-amount">¥{{item.amount}}</text>
+          <text class="ai-desc">不知道吃什么？告诉我你的心情。</text>
+          
+          <view class="ai-input-mock">
+            <text class="ai-placeholder">例如：刚考完试，想吃点好的...</text>
+            <view class="ai-btn">问一问</view>
           </view>
-        </view>
-        <view class="entry-arrow">
-          <text>立即领取</text>
-          <text class="arrow">›</text>
         </view>
       </view>
     </view>
 
-    <!-- Today's Recommendations - 今日推荐板块 -->
-    <view class="today-recommend-section" wx:if="{{todayRecommendations.length > 0}}">
-      <view class="section-header">
-        <text class="section-title">今日推荐</text>
-        <text class="section-more" bindtap="refreshRecommendations">
-          <text>换一批</text>
-          <text class="arrow-icon">›</text>
-        </text>
+    <!-- Food Category Grid (金刚区) -->
+    <view class="category-section">
+      <view class="category-grid">
+        <view class="category-item" wx:for="{{categories}}" wx:key="id" bindtap="goToCategory" data-category="{{item}}">
+          <view class="category-icon-wrapper" style="background-color: {{item.bgColor}};">
+            <text class="category-icon">{{item.icon}}</text>
+          </view>
+          <text class="category-name">{{item.name}}</text>
+        </view>
       </view>
       
-      <scroll-view scroll-x class="recommendation-scroll" show-scrollbar="{{false}}">
-        <view class="recommendation-list">
-          <view class="recommendation-card" wx:for="{{todayRecommendations}}" wx:key="id" bindtap="goToDishDetail" data-dish="{{item}}">
-            <image src="{{item.image}}" mode="aspectFill" class="recommendation-img"></image>
-            <view class="recommendation-info">
-              <text class="dish-name">{{item.name}}</text>
-              <view class="dish-meta">
-                <text class="category-name">{{item.categoryName}}</text>
-              </view>
-              <view class="price-row">
-                <text class="price">¥{{item.price}}</text>
-                <view class="add-btn" catchtap="addToCart" data-dish="{{item}}">
-                  <text>+</text>
-                </view>
-              </view>
-            </view>
-          </view>
-        </view>
-      </scroll-view>
-    </view>
-
-    <!-- AI Assistant Entry -->
-    <view class="ai-entry" bindtap="goToAI">
-      <view class="ai-left">
-        <view class="ai-title-row">
-          <text class="ai-title">AI 智能推荐</text>
-          <view class="ai-tag">NEW</view>
-        </view>
-        <text class="ai-desc">不知道吃什么？让 AI 帮你挑美食</text>
-      </view>
-      <view class="ai-right">
-        <image class="ai-icon-img" src="{{icons.ai}}"></image>
+      <!-- More Categories Button -->
+      <view class="more-categories" bindtap="goToAllCategories">
+        <text class="more-text">全部分类</text>
+        <text class="more-arrow">›</text>
       </view>
     </view>
 
-    <!-- Canteen List -->
-    <view class="section">
+    <!-- Coupon Entry (Simplified) -->
+    <view class="coupon-entry" bindtap="goToCouponCenter" wx:if="{{coupons.length > 0}}">
+      <view class="coupon-icon-wrapper">
+        <text>🎁</text>
+      </view>
+      <view class="coupon-text">
+        <text class="coupon-title">领券中心</text>
+        <text class="coupon-desc">{{coupons.length}}张待领取</text>
+      </view>
+      <view class="coupon-arrow">›</view>
+    </view>
+
+    <!-- Popular Shops -->
+    <view class="section-stalls">
       <view class="section-header">
-        <text class="section-title">校园食堂</text>
-        <text class="section-more" bindtap="goToCanteenList">查看全部 ></text>
+        <text class="section-title-large">热门门店</text>
+        <view class="section-more" bindtap="goToAllShops">
+          <text>更多</text>
+          <text class="section-more-arrow">›</text>
+        </view>
       </view>
       
-      <view class="canteen-list">
-        <view class="canteen-card" wx:for="{{canteens}}" wx:key="id" bindtap="goToMenu" data-id="{{item.id}}" data-name="{{item.name}}" data-isopen="{{item.isOpen}}">
-          <view class="card-img-wrapper">
-            <image src="{{item.image || defaultCanteen}}" mode="aspectFill" class="canteen-img"></image>
-            <view class="status-badge {{item.isOpen ? 'open' : 'closed'}}">
-              {{item.isOpen ? '营业中' : '休息中'}}
+      <view class="stall-list">
+        <view class="stall-card" wx:for="{{canteens}}" wx:key="id" bindtap="goToMenu" data-id="{{item.id}}" data-name="{{item.name}}" data-isopen="{{item.isOpen}}">
+          <view class="stall-img-box">
+            <image src="{{item.image || defaultCanteen}}" mode="aspectFill" class="stall-img" lazy-load="true"></image>
+            <view class="stall-closed-mask" wx:if="{{!item.isOpen}}">
+              <text>休息中</text>
             </view>
+            <view class="stall-badge" wx:if="{{item.sales >= 2000}}">人气</view>
           </view>
           
-          <view class="canteen-info">
-            <view class="info-top">
-              <text class="canteen-name">{{item.name}}</text>
-              <view class="distance-badge">
-                <text>{{item.distance}}</text>
+          <view class="stall-info">
+            <view class="stall-header">
+              <text class="stall-name">{{item.name}}</text>
+              <view class="stall-rating-box">
+                <text class="stall-rating">★ {{item.rating}}</text>
               </view>
             </view>
             
-            <view class="rating-row">
-              <image class="icon-star" src="{{icons.star}}"></image>
-              <text class="score">{{item.rating}}</text>
-              <text class="sales">月售 {{item.sales}}+</text>
+            <view class="stall-meta">
+              <text class="stall-sales">月售{{item.sales}}</text>
+              <text class="stall-divider">|</text>
+              <text class="stall-distance-text">{{item.distance}}</text>
             </view>
             
-            <view class="tags-row">
-              <text class="tag" wx:for="{{item.tags}}" wx:key="*this" wx:for-item="tag">{{tag}}</text>
+            <view class="stall-tags">
+              <text class="stall-tag" wx:for="{{item.tags}}" wx:key="*this" wx:for-item="tag">{{tag}}</text>
             </view>
           </view>
         </view>
@@ -158,18 +134,18 @@
     <view class="footer-spacer"></view>
   </scroll-view>
 
-  <!-- Coupon Dialog 优惠券弹窗 -->
+  <!-- Coupon Dialog (Keep existing logic) -->
   <view class="coupon-dialog-mask" wx:if="{{showCouponDialog}}" bindtap="closeCouponDialog">
     <view class="coupon-dialog" catchtap="">
       <view class="dialog-close" bindtap="closeCouponDialog">×</view>
-      <view class="dialog-title">🎁 新人专享优惠券</view>
+      <view class="dialog-title">🎁 新人专享</view>
       <view class="dialog-subtitle">限时领取，数量有限</view>
       
       <view class="dialog-coupons">
         <view class="dialog-coupon-item" wx:for="{{coupons}}" wx:key="id">
           <view class="dialog-coupon-left">
             <text class="dialog-coupon-amount">¥{{item.amount}}</text>
-            <text class="dialog-coupon-condition">满{{item.minAmount}}元</text>
+            <text class="dialog-coupon-condition">满{{item.minAmount}}</text>
           </view>
           <view class="dialog-coupon-right">
             <view class="dialog-coupon-name">{{item.name}}</view>

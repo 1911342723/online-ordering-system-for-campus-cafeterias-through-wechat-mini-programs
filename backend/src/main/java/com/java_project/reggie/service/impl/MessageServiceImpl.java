@@ -6,10 +6,6 @@ import com.java_project.reggie.mapper.MessageMapper;
 import com.java_project.reggie.service.MessageService;
 import org.springframework.stereotype.Service;
 
-/**
- * 消息ServiceImpl
- */
 @Service
 public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> implements MessageService {
 }
-

@@ -1,19 +1,27 @@
 package com.java_project.reggie.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.java_project.reggie.common.BaseContext;
 import com.java_project.reggie.common.R;
 import com.java_project.reggie.entity.Message;
+import com.java_project.reggie.entity.Note;
+import com.java_project.reggie.entity.User;
 import com.java_project.reggie.service.MessageService;
+import com.java_project.reggie.service.NoteService;
+import com.java_project.reggie.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * 消息功能Controller
+ * 消息Controller
  */
 @Slf4j
 @RestController
@@ -22,109 +30,159 @@ public class MessageController {
 
     @Autowired
     private MessageService messageService;
+    
+    @Autowired
+    private UserService userService;
+    
+    @Autowired
+    private NoteService noteService;
 
     /**
-     * 获取对话列表
+     * 获取未读消息数量
      */
-    @GetMapping("/conversations")
-    public R<List<Map<String, Object>>> getConversations(@RequestParam Long merchantId) {
-        log.info("获取商家{}的对话列表", merchantId);
+    @GetMapping("/unread/count")
+    public R<Integer> getUnreadCount() {
+        Long userId = BaseContext.getThreadLocal();
+        if (userId == null) {
+            return R.success(0);
+        }
         
-        LambdaQueryWrapper<Message> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Message::getMerchantId, merchantId);
-        wrapper.orderByDesc(Message::getCreateTime);
+        LambdaQueryWrapper<Message> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Message::getUserId, userId);
+        queryWrapper.eq(Message::getIsRead, 0);
         
-        List<Message> messages = messageService.list(wrapper);
+        int count = messageService.count(queryWrapper);
         
-        // 按用户分组
-        Map<Long, List<Message>> grouped = messages.stream()
-                .collect(Collectors.groupingBy(Message::getUserId));
+        return R.success(count);
+    }
+
+    /**
+     * 获取未读消息详细数量（按类型）
+     */
+    @GetMapping("/unread/detail")
+    public R<Map<String, Integer>> getUnreadDetail() {
+        Long userId = BaseContext.getThreadLocal();
+        if (userId == null) {
+            Map<String, Integer> result = new HashMap<>();
+            result.put("total", 0);
+            result.put("like", 0);
+            result.put("comment", 0);
+            result.put("system", 0);
+            return R.success(result);
+        }
         
-        List<Map<String, Object>> conversations = new ArrayList<>();
+        Map<String, Integer> result = new HashMap<>();
         
-        grouped.forEach((userId, msgs) -> {
-            Map<String, Object> conv = new HashMap<>();
-            Message latest = msgs.get(0);
-            
-            conv.put("id", userId);
-            conv.put("userId", userId);
-            conv.put("userName", latest.getUserName());
-            conv.put("lastMessage", latest.getContent());
-            conv.put("lastMessageTime", latest.getCreateTime());
-            conv.put("unreadCount", msgs.stream().filter(m -> !m.getFromMerchant() && m.getStatus() == 0).count());
-            
-            conversations.add(conv);
-        });
+        // 总未读数
+        LambdaQueryWrapper<Message> totalWrapper = new LambdaQueryWrapper<>();
+        totalWrapper.eq(Message::getUserId, userId).eq(Message::getIsRead, 0);
+        result.put("total", messageService.count(totalWrapper));
         
-        // 按最后消息时间排序
-        conversations.sort((a, b) -> {
-            Date timeA = (Date) a.get("lastMessageTime");
-            Date timeB = (Date) b.get("lastMessageTime");
-            return timeB.compareTo(timeA);
-        });
+        // 点赞未读数
+        LambdaQueryWrapper<Message> likeWrapper = new LambdaQueryWrapper<>();
+        likeWrapper.eq(Message::getUserId, userId).eq(Message::getIsRead, 0).eq(Message::getType, "like");
+        result.put("like", messageService.count(likeWrapper));
         
-        return R.success(conversations);
+        // 评论未读数
+        LambdaQueryWrapper<Message> commentWrapper = new LambdaQueryWrapper<>();
+        commentWrapper.eq(Message::getUserId, userId).eq(Message::getIsRead, 0).eq(Message::getType, "comment");
+        result.put("comment", messageService.count(commentWrapper));
+        
+        // 系统未读数
+        LambdaQueryWrapper<Message> systemWrapper = new LambdaQueryWrapper<>();
+        systemWrapper.eq(Message::getUserId, userId).eq(Message::getIsRead, 0).eq(Message::getType, "system");
+        result.put("system", messageService.count(systemWrapper));
+        
+        return R.success(result);
     }
 
     /**
      * 获取消息列表
      */
     @GetMapping("/list")
-    public R<List<Message>> getMessages(
-            @RequestParam Long merchantId,
-            @RequestParam Long userId) {
+    public R<Page<Message>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize,
+            @RequestParam(required = false) String type) {
         
-        log.info("获取商家{}与用户{}的消息", merchantId, userId);
+        Long userId = BaseContext.getThreadLocal();
+        if (userId == null) {
+            return R.error("请先登录");
+        }
         
-        LambdaQueryWrapper<Message> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Message::getMerchantId, merchantId)
-                .eq(Message::getUserId, userId)
-                .orderByAsc(Message::getCreateTime);
+        Page<Message> pageInfo = new Page<>(page, pageSize);
         
-        List<Message> messages = messageService.list(wrapper);
+        LambdaQueryWrapper<Message> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Message::getUserId, userId);
         
-        // 标记商家收到的消息为已读
-        messages.stream()
-                .filter(m -> !m.getFromMerchant() && m.getStatus() == 0)
-                .forEach(m -> {
-                    m.setStatus(1);
-                    messageService.updateById(m);
-                });
+        if (StringUtils.hasText(type)) {
+            queryWrapper.eq(Message::getType, type);
+        }
         
-        return R.success(messages);
+        queryWrapper.orderByDesc(Message::getCreateTime);
+        
+        messageService.page(pageInfo, queryWrapper);
+        
+        // 填充发送者信息和笔记信息
+        for (Message message : pageInfo.getRecords()) {
+            // 填充发送者信息
+            if (message.getFromUserId() != null) {
+                User fromUser = userService.getById(message.getFromUserId());
+                if (fromUser != null) {
+                    message.setFromUserName(fromUser.getName());
+                    message.setFromUserAvatar(fromUser.getAvatar());
+                }
+            }
+            
+            // 填充笔记标题
+            if (message.getNoteId() != null) {
+                Note note = noteService.getById(message.getNoteId());
+                if (note != null) {
+                    message.setNoteTitle(note.getTitle());
+                }
+            }
+        }
+        
+        return R.success(pageInfo);
     }
 
     /**
-     * 发送消息
+     * 标记单条消息为已读
      */
-    @PostMapping("/send")
-    public R<String> sendMessage(@RequestBody Message message) {
-        log.info("发送消息：{}", message);
+    @PostMapping("/read/{id}")
+    public R<String> markAsRead(@PathVariable Long id) {
+        Long userId = BaseContext.getThreadLocal();
+        if (userId == null) {
+            return R.error("请先登录");
+        }
         
-        messageService.save(message);
+        LambdaUpdateWrapper<Message> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(Message::getId, id);
+        updateWrapper.eq(Message::getUserId, userId);
+        updateWrapper.set(Message::getIsRead, 1);
         
-        return R.success("发送成功");
-    }
-
-    /**
-     * 标记已读
-     */
-    @PutMapping("/read")
-    public R<String> markAsRead(@RequestBody Map<String, Object> params) {
-        Long conversationId = Long.parseLong(params.get("conversationId").toString());
-        
-        LambdaQueryWrapper<Message> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Message::getUserId, conversationId)
-                .eq(Message::getFromMerchant, false)
-                .eq(Message::getStatus, 0);
-        
-        List<Message> messages = messageService.list(wrapper);
-        messages.forEach(m -> {
-            m.setStatus(1);
-            messageService.updateById(m);
-        });
+        messageService.update(updateWrapper);
         
         return R.success("已标记为已读");
     }
-}
 
+    /**
+     * 标记所有消息为已读
+     */
+    @PostMapping("/read/all")
+    public R<String> markAllAsRead() {
+        Long userId = BaseContext.getThreadLocal();
+        if (userId == null) {
+            return R.error("请先登录");
+        }
+        
+        LambdaUpdateWrapper<Message> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(Message::getUserId, userId);
+        updateWrapper.eq(Message::getIsRead, 0);
+        updateWrapper.set(Message::getIsRead, 1);
+        
+        messageService.update(updateWrapper);
+        
+        return R.success("已全部标记为已读");
+    }
+}

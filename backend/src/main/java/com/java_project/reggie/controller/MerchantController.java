@@ -4,15 +4,18 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.java_project.reggie.common.R;
 import com.java_project.reggie.entity.Canteen;
+import com.java_project.reggie.entity.FoodCategory;
 import com.java_project.reggie.entity.Merchant;
 import com.java_project.reggie.service.CanteenService;
+import com.java_project.reggie.service.FoodCategoryService;
 import com.java_project.reggie.service.MerchantService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 商家管理Controller
@@ -27,6 +30,9 @@ public class MerchantController {
 
     @Autowired
     private CanteenService canteenService;
+    
+    @Autowired
+    private FoodCategoryService foodCategoryService;
 
     /**
      * 分页查询商家列表（管理端）
@@ -68,20 +74,160 @@ public class MerchantController {
     }
 
     /**
-     * 根据食堂ID获取商家列表（用户端）
-     * @param canteenId 食堂ID
+     * 获取商家列表（用户端）- 支持分页、搜索、排序、分类筛选
+     * @param canteenId 食堂ID（可选）
+     * @param keyword 搜索关键词（可选，搜索名称和标签）
+     * @param categoryId 美食分类ID（可选）
+     * @param sortBy 排序方式：default/sales/rating/distance（可选）
+     * @param status 营业状态（可选）
+     * @param page 页码
+     * @param pageSize 每页数量
      * @return 商家列表
      */
     @GetMapping("/list")
-    public R<List<Merchant>> listByCanteen(@RequestParam Long canteenId) {
-        log.info("查询食堂商家列表: canteenId={}", canteenId);
+    public R<List<Merchant>> list(
+            @RequestParam(required = false) Long canteenId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false, defaultValue = "default") String sortBy,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false, defaultValue = "1") int page,
+            @RequestParam(required = false, defaultValue = "20") int pageSize) {
+        
+        log.info("查询商家列表: canteenId={}, keyword={}, categoryId={}, sortBy={}, status={}, page={}, pageSize={}", 
+                canteenId, keyword, categoryId, sortBy, status, page, pageSize);
         
         LambdaQueryWrapper<Merchant> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Merchant::getCanteenId, canteenId);
-        queryWrapper.eq(Merchant::getStatus, 1); // 只查营业中的
+        
+        // 食堂筛选
+        queryWrapper.eq(canteenId != null, Merchant::getCanteenId, canteenId);
+        
+        // 美食分类筛选
+        queryWrapper.eq(categoryId != null, Merchant::getFoodCategoryId, categoryId);
+        
+        // 状态筛选（默认只查营业中的）
+        if (status != null) {
+            queryWrapper.eq(Merchant::getStatus, status);
+        } else {
+            queryWrapper.eq(Merchant::getStatus, 1);
+        }
+        
+        // 关键词搜索（名称或标签）
+        if (StringUtils.hasText(keyword)) {
+            queryWrapper.and(wrapper -> 
+                wrapper.like(Merchant::getName, keyword)
+                       .or()
+                       .like(Merchant::getTags, keyword)
+                       .or()
+                       .like(Merchant::getDescription, keyword)
+            );
+        }
+        
+        // 基础排序
         queryWrapper.orderByAsc(Merchant::getSort);
         
         List<Merchant> list = merchantService.list(queryWrapper);
+        
+        // 填充额外信息
+        for (Merchant merchant : list) {
+            // 填充食堂名称
+            if (merchant.getCanteenId() != null) {
+                Canteen canteen = canteenService.getById(merchant.getCanteenId());
+                if (canteen != null) {
+                    merchant.setCanteenName(canteen.getName());
+                }
+            }
+            
+            // 填充美食分类名称
+            if (merchant.getFoodCategoryId() != null) {
+                FoodCategory category = foodCategoryService.getById(merchant.getFoodCategoryId());
+                if (category != null) {
+                    merchant.setFoodCategoryName(category.getName());
+                }
+            }
+            
+            // 设置默认值
+            if (merchant.getDeliveryTime() == null) {
+                merchant.setDeliveryTime(15 + (int)(Math.random() * 15)); // 15-30分钟
+            }
+            if (merchant.getDistance() == null) {
+                merchant.setDistance(100 + (int)(Math.random() * 400)); // 100-500米
+            }
+            if (merchant.getTags() == null || merchant.getTags().isEmpty()) {
+                merchant.setTags("美食,好评");
+            }
+        }
+        
+        // 应用排序
+        switch (sortBy) {
+            case "sales":
+                list = list.stream()
+                    .sorted(Comparator.comparingInt(m -> m.getSalesCount() != null ? -m.getSalesCount() : 0))
+                    .collect(Collectors.toList());
+                break;
+            case "rating":
+                list = list.stream()
+                    .sorted(Comparator.comparing(m -> m.getRating() != null ? m.getRating().negate() : java.math.BigDecimal.ZERO))
+                    .collect(Collectors.toList());
+                break;
+            case "distance":
+                list = list.stream()
+                    .sorted(Comparator.comparingInt(m -> m.getDistance() != null ? m.getDistance() : Integer.MAX_VALUE))
+                    .collect(Collectors.toList());
+                break;
+            default:
+                // 综合排序：已经按sort排序
+                break;
+        }
+        
+        // 分页处理
+        int start = (page - 1) * pageSize;
+        int end = Math.min(start + pageSize, list.size());
+        
+        if (start >= list.size()) {
+            return R.success(new java.util.ArrayList<>());
+        }
+        
+        return R.success(list.subList(start, end));
+    }
+
+    /**
+     * 获取热门商家（首页展示）
+     * @param limit 数量限制
+     * @return 热门商家列表
+     */
+    @GetMapping("/hot")
+    public R<List<Merchant>> getHotMerchants(@RequestParam(defaultValue = "6") int limit) {
+        log.info("获取热门商家: limit={}", limit);
+        
+        LambdaQueryWrapper<Merchant> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Merchant::getStatus, 1);
+        queryWrapper.orderByDesc(Merchant::getSalesCount);
+        queryWrapper.last("LIMIT " + limit);
+        
+        List<Merchant> list = merchantService.list(queryWrapper);
+        
+        // 填充额外信息
+        for (Merchant merchant : list) {
+            if (merchant.getCanteenId() != null) {
+                Canteen canteen = canteenService.getById(merchant.getCanteenId());
+                if (canteen != null) {
+                    merchant.setCanteenName(canteen.getName());
+                }
+            }
+            
+            // 设置默认值
+            if (merchant.getDeliveryTime() == null) {
+                merchant.setDeliveryTime(15 + (int)(Math.random() * 15));
+            }
+            if (merchant.getDistance() == null) {
+                merchant.setDistance(100 + (int)(Math.random() * 400));
+            }
+            if (merchant.getTags() == null || merchant.getTags().isEmpty()) {
+                merchant.setTags("美食,好评");
+            }
+        }
+        
         return R.success(list);
     }
 
@@ -132,6 +278,15 @@ public class MerchantController {
                     merchant.setCanteenName(canteen.getName());
                 }
             }
+            
+            // 填充美食分类名称
+            if (merchant.getFoodCategoryId() != null) {
+                FoodCategory category = foodCategoryService.getById(merchant.getFoodCategoryId());
+                if (category != null) {
+                    merchant.setFoodCategoryName(category.getName());
+                }
+            }
+            
             return R.success(merchant);
         }
         
@@ -156,6 +311,15 @@ public class MerchantController {
         }
         if (merchant.getStatus() == null) {
             merchant.setStatus(1); // 默认营业
+        }
+        if (merchant.getDeliveryTime() == null) {
+            merchant.setDeliveryTime(20); // 默认20分钟
+        }
+        if (merchant.getDeliveryFee() == null) {
+            merchant.setDeliveryFee(0); // 默认免配送费
+        }
+        if (merchant.getIsNew() == null) {
+            merchant.setIsNew(1); // 默认为新店
         }
         
         boolean saved = merchantService.save(merchant);
@@ -227,6 +391,74 @@ public class MerchantController {
         }
         
         return R.error("商家删除失败");
+    }
+    
+    /**
+     * 获取商家红榜（好评最多）
+     * @param limit 限制数量
+     * @return 红榜商家列表
+     */
+    @GetMapping("/redList")
+    public R<List<Merchant>> getRedList(@RequestParam(defaultValue = "10") int limit) {
+        log.info("获取商家红榜: limit={}", limit);
+        
+        LambdaQueryWrapper<Merchant> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Merchant::getStatus, 1); // 只查营业中的
+        queryWrapper.gt(Merchant::getPositiveCount, 0); // 至少有好评
+        queryWrapper.orderByDesc(Merchant::getPositiveCount); // 按好评数降序
+        queryWrapper.last("LIMIT " + limit);
+        
+        List<Merchant> list = merchantService.list(queryWrapper);
+        
+        return R.success(list);
+    }
+    
+    /**
+     * 获取商家黑榜（差评最多）
+     * @param limit 限制数量
+     * @return 黑榜商家列表
+     */
+    @GetMapping("/blackList")
+    public R<List<Merchant>> getBlackList(@RequestParam(defaultValue = "10") int limit) {
+        log.info("获取商家黑榜: limit={}", limit);
+        
+        LambdaQueryWrapper<Merchant> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Merchant::getStatus, 1); // 只查营业中的
+        queryWrapper.gt(Merchant::getNegativeCount, 0); // 至少有差评
+        queryWrapper.orderByDesc(Merchant::getNegativeCount); // 按差评数降序
+        queryWrapper.last("LIMIT " + limit);
+        
+        List<Merchant> list = merchantService.list(queryWrapper);
+        
+        return R.success(list);
+    }
+    
+    /**
+     * 获取商家评价统计
+     * @param id 商家ID
+     * @return 评价统计信息
+     */
+    @GetMapping("/{id}/ratingStats")
+    public R<java.util.Map<String, Object>> getRatingStats(@PathVariable Long id) {
+        log.info("获取商家评价统计: id={}", id);
+        
+        Merchant merchant = merchantService.getById(id);
+        if (merchant == null) {
+            return R.error("商家不存在");
+        }
+        
+        int positive = merchant.getPositiveCount() != null ? merchant.getPositiveCount() : 0;
+        int negative = merchant.getNegativeCount() != null ? merchant.getNegativeCount() : 0;
+        int total = positive + negative;
+        double positiveRate = total > 0 ? (positive * 100.0 / total) : 0;
+        
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("positiveCount", positive);
+        stats.put("negativeCount", negative);
+        stats.put("totalCount", total);
+        stats.put("positiveRate", Math.round(positiveRate * 10) / 10.0); // 保留一位小数
+        
+        return R.success(stats);
     }
 }
 

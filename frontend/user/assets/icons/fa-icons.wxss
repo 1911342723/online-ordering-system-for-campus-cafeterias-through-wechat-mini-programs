@@ -1,0 +1,31 @@
+/* Font Awesome 风格图标样式 - 使用 base64 SVG */
+/* 这些图标来自 Font Awesome 6.4 的设计风格 */
+
+/* 使用示例: <text class="fa-icon icon-home"></text> */
+
+.fa-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* 图标尺寸变体 */
+.fa-xs { font-size: 24rpx; }
+.fa-sm { font-size: 32rpx; }
+.fa-md { font-size: 40rpx; }
+.fa-lg { font-size: 48rpx; }
+.fa-xl { font-size: 64rpx; }
+.fa-2x { font-size: 80rpx; }
+
+/* 图标颜色变体（需要配合 SVG 使用） */
+.icon-primary { color: var(--primary-color); }
+.icon-success { color: #10b981; }
+.icon-warning { color: #f59e0b; }
+.icon-danger { color: #ef4444; }
+.icon-muted { color: #9ca3af; }
+

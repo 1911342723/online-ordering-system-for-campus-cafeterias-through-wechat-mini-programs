@@ -1,0 +1,73 @@
+<!--pages/user/posts.wxml-->
+<view class="container">
+  <!-- Tabs -->
+  <view class="tabs">
+    <view class="tab {{activeTab === 'published' ? 'active' : ''}}" bindtap="switchTab" data-tab="published">
+      <text>已发布</text>
+      <text class="count">({{publishedCount}})</text>
+    </view>
+    <view class="tab {{activeTab === 'draft' ? 'active' : ''}}" bindtap="switchTab" data-tab="draft">
+      <text>草稿</text>
+      <text class="count">({{draftCount}})</text>
+    </view>
+  </view>
+
+  <!-- Post List -->
+  <scroll-view 
+    scroll-y 
+    class="post-list" 
+    bindscrolltolower="loadMore"
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onRefresh"
+  >
+    <!-- Empty State -->
+    <view class="empty-state" wx:if="{{posts.length === 0 && !loading}}">
+      <text class="empty-icon">📝</text>
+      <text class="empty-title">暂无帖子</text>
+      <text class="empty-desc">{{activeTab === 'published' ? '快去发布你的第一篇帖子吧~' : '暂无草稿'}}</text>
+      <view class="empty-btn" bindtap="goPublish" wx:if="{{activeTab === 'published'}}">去发布</view>
+    </view>
+
+    <!-- Post Items -->
+    <view class="post-item" wx:for="{{posts}}" wx:key="id">
+      <view class="post-content" bindtap="goToDetail" data-id="{{item.id}}">
+        <image class="post-image" src="{{item.coverImage}}" mode="aspectFill" wx:if="{{item.coverImage}}"></image>
+        <view class="post-info">
+          <text class="post-title">{{item.title}}</text>
+          <text class="post-desc">{{item.content}}</text>
+          <view class="post-meta">
+            <text class="post-time">{{item.createTimeStr}}</text>
+            <view class="post-stats" wx:if="{{activeTab === 'published'}}">
+              <text>👁 {{item.viewCount || 0}}</text>
+              <text>❤️ {{item.likeCount || 0}}</text>
+              <text>💬 {{item.commentCount || 0}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="post-actions">
+        <view class="action-btn edit" bindtap="editPost" data-post="{{item}}">编辑</view>
+        <view class="action-btn delete" bindtap="deletePost" data-id="{{item.id}}">删除</view>
+      </view>
+    </view>
+
+    <!-- Loading -->
+    <view class="loading" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+      <text>加载中...</text>
+    </view>
+
+    <view class="no-more" wx:if="{{!hasMore && posts.length > 0}}">
+      <text>— 没有更多了 —</text>
+    </view>
+    
+    <view class="bottom-spacer"></view>
+  </scroll-view>
+
+  <!-- Publish Button -->
+  <view class="publish-btn" bindtap="goPublish">
+    <text>✏️ 发布帖子</text>
+  </view>
+</view>
+

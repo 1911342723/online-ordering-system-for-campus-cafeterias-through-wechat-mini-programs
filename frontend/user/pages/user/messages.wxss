@@ -1,0 +1,253 @@
+/* pages/user/messages.wxss */
+page {
+  background: #f1f5f9;
+  height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  background: #fff;
+  padding: 0 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  padding: 28rpx 0;
+  font-size: 28rpx;
+  color: #64748b;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.tab.active {
+  color: #0ea5e9;
+  font-weight: 700;
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48rpx;
+  height: 6rpx;
+  background: #0ea5e9;
+  border-radius: 3rpx;
+}
+
+.tab-badge {
+  min-width: 32rpx;
+  height: 32rpx;
+  background: #ef4444;
+  color: #fff;
+  font-size: 18rpx;
+  font-weight: 700;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8rpx;
+}
+
+/* Message List */
+.message-list {
+  flex: 1;
+  padding: 24rpx;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 60rpx;
+}
+
+.empty-icon {
+  font-size: 100rpx;
+  margin-bottom: 24rpx;
+}
+
+.empty-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 12rpx;
+}
+
+.empty-desc {
+  font-size: 26rpx;
+  color: #64748b;
+}
+
+/* Message Item */
+.message-item {
+  display: flex;
+  gap: 16rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
+  position: relative;
+}
+
+.message-item.unread {
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+}
+
+.message-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+
+.message-icon.like {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+}
+
+.message-icon.comment {
+  background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+}
+
+.message-icon.collect {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+}
+
+.message-icon.system {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+}
+
+.message-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.message-user {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.message-time {
+  font-size: 22rpx;
+  color: #94a3b8;
+}
+
+.message-text {
+  font-size: 26rpx;
+  color: #475569;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.message-target {
+  margin-top: 12rpx;
+  padding: 12rpx 16rpx;
+  background: #f8fafc;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unread-dot {
+  position: absolute;
+  top: 24rpx;
+  right: 24rpx;
+  width: 16rpx;
+  height: 16rpx;
+  background: #ef4444;
+  border-radius: 50%;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 32rpx;
+  color: #64748b;
+  font-size: 26rpx;
+}
+
+.loading-spinner {
+  width: 32rpx;
+  height: 32rpx;
+  border: 3rpx solid #e2e8f0;
+  border-top-color: #0ea5e9;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.no-more {
+  text-align: center;
+  padding: 32rpx;
+  color: #94a3b8;
+  font-size: 24rpx;
+}
+
+.bottom-spacer {
+  height: 120rpx;
+}
+
+/* Mark All Read */
+.mark-read-btn {
+  position: fixed;
+  bottom: calc(32rpx + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 20rpx 48rpx;
+  background: #fff;
+  color: #0ea5e9;
+  font-size: 28rpx;
+  font-weight: 700;
+  border-radius: 40rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+  border: 2rpx solid #0ea5e9;
+}
+
+.mark-read-btn:active {
+  background: #f0f9ff;
+}
+

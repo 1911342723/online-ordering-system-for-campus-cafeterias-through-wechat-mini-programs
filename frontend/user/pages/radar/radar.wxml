@@ -1,0 +1,112 @@
+<!--pages/radar/radar.wxml-->
+<view class="container">
+  <view class="radar-header">
+    <text class="radar-title">美食雷达</text>
+    <text class="radar-subtitle" bindtap="onGetLocation">{{locationStatus}}</text>
+  </view>
+
+  <view class="radar-circle-wrapper">
+    <!-- Ripple Circles -->
+    <view class="ripple ripple-1"></view>
+    <view class="ripple ripple-2"></view>
+    <view class="ripple ripple-3"></view>
+    
+    <!-- Center User Dot -->
+    <view class="user-dot" bindtap="onGetLocation">
+      <view class="user-dot-pulse"></view>
+    </view>
+
+    <!-- Scanning Line -->
+    <view class="scan-line"></view>
+
+    <!-- 动态商家点 -->
+    <view 
+      class="stall-point stall-{{index + 1}}" 
+      wx:for="{{displayMerchants}}" 
+      wx:key="id"
+      bindtap="onStallClick" 
+      data-item="{{item}}"
+      style="{{item.positionStyle}}"
+    >
+      <view class="stall-icon">
+        <image wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill" class="stall-img"></image>
+        <text wx:else>{{item.iconEmoji}}</text>
+      </view>
+      <view class="stall-label">
+        <text class="stall-name">{{item.name}}</text>
+        <text class="stall-distance" wx:if="{{item.distance}}">{{item.distanceText}}</text>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 附近商家列表 -->
+  <view class="nearby-section">
+    <view class="nearby-header">
+      <text class="nearby-title">附近商家</text>
+      <text class="nearby-count">{{merchants.length}}家</text>
+    </view>
+    <scroll-view scroll-x class="nearby-list" show-scrollbar="{{false}}">
+      <view 
+        class="nearby-item" 
+        wx:for="{{merchants}}" 
+        wx:key="id"
+        bindtap="onStallClick"
+        data-item="{{item}}"
+      >
+        <image class="nearby-img" src="{{item.image || defaultImg}}" mode="aspectFill" lazy-load></image>
+        <view class="nearby-info">
+          <text class="nearby-name">{{item.name}}</text>
+          <view class="nearby-meta">
+            <text class="nearby-rating">⭐ {{item.rating || '4.5'}}</text>
+            <text class="nearby-distance" wx:if="{{item.distanceText}}">{{item.distanceText}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="nearby-item-spacer"></view>
+    </scroll-view>
+  </view>
+
+  <view class="radar-footer">
+    <text>点击雷达中心刷新定位</text>
+  </view>
+
+  <!-- Stall Detail Popup -->
+  <view class="stall-popup-mask {{showPopup ? 'show' : ''}}" bindtap="closePopup">
+    <view class="stall-popup" catchtap="stopProp">
+      <view class="popup-header">
+        <image class="popup-img" src="{{selectedStall.image || defaultImg}}" mode="aspectFill"></image>
+        <view class="popup-close" bindtap="closePopup">×</view>
+        <view class="popup-distance-badge" wx:if="{{selectedStall.distanceText}}">
+          <text class="distance-icon">📍</text>
+          <text>{{selectedStall.distanceText}}</text>
+        </view>
+      </view>
+      <view class="popup-content">
+        <view class="popup-title-row">
+          <text class="popup-title">{{selectedStall.name}}</text>
+          <text class="popup-rating">⭐ {{selectedStall.rating || '4.5'}}</text>
+        </view>
+        <view class="popup-tags">
+          <text class="popup-tag" wx:for="{{selectedStall.tagList}}" wx:key="*this">{{item}}</text>
+          <text class="popup-tag" wx:if="{{!selectedStall.tagList || selectedStall.tagList.length === 0}}">美食</text>
+        </view>
+        <view class="popup-stats">
+          <view class="stat-item">
+            <text class="stat-num">{{selectedStall.salesCount || 0}}</text>
+            <text class="stat-label">月售</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-num">{{selectedStall.positiveCount || 0}}</text>
+            <text class="stat-label">好评</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-num">¥{{selectedStall.avgPrice || 15}}</text>
+            <text class="stat-label">人均</text>
+          </view>
+        </view>
+        <text class="popup-desc">{{selectedStall.description || '暂无简介'}}</text>
+        <button class="popup-btn" bindtap="goToMerchant" data-id="{{selectedStall.id}}">进店点餐</button>
+      </view>
+    </view>
+  </view>
+</view>

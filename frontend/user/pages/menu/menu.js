@@ -17,6 +17,8 @@ Page({
     cartCount: 0,
     cartTotal: 0,
     defaultDishImg: DEFAULT_IMAGES.dish,
+    showQrcodeModal: false,
+    defaultQrcode: 'https://via.placeholder.com/300x300?text=QR+Code',
     icons: {
       cart: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjRkZGRkZGIiBzdHJva2U9Im5vbmUiPjxjaXJjbGUgY3g9IjkiIGN5PSIyMSIgcj0iMSIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMjEiIHI9IjEiLz48cGF0aCBkPSJNMSAxaDRsMi42OCAxMy4zOWEyIDIgMCAwIDAgMiAxLjYxaDkuNzJhMiAyIDAgMCAwIDItMS42MUwyMyA2SDYiLz48L3N2Zz4=',
       cartEmpty: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM5OTk5OTkiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48Y2lyY2xlIGN4PSI5IiBjeT0iMjEiIHI9IjEiLz48Y2lyY2xlIGN4PSIyMCIgY3k9IjIxIiByPSIxIi8+PHBhdGggZD0iTTEgMWg0bDIuNjggMTMuMzlhMiAyIDAgMCAwIDIgMS42MWg5LjcyYTIgMiAwIDAgMCAyLTEuNjFMMjMgNkg2Ii8+PC9zdmc+'
@@ -177,6 +179,20 @@ Page({
       console.error('加载商家优惠券失败:', error)
       this.setData({ merchantCoupons: [] })
     }
+  },
+
+  /**
+   * 显示商家详情
+   */
+  showShopDetail() {
+    const info = this.data.merchantInfo
+    if (!info) return
+    
+    wx.showModal({
+      title: this.data.merchantName,
+      content: `营业时间：${info.openingHours || '全天'}\n地址：${info.address || '暂无'}\n电话：${info.phone || '暂无'}\n\n${info.description || ''}`,
+      showCancel: false
+    })
   },
 
   /**
@@ -550,6 +566,92 @@ Page({
       console.error('领取商家优惠券失败:', error)
       showError(error.msg || '领取失败')
     }
+  },
+
+  /**
+   * 联系商家 - 显示微信社群二维码
+   */
+  contactMerchant() {
+    const { merchantInfo } = this.data
+    
+    if (!merchantInfo || !merchantInfo.wechatGroupQrcode) {
+      wx.showModal({
+        title: '提示',
+        content: '该商家暂未设置微信社群，请稍后再试',
+        showCancel: false
+      })
+      return
+    }
+    
+    this.setData({ showQrcodeModal: true })
+  },
+
+  /**
+   * 隐藏二维码弹窗
+   */
+  hideQrcodeModal() {
+    this.setData({ showQrcodeModal: false })
+  },
+
+  /**
+   * 保存二维码到相册
+   */
+  saveQrcode() {
+    const { merchantInfo } = this.data
+    
+    if (!merchantInfo || !merchantInfo.wechatGroupQrcode) {
+      showError('二维码不存在')
+      return
+    }
+    
+    wx.showLoading({ title: '保存中...' })
+    
+    // 下载图片
+    wx.downloadFile({
+      url: merchantInfo.wechatGroupQrcode,
+      success: (res) => {
+        if (res.statusCode === 200) {
+          // 保存到相册
+          wx.saveImageToPhotosAlbum({
+            filePath: res.tempFilePath,
+            success: () => {
+              wx.hideLoading()
+              showSuccess('已保存到相册')
+            },
+            fail: (err) => {
+              wx.hideLoading()
+              if (err.errMsg.includes('auth deny')) {
+                wx.showModal({
+                  title: '提示',
+                  content: '需要您授权保存图片到相册',
+                  success: (res) => {
+                    if (res.confirm) {
+                      wx.openSetting()
+                    }
+                  }
+                })
+              } else {
+                showError('保存失败')
+              }
+            }
+          })
+        } else {
+          wx.hideLoading()
+          showError('下载失败')
+        }
+      },
+      fail: () => {
+        wx.hideLoading()
+        showError('下载失败')
+      }
+    })
+  },
+
+  /**
+   * 阻止滚动穿透
+   */
+  preventMove() {
+    return false
   }
 })
 

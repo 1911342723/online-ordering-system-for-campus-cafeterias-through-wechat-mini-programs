@@ -5,21 +5,37 @@ const { getImageUrl, showLoading, hideLoading, showError, checkLogin, navigateTo
 
 // SVG Icons
 const ICONS = {
-  location: "/assets/icons/location.png",
-  scan: "/assets/icons/scan.png",
+  location: "/assets/icons/icons8-位置-96.png",
+  scan: "/assets/icons/icons8-纵向模式扫描-100.png",
   search: "/assets/icons/search.png",
   star: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FFC833'%3E%3Cpath d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z'/%3E%3C/svg%3E",
   ai: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%236366F1;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23A855F7;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='28' fill='url(%23grad)' opacity='0.1'/%3E%3Cpath fill='url(%23grad)' d='M42,24c0,1.1-0.9,2-2,2h-4v4c0,1.1-0.9,2-2,2s-2-0.9-2-2v-4h-4c-1.1,0-2-0.9-2-2s0.9-2,2-2h4v-4c0-1.1,0.9-2,2-2s2,0.9,2,2v4h4C41.1,22,42,22.9,42,24z M46.5,39h-2.2c-0.4,0-0.7-0.2-0.9-0.5L41,34.8c-0.2-0.3-0.2-0.7,0-1l2.4-3.7c0.2-0.3,0.5-0.5,0.9-0.5h2.2c0.8,0,1.3,0.9,0.9,1.6l-2.4,3.7l2.4,3.7C47.8,39.1,47.3,39,46.5,39z M22,42c0,2.2-1.8,4-4,4s-4-1.8-4-4s1.8-4,4-4S22,39.8,22,42z'/%3E%3Cpath fill='white' d='M32,14l4,9l9,4l-9,4l-4,9l-4-9l-9-4l9-4L32,14z'/%3E%3C/svg%3E",
   announcement: "/assets/icons/announcement.png"
 }
 
+// 美食分类数据
+const FOOD_CATEGORIES = [
+  { id: 'bbq', name: '烧烤', icon: '🍢', bgColor: '#FEF3C7', keyword: '烧烤' },
+  { id: 'night', name: '夜宵', icon: '🌙', bgColor: '#E0E7FF', keyword: '夜宵' },
+  { id: 'noodle', name: '面食', icon: '🍜', bgColor: '#FCE7F3', keyword: '面' },
+  { id: 'rice', name: '盖饭', icon: '🍚', bgColor: '#D1FAE5', keyword: '饭' },
+  { id: 'hotpot', name: '火锅', icon: '🍲', bgColor: '#FEE2E2', keyword: '火锅' },
+  { id: 'snack', name: '小吃', icon: '🥟', bgColor: '#FEF9C3', keyword: '小吃' },
+  { id: 'drink', name: '饮品', icon: '🧋', bgColor: '#CFFAFE', keyword: '饮品' },
+  { id: 'dessert', name: '甜品', icon: '🍰', bgColor: '#FCE7F3', keyword: '甜品' },
+  { id: 'western', name: '西餐', icon: '🍔', bgColor: '#FFEDD5', keyword: '西餐' },
+  { id: 'healthy', name: '轻食', icon: '🥗', bgColor: '#DCFCE7', keyword: '轻食' }
+]
+
 Page({
   data: {
     banners: [],
-    canteens: [],
+    canteens: [],  // 现在用于热门门店
     announcements: [],
     todayRecommendations: [],
     coupons: [],
+    categories: FOOD_CATEGORIES.slice(0, 8), // 首页显示8个分类
+    allCategories: FOOD_CATEGORIES,
     showCouponDialog: false,
     defaultBanner: DEFAULT_IMAGES.banner,
     defaultCanteen: DEFAULT_IMAGES.canteen,
@@ -66,38 +82,39 @@ Page({
   },
 
   /**
-   * 加载食堂列表 - 对接真实后端API
+   * 加载热门门店（商户列表）- 对接真实后端API
    */
   async loadCanteens() {
     try {
       showLoading('加载中...')
       
-      const canteens = await request({
-        url: '/canteen/list',
+      // 改为加载商户列表
+      const merchants = await request({
+        url: '/merchant/list',
         method: 'GET'
       })
       
       // 判断营业时间
       const currentHour = this.data.currentHour
-      const isLunchTime = currentHour >= 11 && currentHour < 14
-      const isDinnerTime = currentHour >= 17 && currentHour < 20
-      const isBusinessHours = currentHour >= 7 && currentHour < 21
+      const isBusinessHours = currentHour >= 7 && currentHour < 22
       
-      // 处理餐厅数据
-      const processedCanteens = canteens.map(canteen => ({
-        ...canteen,
-        image: getImageUrl(canteen.image, DEFAULT_IMAGES.canteen),
-        isOpen: canteen.status === 1 && isBusinessHours,
-        tags: this.parseBusinessHours(canteen.businessHours),
-        distance: canteen.distance ? `${canteen.distance}m` : '100m',
-        sales: 0 // 可以从订单统计获取
+      // 处理商户数据
+      const processedMerchants = merchants.map(merchant => ({
+        ...merchant,
+        image: getImageUrl(merchant.image, DEFAULT_IMAGES.canteen),
+        isOpen: merchant.status === 1 && isBusinessHours,
+        tags: merchant.tags ? merchant.tags.split(',') : ['美食', '好评如潮'],
+        distance: merchant.distance ? `${merchant.distance}m` : '100m',
+        rating: merchant.rating || 4.8,
+        sales: merchant.salesCount || 0
       }))
       
-      this.setData({ canteens: processedCanteens })
+      // 取前6个热门门店显示
+      this.setData({ canteens: processedMerchants.slice(0, 6) })
       hideLoading()
     } catch (error) {
       hideLoading()
-      console.error('加载餐厅列表失败:', error)
+      console.error('加载商户列表失败:', error)
       // 使用模拟数据作为降级
       this.loadMockCanteens()
     }
@@ -113,72 +130,119 @@ Page({
   },
 
   /**
-   * 加载模拟餐厅数据（降级方案）
+   * 加载模拟门店数据（降级方案）
    */
   loadMockCanteens() {
     const currentHour = this.data.currentHour
-    const isLunchTime = currentHour >= 11 && currentHour < 14
-    const isDinnerTime = currentHour >= 17 && currentHour < 20
-    const isOpen = isLunchTime || isDinnerTime
+    const isBusinessHours = currentHour >= 7 && currentHour < 22
 
-    const mockCanteens = [
+    const mockShops = [
       {
         id: 1,
-        name: '第一食堂',
+        name: '老王烧烤',
         image: DEFAULT_IMAGES.canteen,
-        tags: ['川菜', '面食', '经济实惠'],
-        isOpen: isOpen,
-        rating: 4.5,
+        tags: ['烧烤', '夜宵', '人气爆棚'],
+        isOpen: isBusinessHours,
+        rating: 4.9,
         distance: '100m',
         sales: 2300
       },
       {
         id: 2,
-        name: '第二食堂',
+        name: '川味面馆',
         image: DEFAULT_IMAGES.canteen,
-        tags: ['自选餐', '清真', '环境好'],
-        isOpen: isOpen,
+        tags: ['面食', '川菜', '经济实惠'],
+        isOpen: isBusinessHours,
         rating: 4.8,
-        distance: '200m',
+        distance: '150m',
         sales: 1800
       },
       {
         id: 3,
-        name: '第三食堂',
+        name: '一品香盖饭',
         image: DEFAULT_IMAGES.canteen,
-        tags: ['美食广场', '小吃', '环境好'],
-        isOpen: isOpen,
+        tags: ['盖饭', '快餐', '分量足'],
+        isOpen: isBusinessHours,
+        rating: 4.7,
+        distance: '200m',
+        sales: 1500
+      },
+      {
+        id: 4,
+        name: '茶颜悦色',
+        image: DEFAULT_IMAGES.canteen,
+        tags: ['奶茶', '饮品', '网红店'],
+        isOpen: isBusinessHours,
+        rating: 4.9,
+        distance: '120m',
+        sales: 3200
+      },
+      {
+        id: 5,
+        name: '麻辣小火锅',
+        image: DEFAULT_IMAGES.canteen,
+        tags: ['火锅', '麻辣', '好评如潮'],
+        isOpen: isBusinessHours,
         rating: 4.6,
         distance: '300m',
-        sales: 1200
+        sales: 980
+      },
+      {
+        id: 6,
+        name: '轻食沙拉',
+        image: DEFAULT_IMAGES.canteen,
+        tags: ['轻食', '健康', '低卡'],
+        isOpen: isBusinessHours,
+        rating: 4.5,
+        distance: '250m',
+        sales: 650
       }
     ]
     
-    this.setData({ canteens: mockCanteens })
+    this.setData({ canteens: mockShops })
   },
 
   /**
-   * 跳转到商家列表页
+   * 跳转到分类页面
    */
-  /**
-   * 跳转到食堂列表页
-   */
-  goToCanteenList() {
+  goToCategory(e) {
+    const category = e.currentTarget.dataset.category
     wx.navigateTo({
-      url: '/pages/canteen-list/canteen-list'
+      url: `/pages/category/list?id=${category.id}&name=${encodeURIComponent(category.name)}&keyword=${encodeURIComponent(category.keyword)}`
     })
   },
 
+  /**
+   * 跳转到全部分类页面
+   */
+  goToAllCategories() {
+    wx.navigateTo({
+      url: '/pages/category/list?showAll=true'
+    })
+  },
+
+  /**
+   * 跳转到全部门店
+   */
+  goToAllShops() {
+    wx.navigateTo({
+      url: '/pages/category/list?showAll=true&tab=shops'
+    })
+  },
+
+  /**
+   * 跳转到商家菜单页
+   */
   goToMenu(e) {
     const { id, name, isopen } = e.currentTarget.dataset
     
     if (!isopen) {
-      showError('该食堂暂未营业')
+      showError('该门店暂未营业')
       return
     }
     
     wx.navigateTo({
-      url: `/pages/merchant/list?canteenId=${id}&canteenName=${name}`
+      url: `/pages/menu/menu?merchantId=${id}&merchantName=${encodeURIComponent(name)}`
     })
   },
 

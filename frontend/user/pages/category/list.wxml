@@ -1,0 +1,185 @@
+<!--pages/category/list.wxml-->
+<view class="container">
+  <!-- Sticky Header Wrapper -->
+  <view class="sticky-header">
+    <!-- Header with Search -->
+    <view class="search-header">
+      <view class="search-bar" bindtap="goToSearch">
+        <image class="search-icon" src="/assets/icons/search.png"></image>
+        <text class="search-placeholder">搜索商家、菜品...</text>
+      </view>
+    </view>
+
+    <!-- Category Dropdown Trigger -->
+    <view class="category-dropdown-trigger" bindtap="toggleCategoryDropdown">
+      <view class="current-category">
+        <text class="category-icon" wx:if="{{currentCategoryData.icon}}">{{currentCategoryData.icon}}</text>
+        <text class="category-text">{{currentCategoryData.name || '全部分类'}}</text>
+      </view>
+      <view class="dropdown-arrow {{showCategoryDropdown ? 'up' : ''}}">
+        <text>▼</text>
+      </view>
+    </view>
+
+    <!-- Filter Bar -->
+    <view class="filter-bar">
+      <view class="filter-item {{sortBy === 'default' ? 'active' : ''}}" 
+            bindtap="changeSort" data-sort="default">
+        <text>综合排序</text>
+      </view>
+      <view class="filter-item {{sortBy === 'sales' ? 'active' : ''}}" 
+            bindtap="changeSort" data-sort="sales">
+        <text>销量最高</text>
+      </view>
+      <view class="filter-item {{sortBy === 'rating' ? 'active' : ''}}" 
+            bindtap="changeSort" data-sort="rating">
+        <text>评分最高</text>
+      </view>
+      <view class="filter-item {{sortBy === 'distance' ? 'active' : ''}}" 
+            bindtap="changeSort" data-sort="distance">
+        <text>距离最近</text>
+      </view>
+      <view class="filter-item filter-btn" bindtap="showFilterPanel">
+        <text class="filter-btn-icon">⚙</text>
+        <text>筛选</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Category Dropdown Panel (Fixed overlay) -->
+  <view class="category-dropdown-mask {{showCategoryDropdown ? 'show' : ''}}" bindtap="hideCategoryDropdown" style="top: {{headerHeight}}px"></view>
+  <view class="category-dropdown-panel {{showCategoryDropdown ? 'show' : ''}}" style="top: {{headerHeight}}px">
+    <view class="dropdown-header">
+      <text class="dropdown-title">选择分类</text>
+      <view class="dropdown-close" bindtap="hideCategoryDropdown">✕</view>
+    </view>
+    <scroll-view scroll-y class="category-grid-scroll">
+      <view class="category-grid">
+        <!-- 全部选项 -->
+        <view class="category-grid-item {{currentCategory === 'all' ? 'active' : ''}}" 
+              bindtap="selectCategory" data-id="all" data-name="全部分类" data-icon="">
+          <view class="grid-icon-wrapper all">
+            <text class="grid-icon">🍽️</text>
+          </view>
+          <text class="grid-name">全部</text>
+        </view>
+        <!-- 分类列表 -->
+        <view class="category-grid-item {{currentCategory === item.id ? 'active' : ''}}" 
+              wx:for="{{categories}}" wx:key="id"
+              bindtap="selectCategory" data-id="{{item.id}}" data-name="{{item.name}}" data-icon="{{item.icon}}">
+          <view class="grid-icon-wrapper" style="background-color: {{item.bgColor || '#f3f4f6'}}">
+            <text class="grid-icon">{{item.icon}}</text>
+          </view>
+          <text class="grid-name">{{item.name}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- Shop List -->
+  <scroll-view scroll-y class="shop-list" bindscrolltolower="loadMore" show-scrollbar="{{false}}">
+    <!-- Empty State -->
+    <view class="empty-state" wx:if="{{!loading && shopList.length === 0}}">
+      <view class="empty-icon">🍽️</view>
+      <text class="empty-text">暂无相关门店</text>
+      <text class="empty-tip">换个分类试试吧~</text>
+    </view>
+
+    <!-- Shop Cards -->
+    <view class="shop-card" wx:for="{{shopList}}" wx:key="id" 
+          bindtap="goToShop" data-shop="{{item}}">
+      <view class="shop-img-wrapper">
+        <image class="shop-img" src="{{item.image}}" mode="aspectFill" lazy-load="true"></image>
+        <view class="shop-badge" wx:if="{{item.isNew}}">新店</view>
+        <view class="shop-closed" wx:if="{{!item.isOpen}}">
+          <text>休息中</text>
+        </view>
+      </view>
+      
+      <view class="shop-info">
+        <view class="shop-header">
+          <text class="shop-name">{{item.name}}</text>
+          <view class="shop-rating">
+            <text class="rating-star">★</text>
+            <text class="rating-score">{{item.rating}}</text>
+          </view>
+        </view>
+        
+        <view class="shop-meta">
+          <text class="shop-sales">月售{{item.sales}}</text>
+          <text class="meta-divider">|</text>
+          <text class="shop-distance">{{item.distance}}</text>
+          <text class="meta-divider" wx:if="{{item.deliveryTime}}">|</text>
+          <text class="shop-time" wx:if="{{item.deliveryTime}}">{{item.deliveryTime}}分钟</text>
+        </view>
+        
+        <view class="shop-tags">
+          <text class="shop-tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
+        </view>
+        
+        <view class="shop-promo" wx:if="{{item.promo}}">
+          <view class="promo-badge">惠</view>
+          <text class="promo-text">{{item.promo}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Loading More -->
+    <view class="loading-more" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+      <text>加载中...</text>
+    </view>
+    
+    <!-- No More Data -->
+    <view class="no-more" wx:if="{{!loading && !hasMore && shopList.length > 0}}">
+      <text>— 已经到底啦 —</text>
+    </view>
+    
+    <view class="bottom-spacer"></view>
+  </scroll-view>
+
+  <!-- Filter Panel -->
+  <view class="filter-mask {{showFilter ? 'show' : ''}}" bindtap="hideFilterPanel"></view>
+  <view class="filter-panel {{showFilter ? 'show' : ''}}">
+    <view class="panel-header">
+      <text class="panel-title">筛选条件</text>
+      <view class="panel-reset" bindtap="resetFilter">重置</view>
+    </view>
+    
+    <view class="panel-section">
+      <text class="section-label">营业状态</text>
+      <view class="filter-options">
+        <view class="option-item {{filterStatus === 'all' ? 'active' : ''}}" 
+              bindtap="setFilterStatus" data-status="all">全部</view>
+        <view class="option-item {{filterStatus === 'open' ? 'active' : ''}}" 
+              bindtap="setFilterStatus" data-status="open">营业中</view>
+      </view>
+    </view>
+    
+    <view class="panel-section">
+      <text class="section-label">配送方式</text>
+      <view class="filter-options">
+        <view class="option-item {{deliveryType === 'all' ? 'active' : ''}}" 
+              bindtap="setDeliveryType" data-type="all">全部</view>
+        <view class="option-item {{deliveryType === 'pickup' ? 'active' : ''}}" 
+              bindtap="setDeliveryType" data-type="pickup">到店自取</view>
+        <view class="option-item {{deliveryType === 'delivery' ? 'active' : ''}}" 
+              bindtap="setDeliveryType" data-type="delivery">外卖配送</view>
+      </view>
+    </view>
+    
+    <view class="panel-section">
+      <text class="section-label">特色标签</text>
+      <view class="filter-options wrap">
+        <view class="option-item {{selectedTags.includes(item) ? 'active' : ''}}" 
+              wx:for="{{availableTags}}" wx:key="*this"
+              bindtap="toggleTag" data-tag="{{item}}">{{item}}</view>
+      </view>
+    </view>
+    
+    <view class="panel-footer">
+      <view class="btn-cancel" bindtap="hideFilterPanel">取消</view>
+      <view class="btn-confirm" bindtap="applyFilter">确定</view>
+    </view>
+  </view>
+</view>

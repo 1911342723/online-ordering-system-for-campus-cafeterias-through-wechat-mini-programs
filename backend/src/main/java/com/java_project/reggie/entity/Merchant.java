@@ -6,6 +6,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 /**
  * 商家实体类
@@ -78,6 +79,66 @@ public class Merchant implements Serializable {
     private Integer totalReviews;
     
     /**
+     * 好评数（用于红榜统计）
+     */
+    private Integer positiveCount;
+    
+    /**
+     * 差评数（用于黑榜统计）
+     */
+    private Integer negativeCount;
+    
+    /**
+     * 微信社群二维码图片URL（商家入驻必填）
+     */
+    private String wechatGroupQrcode;
+    
+    /**
+     * 商家标签（逗号分隔，如：烧烤,夜宵,人气爆棚）
+     */
+    private String tags;
+    
+    /**
+     * 优惠信息（如：满30减10）
+     */
+    private String promo;
+    
+    /**
+     * 配送时间（分钟）
+     */
+    private Integer deliveryTime;
+    
+    /**
+     * 配送费（分）
+     */
+    private Integer deliveryFee;
+    
+    /**
+     * 起送价（分）
+     */
+    private Integer minOrderAmount;
+    
+    /**
+     * 营业开始时间
+     */
+    private LocalTime openTime;
+    
+    /**
+     * 营业结束时间
+     */
+    private LocalTime closeTime;
+    
+    /**
+     * 是否为新店 0:否 1:是
+     */
+    private Integer isNew;
+    
+    /**
+     * 美食分类ID（关联food_category表）
+     */
+    private Long foodCategoryId;
+    
+    /**
      * 排序
      */
     private Integer sort;
@@ -109,4 +170,16 @@ public class Merchant implements Serializable {
      */
     @TableField(exist = false)
     private String canteenName;
+    
+    /**
+     * 美食分类名称（查询时关联）
+     */
+    @TableField(exist = false)
+    private String foodCategoryName;
+    
+    /**
+     * 距离（米，前端计算或传入）
+     */
+    @TableField(exist = false)
+    private Integer distance;
 }

@@ -1,0 +1,118 @@
+<!--pages/user/level.wxml-->
+<view class="container">
+  <!-- Current Level Card -->
+  <view class="level-card">
+    <view class="level-icon">{{currentLevel.icon}}</view>
+    <view class="level-info">
+      <text class="level-title">Lv.{{currentLevel.level}} {{currentLevel.title}}</text>
+      <view class="level-progress-bar">
+        <view class="level-progress" style="width: {{currentLevel.progress}}%"></view>
+      </view>
+      <text class="level-exp">{{currentLevel.currentExp}} / {{currentLevel.nextExp}} 经验</text>
+    </view>
+  </view>
+
+  <!-- Level Benefits -->
+  <view class="section">
+    <view class="section-title">等级特权</view>
+    <view class="benefits-list">
+      <view class="benefit-item {{currentLevel.level >= 1 ? 'active' : ''}}">
+        <text class="benefit-icon">🎁</text>
+        <view class="benefit-info">
+          <text class="benefit-name">新人礼包</text>
+          <text class="benefit-desc">注册即送5元优惠券</text>
+        </view>
+        <text class="benefit-level">Lv.1</text>
+      </view>
+      <view class="benefit-item {{currentLevel.level >= 2 ? 'active' : ''}}">
+        <text class="benefit-icon">🏷️</text>
+        <view class="benefit-info">
+          <text class="benefit-name">专属优惠</text>
+          <text class="benefit-desc">每月领取2张优惠券</text>
+        </view>
+        <text class="benefit-level">Lv.2</text>
+      </view>
+      <view class="benefit-item {{currentLevel.level >= 3 ? 'active' : ''}}">
+        <text class="benefit-icon">⭐</text>
+        <view class="benefit-info">
+          <text class="benefit-name">达人标识</text>
+          <text class="benefit-desc">评论区显示达人标签</text>
+        </view>
+        <text class="benefit-level">Lv.3</text>
+      </view>
+      <view class="benefit-item {{currentLevel.level >= 4 ? 'active' : ''}}">
+        <text class="benefit-icon">🎯</text>
+        <view class="benefit-info">
+          <text class="benefit-name">优先体验</text>
+          <text class="benefit-desc">新功能优先体验资格</text>
+        </view>
+        <text class="benefit-level">Lv.4</text>
+      </view>
+      <view class="benefit-item {{currentLevel.level >= 5 ? 'active' : ''}}">
+        <text class="benefit-icon">🏆</text>
+        <view class="benefit-info">
+          <text class="benefit-name">大师特权</text>
+          <text class="benefit-desc">专属客服+每月10元券</text>
+        </view>
+        <text class="benefit-level">Lv.5</text>
+      </view>
+      <view class="benefit-item {{currentLevel.level >= 6 ? 'active' : ''}}">
+        <text class="benefit-icon">👑</text>
+        <view class="benefit-info">
+          <text class="benefit-name">美食之神</text>
+          <text class="benefit-desc">所有特权+专属徽章</text>
+        </view>
+        <text class="benefit-level">Lv.6</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Level List -->
+  <view class="section">
+    <view class="section-title">等级说明</view>
+    <view class="level-list">
+      <view class="level-item {{currentLevel.level === item.level ? 'current' : ''}}" wx:for="{{levelList}}" wx:key="level">
+        <view class="level-item-icon">{{item.icon}}</view>
+        <view class="level-item-info">
+          <text class="level-item-name">Lv.{{item.level}} {{item.title}}</text>
+          <text class="level-item-exp">{{item.minExp}} - {{item.maxExp === 999999 ? '∞' : item.maxExp}} 经验</text>
+        </view>
+        <view class="level-item-status" wx:if="{{currentLevel.level === item.level}}">当前</view>
+        <view class="level-item-status locked" wx:elif="{{currentLevel.level < item.level}}">未解锁</view>
+        <view class="level-item-status unlocked" wx:else>已达成</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Exp Rules -->
+  <view class="section">
+    <view class="section-title">经验获取</view>
+    <view class="rules-list">
+      <view class="rule-item">
+        <text class="rule-action">发布帖子</text>
+        <text class="rule-exp">+20 经验/篇</text>
+      </view>
+      <view class="rule-item">
+        <text class="rule-action">评论帖子</text>
+        <text class="rule-exp">+5 经验/条</text>
+      </view>
+      <view class="rule-item">
+        <text class="rule-action">被点赞</text>
+        <text class="rule-exp">+2 经验/次</text>
+      </view>
+      <view class="rule-item">
+        <text class="rule-action">被收藏</text>
+        <text class="rule-exp">+3 经验/次</text>
+      </view>
+      <view class="rule-item">
+        <text class="rule-action">完成订单</text>
+        <text class="rule-exp">+10 经验/单</text>
+      </view>
+      <view class="rule-item">
+        <text class="rule-action">每日签到</text>
+        <text class="rule-exp">+5 经验/天</text>
+      </view>
+    </view>
+  </view>
+</view>
+

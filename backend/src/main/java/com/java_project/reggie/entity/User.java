@@ -63,6 +63,26 @@ public class User implements Serializable {
 
     //优惠券数量
     private Integer couponCount = 0;
+    
+    
+    //个性签名
+    private String signature;
+    
+    
+    //经验值
+    private Integer exp = 0;
+    
+    
+    //发帖数量
+    private Integer postCount = 0;
+    
+    
+    //收藏数量
+    private Integer collectCount = 0;
+    
+    
+    //获赞数量
+    private Integer likeCount = 0;
 
 
     //创建时间
