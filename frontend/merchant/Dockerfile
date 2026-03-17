@@ -1,7 +1,7 @@
 # ============================================
 # 构建阶段
 # ============================================
-FROM node:16-alpine AS builder
+FROM docker.m.daocloud.io/library/node:16-alpine AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ RUN npm run build
 # ============================================
 # 运行阶段
 # ============================================
-FROM nginx:alpine
+FROM docker.m.daocloud.io/library/nginx:alpine
 
 # 设置时区
 RUN apk add --no-cache tzdata \

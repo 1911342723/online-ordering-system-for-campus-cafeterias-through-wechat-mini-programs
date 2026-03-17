@@ -1,7 +1,7 @@
 # ============================================
 # 多阶段构建 - 构建阶段
 # ============================================
-FROM maven:3.6.3-openjdk-8 AS builder
+FROM docker.m.daocloud.io/library/maven:3.6.3-openjdk-8 AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ RUN mvn clean package -DskipTests -B
 # ============================================
 # 运行阶段
 # ============================================
-FROM openjdk:8-jdk-alpine
+FROM docker.m.daocloud.io/library/openjdk:8-jdk-alpine
 
 # 安装必要的工具
 RUN apk add --no-cache curl tzdata \
