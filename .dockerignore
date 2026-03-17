@@ -3,12 +3,16 @@ backend/target/
 backend/.mvn/
 backend/mvnw
 backend/mvnw.cmd
+backend/.idea/
 
 # 前端忽略文件
 frontend/*/node_modules/
 frontend/*/dist/
 frontend/*/.cache/
 frontend/*/npm-debug.log*
+
+# 根目录
+node_modules/
 
 # IDE
 .idea/
@@ -21,12 +25,11 @@ frontend/*/npm-debug.log*
 .git/
 .gitignore
 
-# Docker
-Dockerfile
-docker-compose.yml
-.dockerignore
-
-# 文档
+# 文档（不在构建上下文中忽略 SQL）
+参考前端页面/
 *.md
-README.md
+!backend/sql/*.sql
 
+# 其他
+.env.local
+.env.*.local

@@ -1,7 +1,9 @@
 version: '3.8'
 
 services:
-  # MySQL数据库
+  # ============================================
+  # MySQL 数据库
+  # ============================================
   mysql:
     image: mysql:8.0
     container_name: canteen-mysql
@@ -13,19 +15,28 @@ services:
       - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./backend/db.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ./backend/数据库升级-预订单和配置.sql:/docker-entrypoint-initdb.d/02-upgrade.sql
-      - ./backend/测试账号.sql:/docker-entrypoint-initdb.d/03-test-accounts.sql
-    command: --default-authentication-plugin=mysql_native_password
+      # 挂载 SQL 初始化目录
+      - ./backend/sql:/docker-entrypoint-initdb.d/sql:ro
+      - ./backend/sql/init-db.sh:/docker-entrypoint-initdb.d/01-init-db.sh:ro
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --max-connections=200
+      --innodb-buffer-pool-size=256M
     networks:
       - canteen-network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
 
-  # Redis缓存
+  # ============================================
+  # Redis 缓存
+  # ============================================
   redis:
     image: redis:7-alpine
     container_name: canteen-redis
@@ -33,6 +44,7 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
     networks:
       - canteen-network
     healthcheck:
@@ -40,22 +52,28 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
+    restart: unless-stopped
 
-  # 后端服务
+  # ============================================
+  # 后端服务 (Spring Boot)
+  # ============================================
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: canteen-backend
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/reggie?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/reggie?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root123
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
       SERVER_PORT: 8080
+      TZ: Asia/Shanghai
     ports:
       - "8080:8080"
+    volumes:
+      - upload-data:/app/upload
     depends_on:
       mysql:
         condition: service_healthy
@@ -65,7 +83,9 @@ services:
       - canteen-network
     restart: unless-stopped
 
-  # 管理端前端
+  # ============================================
+  # 管理端前端 (Admin)
+  # ============================================
   admin-frontend:
     build:
       context: ./frontend/admin
@@ -79,14 +99,37 @@ services:
       - canteen-network
     restart: unless-stopped
 
+  # ============================================
+  # 商家端前端 (Merchant)
+  # ============================================
+  merchant-frontend:
+    build:
+      context: ./frontend/merchant
+      dockerfile: Dockerfile
+    container_name: canteen-merchant
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    networks:
+      - canteen-network
+    restart: unless-stopped
+
+# ============================================
+# 数据卷
+# ============================================
 volumes:
   mysql-data:
     driver: local
   redis-data:
     driver: local
+  upload-data:
+    driver: local
 
+# ============================================
+# 网络
+# ============================================
 networks:
   canteen-network:
     driver: bridge
     name: canteen-network
-
