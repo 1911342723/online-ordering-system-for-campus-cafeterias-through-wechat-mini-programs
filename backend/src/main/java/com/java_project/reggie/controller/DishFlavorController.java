@@ -169,84 +169,65 @@ public class DishFlavorController {
     public R<List<DishDto>> list(Dish dish ){
         List<DishDto> dishDtoList = null;
         
-        // Redis缓存已禁用，直接查询数据库
-        // String canteenKey = dish.getCanteenId() != null ? dish.getCanteenId().toString() : "all";
-        // String categoryKey = dish.getCategoryId() != null ? dish.getCategoryId().toString() : "all";
-        // String statusKey = dish.getStatus() != null ? dish.getStatus().toString() : "1";
-        // String key = "dish_" + canteenKey + "_" + categoryKey + "_" + statusKey;
-        
-        // //尝试从redis中获取缓存数据（优雅降级）
-        // try {
-        //     dishDtoList = (List<DishDto>) redisTemplate.opsForValue().get(key);
-        //     if(dishDtoList!=null){
-        //         log.info("从Redis缓存获取菜品列表，key：{}", key);
-        //         return R.success(dishDtoList);
-        //     }
-        // } catch (Exception e) {
-        //     log.warn("Redis连接失败，将直接从数据库查询：{}", e.getMessage());
-        // }
+        try {
+            // Redis缓存已禁用，直接查询数据库
+            log.info("从数据库查询菜品列表，canteenId：{}，categoryId：{}，status：{}", 
+                dish.getCanteenId(), dish.getCategoryId(), dish.getStatus());
 
-        log.info("从数据库查询菜品列表，canteenId：{}，categoryId：{}，status：{}", 
-            dish.getCanteenId(), dish.getCategoryId(), dish.getStatus());
+            //没有数据就是没缓存，查询数据库
+            //构造查询条件
+            LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
+            //添加查询条件 - 支持根据canteenId查询
+            queryWrapper.eq(dish.getCanteenId()!=null,Dish::getCanteenId,dish.getCanteenId());
+            queryWrapper.eq(dish.getCategoryId()!=null,Dish::getCategoryId,dish.getCategoryId());
+            //查询状态是1的，为在售状态的
+            queryWrapper.eq(Dish::getStatus,1);
 
-        //没有数据就是没缓存，查询数据库
-        //构造查询条件
-        LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
-        //添加查询条件 - 支持根据canteenId查询
-        queryWrapper.eq(dish.getCanteenId()!=null,Dish::getCanteenId,dish.getCanteenId());
-        queryWrapper.eq(dish.getCategoryId()!=null,Dish::getCategoryId,dish.getCategoryId());
-        //查询状态是1的，为在售状态的
-        queryWrapper.eq(Dish::getStatus,1);
+            //添加排序条件
+            queryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
+            //开始查询
+            List<Dish> list = dishService.list(queryWrapper);
 
-        //添加排序条件
-        queryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
-        //开始查询
-        List<Dish> list = dishService.list(queryWrapper);
+            //bean拷贝，通过流的形式
+            dishDtoList = list.stream().map((item) -> {
+                DishDto dishDto = new DishDto();
 
-        //bean拷贝，通过流的形式
-        dishDtoList = list.stream().map((item) -> {
-            DishDto dishDto = new DishDto();
+                BeanUtils.copyProperties(item, dishDto);
 
-            BeanUtils.copyProperties(item, dishDto);
-
-            Long categoryId = item.getCategoryId();
-            if (categoryId != null) {
-                if (categoryService == null) {
-                    throw new NullPointerException("CategoryService is null");
-                }
-                Category category = categoryService.getById(categoryId);
-                if (category != null) {
-                    String categoryName = category.getName();
-                    if (categoryName != null) {
-                        dishDto.setCategoryName(categoryName);
+                Long categoryId = item.getCategoryId();
+                if (categoryId != null) {
+                    if (categoryService == null) {
+                        throw new NullPointerException("CategoryService is null");
+                    }
+                    Category category = categoryService.getById(categoryId);
+                    if (category != null) {
+                        String categoryName = category.getName();
+                        if (categoryName != null) {
+                            dishDto.setCategoryName(categoryName);
+                        } else {
+                            log.warn("Category name is null for categoryId: {}", categoryId);
+                        }
                     } else {
-                        log.warn("Category name is null for categoryId: {}", categoryId);
+                        log.warn("Category is null for categoryId: {}", categoryId);
                     }
                 } else {
-                    log.warn("Category is null for categoryId: {}", categoryId);
+                    log.warn("CategoryId is null for dish: {}", item.getId());
                 }
-            } else {
-                log.warn("CategoryId is null for dish: {}", item.getId());
-            }
-            //当前菜品的id
-            Long id = item.getId();
-            LambdaQueryWrapper<DishFlavor> queryWrapper1 = new LambdaQueryWrapper<>();
-            queryWrapper1.eq(DishFlavor::getDishId,id);
-            List<DishFlavor> dishFlavors = dishFlavorService.list(queryWrapper1);
-            dishDto.setFlavors(dishFlavors);
-            return dishDto;
-        }).collect(Collectors.toList());
+                //当前菜品的id
+                Long id = item.getId();
+                LambdaQueryWrapper<DishFlavor> queryWrapper1 = new LambdaQueryWrapper<>();
+                queryWrapper1.eq(DishFlavor::getDishId,id);
+                List<DishFlavor> dishFlavors = dishFlavorService.list(queryWrapper1);
+                dishDto.setFlavors(dishFlavors);
+                return dishDto;
+            }).collect(Collectors.toList());
 
-        // Redis缓存已禁用
-        // try {
-        //     redisTemplate.opsForValue().set(key,dishDtoList,60L, TimeUnit.MINUTES);
-        //     log.info("菜品列表已缓存到Redis，key：{}，数量：{}", key, dishDtoList.size());
-        // } catch (Exception e) {
-        //     log.warn("Redis缓存失败，但不影响业务：{}", e.getMessage());
-        // }
-        
-        log.info("查询到{}道菜品", dishDtoList.size());
-        return R.success(dishDtoList);
+            log.info("查询到{}道菜品", dishDtoList.size());
+            return R.success(dishDtoList);
+        } catch (Exception e) {
+            log.error("查询菜品列表异常: {}", e.getMessage(), e);
+            return R.success(new ArrayList<>());
+        }
     }
 
     /*

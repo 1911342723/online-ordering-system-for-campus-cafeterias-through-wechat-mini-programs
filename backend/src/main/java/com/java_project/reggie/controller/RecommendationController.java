@@ -35,8 +35,14 @@ public class RecommendationController {
         }
         
         log.info("获取今日推荐，用户ID：{}，数量：{}", userId, limit);
-        List<DishDto> recommendations = recommendationService.getTodayRecommendations(userId, limit);
-        return R.success(recommendations);
+        
+        try {
+            List<DishDto> recommendations = recommendationService.getTodayRecommendations(userId, limit);
+            return R.success(recommendations);
+        } catch (Exception e) {
+            log.error("获取今日推荐异常: {}", e.getMessage(), e);
+            return R.success(new java.util.ArrayList<>());
+        }
     }
 
     /**
