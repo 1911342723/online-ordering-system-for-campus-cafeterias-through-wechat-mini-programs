@@ -16,7 +16,7 @@ RUN mvn clean package -DskipTests -B
 # ============================================
 # 运行阶段
 # ============================================
-FROM docker.m.daocloud.io/library/openjdk:8-jdk-alpine
+FROM docker.m.daocloud.io/library/eclipse-temurin:8-jdk-alpine
 
 # 安装必要的工具
 RUN apk add --no-cache curl tzdata \

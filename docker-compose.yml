@@ -61,12 +61,13 @@ services:
       dockerfile: Dockerfile
     container_name: canteen-backend
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/reggie?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root123
+      SPRING_DATASOURCE_DRUID_URL: jdbc:mysql://mysql:3306/reggie?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_DRUID_USERNAME: root
+      SPRING_DATASOURCE_DRUID_PASSWORD: root123
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
       SERVER_PORT: 8080
+      REGGIE_PATH: /app/upload/
       TZ: Asia/Shanghai
     ports:
       - "8080:8080"
