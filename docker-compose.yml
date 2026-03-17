@@ -10,7 +10,7 @@ services:
       MYSQL_DATABASE: reggie
       TZ: Asia/Shanghai
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       # 挂载 SQL 初始化目录
