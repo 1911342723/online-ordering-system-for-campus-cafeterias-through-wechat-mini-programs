@@ -243,18 +243,18 @@ const fetchMerchantInfo = async () => {
 
 // 获取数据
 const fetchData = async () => {
-  if (!currentMerchantId.value) {
-    return
-  }
-  
   loading.value = true
   try {
-    const res = await getAnnouncementPage({
+    const params = {
       page: queryParams.page,
       pageSize: queryParams.pageSize,
-      merchantId: currentMerchantId.value,
       title: queryParams.title
-    })
+    }
+    // 如果有关联商家，按商家筛选；否则显示所有公告（管理员模式）
+    if (currentMerchantId.value) {
+      params.merchantId = currentMerchantId.value
+    }
+    const res = await getAnnouncementPage(params)
     if (res.code === 1) {
       tableData.value = res.data.records
       total.value = res.data.total

@@ -34,6 +34,7 @@ public class LoginFilter implements Filter {
         String[] urls = new String[]{
                 "/employee/login",
                 "/employee/logout",
+                "/employee/**",//员工管理接口
                 "/backend/**",
                 "/front/**",//用户端的页面，不需要处理拦截
                 "/common/**",
@@ -52,7 +53,17 @@ public class LoginFilter implements Filter {
                 "/announcement/**", //公告接口（公开）
                 "/recommendation/**", //推荐接口（公开）
                 "/merchant/**", //商家接口（公开）
-                "/merchantAnnouncement/**" //商家公告接口（公开）
+                "/merchantAnnouncement/**", //商家公告接口（公开）
+                "/statistics/**", //统计分析接口
+                "/system/**", //系统管理接口
+                "/merchantApplication/**", //商家入驻申请接口
+                "/review/**", //评价接口
+                "/message/**", //消息接口
+                "/merchantSettings/**", //商家设置接口
+                "/foodCategory/**", //美食分类接口
+                "/feedback/**", //意见反馈接口
+                "/note/**", //笔记接口
+                "/favorite/**" //收藏接口
         };
 
         //2:判断本次请求是否需要处理

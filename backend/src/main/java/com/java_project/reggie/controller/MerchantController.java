@@ -97,98 +97,113 @@ public class MerchantController {
         log.info("查询商家列表: canteenId={}, keyword={}, categoryId={}, sortBy={}, status={}, page={}, pageSize={}", 
                 canteenId, keyword, categoryId, sortBy, status, page, pageSize);
         
-        LambdaQueryWrapper<Merchant> queryWrapper = new LambdaQueryWrapper<>();
-        
-        // 食堂筛选
-        queryWrapper.eq(canteenId != null, Merchant::getCanteenId, canteenId);
-        
-        // 美食分类筛选
-        queryWrapper.eq(categoryId != null, Merchant::getFoodCategoryId, categoryId);
-        
-        // 状态筛选（默认只查营业中的）
-        if (status != null) {
-            queryWrapper.eq(Merchant::getStatus, status);
-        } else {
-            queryWrapper.eq(Merchant::getStatus, 1);
-        }
-        
-        // 关键词搜索（名称或标签）
-        if (StringUtils.hasText(keyword)) {
-            queryWrapper.and(wrapper -> 
-                wrapper.like(Merchant::getName, keyword)
-                       .or()
-                       .like(Merchant::getTags, keyword)
-                       .or()
-                       .like(Merchant::getDescription, keyword)
-            );
-        }
-        
-        // 基础排序
-        queryWrapper.orderByAsc(Merchant::getSort);
-        
-        List<Merchant> list = merchantService.list(queryWrapper);
-        
-        // 填充额外信息
-        for (Merchant merchant : list) {
-            // 填充食堂名称
-            if (merchant.getCanteenId() != null) {
-                Canteen canteen = canteenService.getById(merchant.getCanteenId());
-                if (canteen != null) {
-                    merchant.setCanteenName(canteen.getName());
+        try {
+            LambdaQueryWrapper<Merchant> queryWrapper = new LambdaQueryWrapper<>();
+            
+            // 食堂筛选
+            queryWrapper.eq(canteenId != null, Merchant::getCanteenId, canteenId);
+            
+            // 美食分类筛选
+            queryWrapper.eq(categoryId != null, Merchant::getFoodCategoryId, categoryId);
+            
+            // 状态筛选（默认只查营业中的）
+            if (status != null) {
+                queryWrapper.eq(Merchant::getStatus, status);
+            } else {
+                queryWrapper.eq(Merchant::getStatus, 1);
+            }
+            
+            // 关键词搜索（名称或标签）
+            if (StringUtils.hasText(keyword)) {
+                queryWrapper.and(wrapper -> 
+                    wrapper.like(Merchant::getName, keyword)
+                           .or()
+                           .like(Merchant::getTags, keyword)
+                           .or()
+                           .like(Merchant::getDescription, keyword)
+                );
+            }
+            
+            // 基础排序
+            queryWrapper.orderByAsc(Merchant::getSort);
+            
+            List<Merchant> list = merchantService.list(queryWrapper);
+            
+            // 填充额外信息
+            for (Merchant merchant : list) {
+                // 填充食堂名称
+                if (merchant.getCanteenId() != null) {
+                    try {
+                        Canteen canteen = canteenService.getById(merchant.getCanteenId());
+                        if (canteen != null) {
+                            merchant.setCanteenName(canteen.getName());
+                        }
+                    } catch (Exception e) {
+                        log.warn("填充食堂名称失败: merchantId={}, canteenId={}", merchant.getId(), merchant.getCanteenId());
+                    }
+                }
+                
+                // 填充美食分类名称
+                if (merchant.getFoodCategoryId() != null) {
+                    try {
+                        FoodCategory category = foodCategoryService.getById(merchant.getFoodCategoryId());
+                        if (category != null) {
+                            merchant.setFoodCategoryName(category.getName());
+                        }
+                    } catch (Exception e) {
+                        log.warn("填充美食分类名称失败: merchantId={}, foodCategoryId={}", merchant.getId(), merchant.getFoodCategoryId());
+                    }
+                }
+                
+                // 设置默认值
+                if (merchant.getDeliveryTime() == null) {
+                    merchant.setDeliveryTime(15 + (int)(Math.random() * 15)); // 15-30分钟
+                }
+                if (merchant.getDistance() == null) {
+                    merchant.setDistance(100 + (int)(Math.random() * 400)); // 100-500米
+                }
+                if (merchant.getTags() == null || merchant.getTags().isEmpty()) {
+                    merchant.setTags("美食,好评");
                 }
             }
             
-            // 填充美食分类名称
-            if (merchant.getFoodCategoryId() != null) {
-                FoodCategory category = foodCategoryService.getById(merchant.getFoodCategoryId());
-                if (category != null) {
-                    merchant.setFoodCategoryName(category.getName());
-                }
+            // 应用排序
+            switch (sortBy) {
+                case "sales":
+                    list = list.stream()
+                        .sorted(Comparator.comparingInt(m -> m.getSalesCount() != null ? -m.getSalesCount() : 0))
+                        .collect(Collectors.toList());
+                    break;
+                case "rating":
+                    list = list.stream()
+                        .sorted(Comparator.comparing(
+                            (Merchant m) -> m.getRating() != null ? m.getRating() : java.math.BigDecimal.ZERO)
+                            .reversed())
+                        .collect(Collectors.toList());
+                    break;
+                case "distance":
+                    list = list.stream()
+                        .sorted(Comparator.comparingInt(m -> m.getDistance() != null ? m.getDistance() : Integer.MAX_VALUE))
+                        .collect(Collectors.toList());
+                    break;
+                default:
+                    // 综合排序：已经按sort排序
+                    break;
             }
             
-            // 设置默认值
-            if (merchant.getDeliveryTime() == null) {
-                merchant.setDeliveryTime(15 + (int)(Math.random() * 15)); // 15-30分钟
+            // 分页处理
+            int start = (page - 1) * pageSize;
+            int end = Math.min(start + pageSize, list.size());
+            
+            if (start >= list.size()) {
+                return R.success(new java.util.ArrayList<>());
             }
-            if (merchant.getDistance() == null) {
-                merchant.setDistance(100 + (int)(Math.random() * 400)); // 100-500米
-            }
-            if (merchant.getTags() == null || merchant.getTags().isEmpty()) {
-                merchant.setTags("美食,好评");
-            }
-        }
-        
-        // 应用排序
-        switch (sortBy) {
-            case "sales":
-                list = list.stream()
-                    .sorted(Comparator.comparingInt(m -> m.getSalesCount() != null ? -m.getSalesCount() : 0))
-                    .collect(Collectors.toList());
-                break;
-            case "rating":
-                list = list.stream()
-                    .sorted(Comparator.comparing(m -> m.getRating() != null ? m.getRating().negate() : java.math.BigDecimal.ZERO))
-                    .collect(Collectors.toList());
-                break;
-            case "distance":
-                list = list.stream()
-                    .sorted(Comparator.comparingInt(m -> m.getDistance() != null ? m.getDistance() : Integer.MAX_VALUE))
-                    .collect(Collectors.toList());
-                break;
-            default:
-                // 综合排序：已经按sort排序
-                break;
-        }
-        
-        // 分页处理
-        int start = (page - 1) * pageSize;
-        int end = Math.min(start + pageSize, list.size());
-        
-        if (start >= list.size()) {
+            
+            return R.success(list.subList(start, end));
+        } catch (Exception e) {
+            log.error("查询商家列表异常: {}", e.getMessage(), e);
             return R.success(new java.util.ArrayList<>());
         }
-        
-        return R.success(list.subList(start, end));
     }
 
     /**
@@ -402,15 +417,20 @@ public class MerchantController {
     public R<List<Merchant>> getRedList(@RequestParam(defaultValue = "10") int limit) {
         log.info("获取商家红榜: limit={}", limit);
         
-        LambdaQueryWrapper<Merchant> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Merchant::getStatus, 1); // 只查营业中的
-        queryWrapper.gt(Merchant::getPositiveCount, 0); // 至少有好评
-        queryWrapper.orderByDesc(Merchant::getPositiveCount); // 按好评数降序
-        queryWrapper.last("LIMIT " + limit);
-        
-        List<Merchant> list = merchantService.list(queryWrapper);
-        
-        return R.success(list);
+        try {
+            LambdaQueryWrapper<Merchant> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Merchant::getStatus, 1); // 只查营业中的
+            queryWrapper.gt(Merchant::getPositiveCount, 0); // 至少有好评
+            queryWrapper.orderByDesc(Merchant::getPositiveCount); // 按好评数降序
+            queryWrapper.last("LIMIT " + limit);
+            
+            List<Merchant> list = merchantService.list(queryWrapper);
+            
+            return R.success(list);
+        } catch (Exception e) {
+            log.error("获取商家红榜异常: {}", e.getMessage(), e);
+            return R.success(new java.util.ArrayList<>());
+        }
     }
     
     /**
@@ -422,15 +442,20 @@ public class MerchantController {
     public R<List<Merchant>> getBlackList(@RequestParam(defaultValue = "10") int limit) {
         log.info("获取商家黑榜: limit={}", limit);
         
-        LambdaQueryWrapper<Merchant> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Merchant::getStatus, 1); // 只查营业中的
-        queryWrapper.gt(Merchant::getNegativeCount, 0); // 至少有差评
-        queryWrapper.orderByDesc(Merchant::getNegativeCount); // 按差评数降序
-        queryWrapper.last("LIMIT " + limit);
-        
-        List<Merchant> list = merchantService.list(queryWrapper);
-        
-        return R.success(list);
+        try {
+            LambdaQueryWrapper<Merchant> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Merchant::getStatus, 1); // 只查营业中的
+            queryWrapper.gt(Merchant::getNegativeCount, 0); // 至少有差评
+            queryWrapper.orderByDesc(Merchant::getNegativeCount); // 按差评数降序
+            queryWrapper.last("LIMIT " + limit);
+            
+            List<Merchant> list = merchantService.list(queryWrapper);
+            
+            return R.success(list);
+        } catch (Exception e) {
+            log.error("获取商家黑榜异常: {}", e.getMessage(), e);
+            return R.success(new java.util.ArrayList<>());
+        }
     }
     
     /**
