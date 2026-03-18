@@ -74,7 +74,17 @@
       <artifactId>druid-spring-boot-starter</artifactId>
       <version>1.1.23</version>
     </dependency>
-
+    <!-- LangChain4j - AI功能支持 -->
+    <dependency>
+      <groupId>dev.langchain4j</groupId>
+      <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
+      <version>0.35.0</version>
+    </dependency>
+    <dependency>
+      <groupId>dev.langchain4j</groupId>
+      <artifactId>langchain4j</artifactId>
+      <version>0.35.0</version>
+    </dependency>
     <!-- JWT依赖 - JSON Web Token -->
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
