@@ -37,11 +37,13 @@ const request = (options) => {
             console.log('未登录访问:', options.url)
             reject(res.data)
           } else {
-            // 其他错误才显示提示
-            wx.showToast({
-              title: msg || '请求失败',
-              icon: 'none'
-            })
+            // 其他错误：如果不是静默模式才显示提示
+            if (!options.silent) {
+              wx.showToast({
+                title: msg || '请求失败',
+                icon: 'none'
+              })
+            }
             reject(res.data)
           }
         } else {

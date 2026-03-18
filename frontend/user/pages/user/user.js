@@ -88,7 +88,8 @@ Page({
       // 获取用户基本信息
       const userInfo = await request({
         url: '/user/info',
-        method: 'GET'
+        method: 'GET',
+        silent: true  // 静默模式，由本方法自行处理错误
       })
       
       if (userInfo) {
@@ -118,7 +119,35 @@ Page({
       }
     } catch (error) {
       console.error('加载用户统计数据失败:', error)
-      // 使用模拟数据
+      
+      // 如果后端返回"用户不存在"，说明token对应的用户已被删除（可能数据库重置），
+      // 需要清除本地过期凭证并引导重新登录
+      if (error && error.msg === '用户不存在') {
+        console.warn('用户不存在，清除过期登录状态')
+        wx.removeStorageSync('userInfo')
+        wx.removeStorageSync('token')
+        wx.removeStorageSync('phone')
+        this.setData({
+          isLoggedIn: false,
+          userInfo: {},
+          stats: {
+            balance: '0.00',
+            coupon: 0,
+            posts: 0,
+            collects: 0,
+            likes: 0
+          },
+          unreadCount: 0
+        })
+        wx.showToast({
+          title: '登录已过期，请重新登录',
+          icon: 'none',
+          duration: 2000
+        })
+        return
+      }
+      
+      // 其他错误使用模拟数据
       this.loadMockStats()
     }
   },
