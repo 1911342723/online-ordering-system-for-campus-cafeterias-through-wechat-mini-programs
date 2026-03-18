@@ -35,4 +35,11 @@ public class GlobalExceptionHandler {
         log.info(e.getMessage());
         return R.error(e.getMessage());
     }
+
+    //全局兜底异常处理，防止Spring返回默认的500空白错误
+    @ExceptionHandler(Exception.class)
+    public R<String> globalExceptionHandler(Exception e){
+        log.error("服务器内部异常: {}", e.getMessage(), e);
+        return R.error("服务器内部错误: " + e.getMessage());
+    }
 }

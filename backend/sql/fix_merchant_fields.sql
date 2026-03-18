@@ -85,4 +85,9 @@ INSERT IGNORE INTO `food_category` (`code`, `name`, `icon`, `bg_color`, `keyword
 ('drink', '饮品', '🧋', '#CFFAFE', '饮品', 7, 1),
 ('dessert', '甜品', '🍰', '#FCE7F3', '甜品', 8, 1);
 
+-- ====== 修复 merchant 表 - 添加 application_id（若不存在） ======
+
+ALTER TABLE `merchant`
+ADD COLUMN IF NOT EXISTS `application_id` BIGINT DEFAULT NULL COMMENT '关联的申请ID' AFTER `employee_id`;
+
 SELECT '数据库字段修复完成！' AS message;

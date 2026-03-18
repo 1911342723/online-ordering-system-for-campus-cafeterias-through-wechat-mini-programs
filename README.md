@@ -142,3 +142,43 @@ Online-Catering-System/
 
 - API接口文档详见 `frontend/admin/API使用文档.md` 和 `frontend/merchant/API使用文档.md`
 - 数据库设计文档详见 `backend/db.sql`
+
+---
+
+## Docker 部署指南
+
+为了方便快速部署和重启项目，本项目已配置了完整的 Docker 环境（包含前后端及所需环境）。你可以使用以下命令进行管理：
+
+### 1. 一键启动所有服务 (后台运行)
+```bash
+docker-compose up -d
+```
+*此命令会自动拉取所需镜像、构建项目并按顺序启动所有容器。重启服务器后，直接在项目根目录执行此命令即可恢复整个项目。*
+
+### 2. 重新构建并启动 (当代码有更新时)
+```bash
+docker-compose up -d --build
+```
+
+### 3. 查看服务运行状态
+```bash
+docker-compose ps
+```
+
+### 4. 查看服务日志
+```bash
+# 查看所有服务实时日志
+docker-compose logs -f
+
+# 查看某个特定服务的日志（例如后端）
+docker-compose logs -f backend
+```
+
+### 5. 停止并移除容器
+```bash
+# 停止运行
+docker-compose down
+
+# 停止并移除所有相关的数据卷(警告：会清空数据库数据！)
+docker-compose down -v
+```
