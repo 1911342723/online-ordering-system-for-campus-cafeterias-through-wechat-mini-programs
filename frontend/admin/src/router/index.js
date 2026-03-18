@@ -89,6 +89,12 @@ const routes = [
         name: 'System',
         component: () => import('@/views/system/index.vue'),
         meta: { title: '系统设置', icon: 'Setting', role: 'admin' }
+      },
+      {
+        path: 'member',
+        name: 'Member',
+        component: () => import('@/views/member/index.vue'),
+        meta: { title: '员工管理', icon: 'User', role: 'admin' }
       }
     ]
   }

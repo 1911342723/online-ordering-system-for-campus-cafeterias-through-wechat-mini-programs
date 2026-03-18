@@ -41,26 +41,35 @@ public class MerchantAnnouncementController {
         
         log.info("分页查询商家公告: page={}, pageSize={}, merchantId={}, title={}", page, pageSize, merchantId, title);
         
-        Page<MerchantAnnouncement> pageInfo = new Page<>(page, pageSize);
-        
-        LambdaQueryWrapper<MerchantAnnouncement> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(merchantId != null, MerchantAnnouncement::getMerchantId, merchantId);
-        queryWrapper.like(StringUtils.hasText(title), MerchantAnnouncement::getTitle, title);
-        queryWrapper.orderByDesc(MerchantAnnouncement::getSort).orderByDesc(MerchantAnnouncement::getCreateTime);
-        
-        merchantAnnouncementService.page(pageInfo, queryWrapper);
-        
-        // 填充商家名称
-        pageInfo.getRecords().forEach(announcement -> {
-            if (announcement.getMerchantId() != null) {
-                Merchant merchant = merchantService.getById(announcement.getMerchantId());
-                if (merchant != null) {
-                    announcement.setMerchantName(merchant.getName());
+        try {
+            Page<MerchantAnnouncement> pageInfo = new Page<>(page, pageSize);
+            
+            LambdaQueryWrapper<MerchantAnnouncement> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(merchantId != null, MerchantAnnouncement::getMerchantId, merchantId);
+            queryWrapper.like(StringUtils.hasText(title), MerchantAnnouncement::getTitle, title);
+            queryWrapper.orderByDesc(MerchantAnnouncement::getSort).orderByDesc(MerchantAnnouncement::getCreateTime);
+            
+            merchantAnnouncementService.page(pageInfo, queryWrapper);
+            
+            // 填充商家名称
+            pageInfo.getRecords().forEach(announcement -> {
+                try {
+                    if (announcement.getMerchantId() != null) {
+                        Merchant merchant = merchantService.getById(announcement.getMerchantId());
+                        if (merchant != null) {
+                            announcement.setMerchantName(merchant.getName());
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("填充公告商家名称失败: {}", e.getMessage());
                 }
-            }
-        });
-        
-        return R.success(pageInfo);
+            });
+            
+            return R.success(pageInfo);
+        } catch (Exception e) {
+            log.error("分页查询商家公告异常: {}", e.getMessage(), e);
+            return R.success(new Page<>(page, pageSize));
+        }
     }
 
     /**

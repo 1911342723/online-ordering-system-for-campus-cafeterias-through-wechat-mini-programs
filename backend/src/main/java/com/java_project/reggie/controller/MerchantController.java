@@ -255,23 +255,32 @@ public class MerchantController {
     public R<Merchant> getByEmployeeId(@PathVariable Long employeeId) {
         log.info("根据员工ID查询商家: employeeId={}", employeeId);
         
-        LambdaQueryWrapper<Merchant> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Merchant::getEmployeeId, employeeId);
-        
-        Merchant merchant = merchantService.getOne(queryWrapper);
-        
-        if (merchant != null) {
-            // 填充食堂名称
-            if (merchant.getCanteenId() != null) {
-                Canteen canteen = canteenService.getById(merchant.getCanteenId());
-                if (canteen != null) {
-                    merchant.setCanteenName(canteen.getName());
+        try {
+            LambdaQueryWrapper<Merchant> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Merchant::getEmployeeId, employeeId);
+            
+            Merchant merchant = merchantService.getOne(queryWrapper);
+            
+            if (merchant != null) {
+                // 填充食堂名称
+                if (merchant.getCanteenId() != null) {
+                    try {
+                        Canteen canteen = canteenService.getById(merchant.getCanteenId());
+                        if (canteen != null) {
+                            merchant.setCanteenName(canteen.getName());
+                        }
+                    } catch (Exception e) {
+                        log.warn("填充食堂名称失败: {}", e.getMessage());
+                    }
                 }
+                return R.success(merchant);
             }
-            return R.success(merchant);
+            
+            return R.error("未找到关联的商家信息");
+        } catch (Exception e) {
+            log.error("根据员工ID查询商家异常: {}", e.getMessage(), e);
+            return R.error("查询商家信息失败");
         }
-        
-        return R.error("未找到关联的商家信息");
     }
 
     /**
