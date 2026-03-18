@@ -62,48 +62,50 @@ public class JwtAuthenticationFilter implements Filter {
         //2. 判断本次请求是否需要处理
         boolean check = check(urls, requestURI);
         
-        //3. 如果不需要处理，则直接放行
-        if (check) {
-            log.info("本次请求{}不需要处理", requestURI);
-            filterChain.doFilter(request, response);
-            return;
-        }
-        
-        //4. 尝试从请求头中获取Token
+        //3. 尝试从请求头中获取Token并验证（无论是否在白名单中，如果有有效Token都解析并存入ThreadLocal）
         String token = request.getHeader("Authorization");
         if (token != null && !token.trim().isEmpty() && token.startsWith("Bearer ")) {
             token = token.substring(7); // 移除 "Bearer " 前缀
         }
         
-        //5. 验证Token
+        boolean hasValidAuth = false;
+        
         if (token != null && !token.trim().isEmpty() && JwtUtil.validateToken(token)) {
-            //Token有效，获取用户ID
             Long userId = JwtUtil.getUserId(token);
             if (userId != null) {
                 log.info("JWT认证成功，用户ID：{}", userId);
-                //将用户ID存入ThreadLocal，供后续使用
                 BaseContext.setThreadLocal(userId);
-                filterChain.doFilter(request, response);
-                return;
+                hasValidAuth = true;
             }
         }
         
-        //6. 兼容Session方式的认证（向后兼容）
-        if (request.getSession().getAttribute("employee") != null) {
-            Long empId = (Long) request.getSession().getAttribute("employee");
-            BaseContext.setThreadLocal(empId);
-            log.info("Session认证成功（员工），ID：{}", empId);
-            filterChain.doFilter(request, response);
-            return;
-        } else if (request.getSession().getAttribute("user") != null) {
-            Long userId = (Long) request.getSession().getAttribute("user");
-            BaseContext.setThreadLocal(userId);
-            log.info("Session认证成功（用户），ID：{}", userId);
+        // 兼容Session认证（员工或用户）
+        if (!hasValidAuth) {
+            if (request.getSession().getAttribute("employee") != null) {
+                Long empId = (Long) request.getSession().getAttribute("employee");
+                BaseContext.setThreadLocal(empId);
+                log.info("Session认证成功（员工），ID：{}", empId);
+                hasValidAuth = true;
+            } else if (request.getSession().getAttribute("user") != null) {
+                Long userId = (Long) request.getSession().getAttribute("user");
+                BaseContext.setThreadLocal(userId);
+                log.info("Session认证成功（用户），ID：{}", userId);
+                hasValidAuth = true;
+            }
+        }
+        
+        //4. 判断是否放行（如果有有效认证，或者在白名单内）
+        if (hasValidAuth || check) {
+            if (!hasValidAuth) {
+                log.info("没登录但在白名单，直接放行：{}", requestURI);
+                // 清除之前的ThreadLocal防止线程池复用导致状态泄漏
+                BaseContext.setThreadLocal(null);
+            }
             filterChain.doFilter(request, response);
             return;
         }
         
-        //7. 如果既没有有效Token也没有Session，返回未登录状态
+        //5. 如果既没有有效Token也没有Session且不在白名单，返回未登录状态
         log.info("用户未登录或Token无效");
         response.getWriter().write(JSON.toJSONString(R.error("NOTLOGIN")));
     }
