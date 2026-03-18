@@ -1,7 +1,7 @@
 # ============================================
-# 多阶段构建 - 构建阶段
+# 多阶段构建 - 构建阶段 (Java 17)
 # ============================================
-FROM docker.m.daocloud.io/library/maven:3.6.3-openjdk-8 AS builder
+FROM docker.m.daocloud.io/library/maven:3.8.6-openjdk-17 AS builder
 
 WORKDIR /app
 
@@ -14,9 +14,9 @@ COPY src ./src
 RUN mvn clean package -DskipTests -B
 
 # ============================================
-# 运行阶段
+# 运行阶段 (Java 17)
 # ============================================
-FROM docker.m.daocloud.io/library/eclipse-temurin:8-jdk-alpine
+FROM docker.m.daocloud.io/library/eclipse-temurin:17-jdk-alpine
 
 # 安装必要的工具
 RUN apk add --no-cache curl tzdata \
@@ -41,13 +41,12 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8080/employee/page?page=1\&pageSize=1 || exit 1
 
-# 启动应用 - 添加 https.protocols 强制使用TLS1.2
+# 启动应用
 ENTRYPOINT ["java", \
   "-Djava.security.egd=file:/dev/./urandom", \
-  "-Dhttps.protocols=TLSv1.2", \
+  "-Dhttps.protocols=TLSv1.2,TLSv1.3", \
   "-Dspring.profiles.active=prod", \
   "-Xms256m", \
   "-Xmx512m", \
   "-jar", \
   "app.jar"]
-
