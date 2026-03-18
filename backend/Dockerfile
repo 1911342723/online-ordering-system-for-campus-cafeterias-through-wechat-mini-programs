@@ -1,5 +1,5 @@
 # 多阶段构建 - 构建阶段
-FROM registry.cn-hangzhou.aliyuncs.com/library/maven:3.8.6-openjdk-17 AS builder
+FROM docker.m.daocloud.io/library/maven:3.8.6-openjdk-17 AS builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests -B
 
 # 运行阶段
-FROM registry.cn-hangzhou.aliyuncs.com/library/eclipse-temurin:17-jdk-alpine
+FROM docker.m.daocloud.io/library/eclipse-temurin:17-jdk-alpine
 
 # 安装必要的工具
 RUN apk add --no-cache curl tzdata \
