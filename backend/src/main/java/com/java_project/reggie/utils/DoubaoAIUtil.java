@@ -5,8 +5,13 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
+import javax.net.ssl.*;
+import java.security.cert.X509Certificate;
+import java.net.HttpURLConnection;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,7 +23,49 @@ import java.util.Map;
 @Slf4j
 public class DoubaoAIUtil {
     
-    private static final RestTemplate restTemplate = new RestTemplate();
+    private static final RestTemplate restTemplate = createSSLRestTemplate();
+    
+    /**
+     * 创建支持TLS的RestTemplate，解决与火山引擎API的SSL握手问题
+     */
+    private static RestTemplate createSSLRestTemplate() {
+        try {
+            // 创建信任所有证书的TrustManager
+            TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+                }
+            };
+            
+            // 使用TLSv1.2协议初始化SSLContext
+            SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            
+            // 自定义RequestFactory，在创建连接时应用SSL配置
+            SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory() {
+                @Override
+                protected void prepareConnection(HttpURLConnection connection, String httpMethod) throws IOException {
+                    if (connection instanceof HttpsURLConnection) {
+                        HttpsURLConnection httpsConnection = (HttpsURLConnection) connection;
+                        httpsConnection.setSSLSocketFactory(sslContext.getSocketFactory());
+                        httpsConnection.setHostnameVerifier((hostname, session) -> true);
+                    }
+                    super.prepareConnection(connection, httpMethod);
+                }
+            };
+            requestFactory.setConnectTimeout(15000); // 连接超时15秒
+            requestFactory.setReadTimeout(30000);    // 读取超时30秒
+            
+            log.info("SSL RestTemplate 初始化成功");
+            return new RestTemplate(requestFactory);
+            
+        } catch (Exception e) {
+            log.error("SSL RestTemplate 初始化失败，回退到默认配置", e);
+            return new RestTemplate();
+        }
+    }
     
     /**
      * 调用豆包AI

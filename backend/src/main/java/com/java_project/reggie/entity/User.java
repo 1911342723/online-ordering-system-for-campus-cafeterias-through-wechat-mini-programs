@@ -45,6 +45,10 @@ public class User implements Serializable {
     private String sex;
 
 
+    //身份证号（教师认证用）
+    private String idCard;
+
+
     //身份证号
     private String idNumber;
 
@@ -63,6 +67,10 @@ public class User implements Serializable {
 
     //优惠券数量
     private Integer couponCount = 0;
+    
+    
+    //积分
+    private Integer points = 0;
     
     
     //个性签名
