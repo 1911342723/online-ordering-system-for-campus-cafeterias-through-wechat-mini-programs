@@ -37,7 +37,7 @@ public class JwtAuthenticationFilter implements Filter {
         
         //1. 获取本次请求的URI
         String requestURI = request.getRequestURI();
-        log.info("拦截到请求：{}", requestURI);
+
         
         //定义不需要处理的请求路径（白名单）
         String[] urls = new String[]{
@@ -73,7 +73,7 @@ public class JwtAuthenticationFilter implements Filter {
         if (token != null && !token.trim().isEmpty() && JwtUtil.validateToken(token)) {
             Long userId = JwtUtil.getUserId(token);
             if (userId != null) {
-                log.info("JWT认证成功，用户ID：{}", userId);
+
                 BaseContext.setThreadLocal(userId);
                 hasValidAuth = true;
             }
@@ -84,12 +84,12 @@ public class JwtAuthenticationFilter implements Filter {
             if (request.getSession().getAttribute("employee") != null) {
                 Long empId = (Long) request.getSession().getAttribute("employee");
                 BaseContext.setThreadLocal(empId);
-                log.info("Session认证成功（员工），ID：{}", empId);
+
                 hasValidAuth = true;
             } else if (request.getSession().getAttribute("user") != null) {
                 Long userId = (Long) request.getSession().getAttribute("user");
                 BaseContext.setThreadLocal(userId);
-                log.info("Session认证成功（用户），ID：{}", userId);
+
                 hasValidAuth = true;
             }
         }
@@ -97,7 +97,7 @@ public class JwtAuthenticationFilter implements Filter {
         //4. 判断是否放行（如果有有效认证，或者在白名单内）
         if (hasValidAuth || check) {
             if (!hasValidAuth) {
-                log.info("没登录但在白名单，直接放行：{}", requestURI);
+
                 // 清除之前的ThreadLocal防止线程池复用导致状态泄漏
                 BaseContext.setThreadLocal(null);
             }
@@ -106,7 +106,7 @@ public class JwtAuthenticationFilter implements Filter {
         }
         
         //5. 如果既没有有效Token也没有Session且不在白名单，返回未登录状态
-        log.info("用户未登录或Token无效");
+
         response.getWriter().write(JSON.toJSONString(R.error("NOTLOGIN")));
     }
     

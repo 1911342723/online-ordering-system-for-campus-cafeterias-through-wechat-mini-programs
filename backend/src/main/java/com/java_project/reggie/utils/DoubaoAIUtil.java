@@ -61,7 +61,7 @@ public class DoubaoAIUtil {
             // 创建请求实体
             HttpEntity<String> entity = new HttpEntity<>(JSON.toJSONString(requestBody), headers);
             
-            log.info("调用豆包AI，用户消息: {}", userMessage);
+            log.info("调用豆包AI，消息长度: {}", userMessage.length());
             
             // 发送请求
             ResponseEntity<String> response = restTemplate.exchange(
@@ -74,7 +74,7 @@ public class DoubaoAIUtil {
             // 解析响应
             if (response.getStatusCode() == HttpStatus.OK) {
                 String responseBody = response.getBody();
-                log.info("豆包AI响应: {}", responseBody);
+                log.info("豆包AI响应成功");
                 
                 JSONObject jsonResponse = JSON.parseObject(responseBody);
                 JSONArray choices = jsonResponse.getJSONArray("choices");

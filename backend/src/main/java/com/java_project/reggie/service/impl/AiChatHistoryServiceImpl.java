@@ -39,7 +39,6 @@ public class AiChatHistoryServiceImpl extends ServiceImpl<AiChatHistoryMapper, A
         chatHistory.setCreateTime(LocalDateTime.now());
         
         this.save(chatHistory);
-        log.info("保存聊天记录：userId={}, role={}", userId, role);
         
         return chatHistory;
     }

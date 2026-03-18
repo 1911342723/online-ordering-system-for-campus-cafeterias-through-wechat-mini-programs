@@ -45,12 +45,10 @@ public class AIController {
             Long userId = BaseContext.getThreadLocal();
             if (userId == null) {
                 // 如果没有登录，返回空列表（不报错）
-                log.warn("用户未登录，返回空聊天历史");
                 return R.success(java.util.Collections.emptyList());
             }
             
             List<AiChatHistory> history = aiChatHistoryService.getUserChatHistory(userId);
-            log.info("获取用户{}的聊天历史，共{}条", userId, history.size());
             return R.success(history);
             
         } catch (Exception e) {
@@ -79,7 +77,7 @@ public class AIController {
         try {
             userId = BaseContext.getThreadLocal();
         } catch (Exception e) {
-            log.warn("未登录用户使用AI聊天");
+            // 未登录用户
         }
         
         try {
@@ -89,7 +87,7 @@ public class AIController {
             // 步骤2: 将菜品信息格式化为文本
             String dishesInfo = aiRecommendService.formatDishesInfo(relevantDishes);
             
-            log.info("检索到{}道相关菜品", relevantDishes.size());
+
             
             // 步骤3: 构建系统提示词
             String systemPrompt = "你是一个专业的智慧食堂AI助手，名字叫\"智慧小助手\"。" +
@@ -113,7 +111,7 @@ public class AIController {
                     fullUserMessage
             );
             
-            log.info("AI回复: {}", aiResponse);
+            log.info("AI回复成功");
             
             // 保存聊天历史（如果用户已登录）
             if (userId != null) {
@@ -125,9 +123,8 @@ public class AIController {
                     String dishesJson = relevantDishes.isEmpty() ? null : JSON.toJSONString(relevantDishes);
                     aiChatHistoryService.saveChatMessage(userId, "ai", aiResponse, dishesJson);
                     
-                    log.info("已保存聊天记录到数据库");
                 } catch (Exception e) {
-                    log.error("保存聊天历史失败，但不影响返回结果", e);
+                    log.error("保存聊天历史失败", e);
                 }
             }
             
@@ -148,8 +145,7 @@ public class AIController {
                 try {
                     aiChatHistoryService.saveChatMessage(userId, "user", message, null);
                     aiChatHistoryService.saveChatMessage(userId, "ai", fallbackResponse, null);
-                } catch (Exception ex) {
-                    log.error("保存降级响应失败", ex);
+                } catch (Exception ignore) {
                 }
             }
             
@@ -165,7 +161,7 @@ public class AIController {
      * 降级响应 - 当AI服务不可用时使用
      */
     private String getFallbackResponse(String message) {
-        log.info("使用降级响应");
+
         
         // 简单的规则匹配
         String lowerMessage = message.toLowerCase();
