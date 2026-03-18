@@ -36,6 +36,18 @@ if [ -f "/docker-entrypoint-initdb.d/sql/update_user_profile.sql" ]; then
   mysql -u root -p"${MYSQL_ROOT_PASSWORD}" reggie < /docker-entrypoint-initdb.d/sql/update_user_profile.sql
 fi
 
+# 6. 修复商家和菜品结构字段
+if [ -f "/docker-entrypoint-initdb.d/sql/fix_merchant_fields.sql" ]; then
+  echo "[6/7] 修复商家和菜品字段..."
+  mysql -u root -p"${MYSQL_ROOT_PASSWORD}" reggie < /docker-entrypoint-initdb.d/sql/fix_merchant_fields.sql
+fi
+
+# 7. 进一步更新商家表并创建美食分类
+if [ -f "/docker-entrypoint-initdb.d/sql/update_merchant_and_food_category.sql" ]; then
+  echo "[7/7] 创建并更新美食分类..."
+  mysql -u root -p"${MYSQL_ROOT_PASSWORD}" reggie < /docker-entrypoint-initdb.d/sql/update_merchant_and_food_category.sql
+fi
+
 echo "=========================================="
 echo "  数据库初始化完成！"
 echo "=========================================="
