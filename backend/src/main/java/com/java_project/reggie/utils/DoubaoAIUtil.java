@@ -4,14 +4,14 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.web.client.RestTemplate;
 
 import javax.net.ssl.*;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.security.cert.X509Certificate;
-import java.net.HttpURLConnection;
-import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,16 +19,17 @@ import java.util.Map;
 
 /**
  * 豆包AI工具类
+ * 使用Java 17原生HttpClient，解决RestTemplate的SSL握手问题
  */
 @Slf4j
 public class DoubaoAIUtil {
     
-    private static final RestTemplate restTemplate = createSSLRestTemplate();
+    private static final HttpClient httpClient = createHttpClient();
     
     /**
-     * 创建支持TLS的RestTemplate，解决与火山引擎API的SSL握手问题
+     * 创建支持TLS的HttpClient
      */
-    private static RestTemplate createSSLRestTemplate() {
+    private static HttpClient createHttpClient() {
         try {
             // 创建信任所有证书的TrustManager
             TrustManager[] trustAllCerts = new TrustManager[]{
@@ -39,31 +40,22 @@ public class DoubaoAIUtil {
                 }
             };
             
-            // 使用TLSv1.2协议初始化SSLContext
-            SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+            SSLContext sslContext = SSLContext.getInstance("TLS");
             sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
             
-            // 自定义RequestFactory，在创建连接时应用SSL配置
-            SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory() {
-                @Override
-                protected void prepareConnection(HttpURLConnection connection, String httpMethod) throws IOException {
-                    if (connection instanceof HttpsURLConnection) {
-                        HttpsURLConnection httpsConnection = (HttpsURLConnection) connection;
-                        httpsConnection.setSSLSocketFactory(sslContext.getSocketFactory());
-                        httpsConnection.setHostnameVerifier((hostname, session) -> true);
-                    }
-                    super.prepareConnection(connection, httpMethod);
-                }
-            };
-            requestFactory.setConnectTimeout(15000); // 连接超时15秒
-            requestFactory.setReadTimeout(30000);    // 读取超时30秒
+            log.info("HttpClient SSL初始化成功");
             
-            log.info("SSL RestTemplate 初始化成功");
-            return new RestTemplate(requestFactory);
-            
+            return HttpClient.newBuilder()
+                    .sslContext(sslContext)
+                    .connectTimeout(Duration.ofSeconds(15))
+                    .version(HttpClient.Version.HTTP_1_1)
+                    .build();
+                    
         } catch (Exception e) {
-            log.error("SSL RestTemplate 初始化失败，回退到默认配置", e);
-            return new RestTemplate();
+            log.error("HttpClient SSL初始化失败，使用默认配置", e);
+            return HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(15))
+                    .build();
         }
     }
     
@@ -78,11 +70,6 @@ public class DoubaoAIUtil {
      */
     public static String chat(String apiKey, String apiUrl, String model, String systemPrompt, String userMessage) {
         try {
-            // 构建请求头
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("Authorization", "Bearer " + apiKey);
-            
             // 构建消息列表
             List<Map<String, String>> messages = new ArrayList<>();
             
@@ -102,25 +89,27 @@ public class DoubaoAIUtil {
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("model", model);
             requestBody.put("messages", messages);
-            requestBody.put("temperature", 0.7); // 控制创造性
-            requestBody.put("max_tokens", 500); // 最大token数
+            requestBody.put("temperature", 0.7);
+            requestBody.put("max_tokens", 500);
             
-            // 创建请求实体
-            HttpEntity<String> entity = new HttpEntity<>(JSON.toJSONString(requestBody), headers);
+            String jsonBody = JSON.toJSONString(requestBody);
             
             log.info("调用豆包AI，用户消息: {}", userMessage);
             
-            // 发送请求
-            ResponseEntity<String> response = restTemplate.exchange(
-                apiUrl,
-                HttpMethod.POST,
-                entity,
-                String.class
-            );
+            // 使用Java原生HttpClient发送请求
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(apiUrl))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + apiKey)
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .timeout(Duration.ofSeconds(30))
+                    .build();
+            
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             
             // 解析响应
-            if (response.getStatusCode() == HttpStatus.OK) {
-                String responseBody = response.getBody();
+            if (response.statusCode() == 200) {
+                String responseBody = response.body();
                 log.info("豆包AI响应: {}", responseBody);
                 
                 JSONObject jsonResponse = JSON.parseObject(responseBody);
@@ -133,7 +122,7 @@ public class DoubaoAIUtil {
                 }
             }
             
-            log.error("豆包AI调用失败，状态码: {}", response.getStatusCode());
+            log.error("豆包AI调用失败，状态码: {}, 响应: {}", response.statusCode(), response.body());
             return "抱歉，AI助手暂时无法回答，请稍后再试。";
             
         } catch (Exception e) {
@@ -160,4 +149,3 @@ public class DoubaoAIUtil {
         );
     }
 }
-
