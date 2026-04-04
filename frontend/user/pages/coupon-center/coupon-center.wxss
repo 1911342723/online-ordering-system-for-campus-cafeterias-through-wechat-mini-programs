@@ -21,7 +21,7 @@
 
 .my-coupons {
   font-size: 26rpx;
-  color: #FF6B00;
+  color: var(--primary-color);
   font-weight: 600;
 }
 
@@ -76,7 +76,7 @@
 .amount {
   font-size: 56rpx;
   font-weight: 800;
-  color: #FF6B00;
+  color: var(--primary-color);
   line-height: 1;
 }
 
@@ -131,7 +131,7 @@
 .receive-btn {
   width: 120rpx;
   height: 60rpx;
-  background: linear-gradient(135deg, #FF6B00 0%, #FF8F40 100%);
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
   border-radius: 30rpx;
   display: flex;
   align-items: center;
@@ -139,7 +139,7 @@
   font-size: 24rpx;
   font-weight: 700;
   color: #FFFFFF;
-  box-shadow: 0 4rpx 12rpx rgba(255, 107, 0, 0.3);
+  box-shadow: 0 4rpx 12rpx rgba(14, 165, 233, 0.3);
 }
 
 .receive-btn:active {

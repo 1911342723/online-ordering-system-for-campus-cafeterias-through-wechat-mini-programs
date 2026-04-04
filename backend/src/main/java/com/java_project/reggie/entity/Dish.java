@@ -52,6 +52,24 @@ public class Dish implements Serializable {
     //库存数量
     private Integer stock;
 
+    //卡路里（千卡/份）
+    private Integer calories;
+
+    //蛋白质（克/份）
+    private java.math.BigDecimal protein;
+
+    //脂肪（克/份）
+    private java.math.BigDecimal fat;
+
+    //碳水化合物（克/份）
+    private java.math.BigDecimal carbs;
+
+    //膳食纤维（克/份）
+    private java.math.BigDecimal fiber;
+
+    //营养标签（逗号分隔，如：高蛋白,低脂,低卡）
+    private String nutritionTags;
+
     //0 停售 1 起售
     private Integer status;
 

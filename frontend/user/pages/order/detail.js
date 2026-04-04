@@ -48,7 +48,8 @@ Page({
           ...result,
           orderTime: formatTime(result.orderTime),
           amount: formatPrice(result.amount),
-          deliveryFee: formatPrice(result.deliveryFee || 0)
+          deliveryFee: formatPrice(result.deliveryFee || 0),
+          generatedPickupCode: this.buildPickupCode(result)
         }
         
         // 计算菜品金额
@@ -208,6 +209,27 @@ Page({
       console.error('申请退款失败:', error)
       showError(error.msg || '申请失败')
     }
+  },
+
+  contactShop() {
+    const { merchantId, merchantName, canteenName, number } = this.data.orderInfo
+    if (!merchantId) {
+      showError('商家信息缺失，暂时无法联系')
+      return
+    }
+
+    const displayName = merchantName || canteenName || '商家'
+    wx.navigateTo({
+      url: `/pages/chat/chat?merchantId=${merchantId}&merchantName=${encodeURIComponent(displayName)}&orderId=${this.data.orderId}&orderNumber=${encodeURIComponent(number || this.data.orderId)}`
+    })
+  },
+
+  buildPickupCode(order) {
+    if (!order) return '--'
+    if (order.pickupCode) return String(order.pickupCode)
+    const source = String(order.number || order.id || '')
+    if (!source) return '--'
+    return `A-${source.slice(-4).padStart(4, '0')}`
   }
 })
 

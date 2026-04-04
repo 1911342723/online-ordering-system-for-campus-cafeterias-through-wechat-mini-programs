@@ -176,6 +176,9 @@ public class NoteController {
         boolean saved = noteService.save(note);
         
         if (saved) {
+            // 任务奖励：发布帖子 +20经验，发帖数+1
+            rewardUser(userId, 20, true, false, false);
+
             // 更新商家的好评/差评计数（用于红黑榜）
             if (note.getMerchantId() != null && StringUtils.hasText(note.getRatingType())) {
                 updateMerchantRatingCount(note.getMerchantId(), note.getRatingType());
@@ -235,6 +238,10 @@ public class NoteController {
             // 取消点赞
             noteLikeService.removeById(existing.getId());
             note.setLikeCount(Math.max(0, note.getLikeCount() - 1));
+            // 回滚被点赞计数与经验，防止反复点赞刷经验
+            if (note.getUserId() != null && !note.getUserId().equals(userId)) {
+                rewardUser(note.getUserId(), -2, false, false, true);
+            }
             isLiked = false;
         } else {
             // 点赞
@@ -243,6 +250,10 @@ public class NoteController {
             like.setUserId(userId);
             noteLikeService.save(like);
             note.setLikeCount(note.getLikeCount() + 1);
+            // 任务奖励：被点赞 +2经验，获赞数+1
+            if (note.getUserId() != null && !note.getUserId().equals(userId)) {
+                rewardUser(note.getUserId(), 2, false, false, true);
+            }
             isLiked = true;
         }
         
@@ -280,6 +291,10 @@ public class NoteController {
             // 取消收藏
             noteCollectService.removeById(existing.getId());
             note.setCollectCount(Math.max(0, note.getCollectCount() - 1));
+            // 回滚被收藏计数与经验，防止反复收藏刷经验
+            if (note.getUserId() != null && !note.getUserId().equals(userId)) {
+                rewardUser(note.getUserId(), -3, false, true, false);
+            }
             isCollected = false;
         } else {
             // 收藏
@@ -288,6 +303,10 @@ public class NoteController {
             collect.setUserId(userId);
             noteCollectService.save(collect);
             note.setCollectCount(note.getCollectCount() + 1);
+            // 任务奖励：被收藏 +3经验，收藏数+1
+            if (note.getUserId() != null && !note.getUserId().equals(userId)) {
+                rewardUser(note.getUserId(), 3, false, true, false);
+            }
             isCollected = true;
         }
         
@@ -337,6 +356,9 @@ public class NoteController {
         boolean saved = noteCommentService.save(comment);
         
         if (saved) {
+            // 任务奖励：评论帖子 +5经验
+            rewardUser(userId, 5, false, false, false);
+
             // 更新笔记评论数
             Note note = noteService.getById(comment.getNoteId());
             if (note != null) {
@@ -377,6 +399,9 @@ public class NoteController {
         
         comment.setStatus(0); // 软删除
         noteCommentService.updateById(comment);
+
+        // 回滚评论经验，防止通过发评论/删评论刷经验
+        rewardUser(userId, -5, false, false, false);
         
         // 更新笔记评论数
         Note note = noteService.getById(comment.getNoteId());
@@ -493,8 +518,43 @@ public class NoteController {
         
         note.setStatus(2); // 软删除
         noteService.updateById(note);
+
+        // 删除帖子时回滚发帖任务奖励
+        rewardUser(userId, -20, true, false, false);
         
         return R.success("删除成功");
+    }
+
+    /**
+     * 用户经验与统计字段奖励/回滚。
+     */
+    private void rewardUser(Long userId, int expDelta, boolean postDelta, boolean collectDelta, boolean likeDelta) {
+        if (userId == null) {
+            return;
+        }
+
+        User user = userService.getById(userId);
+        if (user == null) {
+            return;
+        }
+
+        int currentExp = user.getExp() == null ? 0 : user.getExp();
+        user.setExp(Math.max(0, currentExp + expDelta));
+
+        if (postDelta) {
+            int postCount = user.getPostCount() == null ? 0 : user.getPostCount();
+            user.setPostCount(Math.max(0, postCount + (expDelta >= 0 ? 1 : -1)));
+        }
+        if (collectDelta) {
+            int collectCount = user.getCollectCount() == null ? 0 : user.getCollectCount();
+            user.setCollectCount(Math.max(0, collectCount + (expDelta >= 0 ? 1 : -1)));
+        }
+        if (likeDelta) {
+            int likeCount = user.getLikeCount() == null ? 0 : user.getLikeCount();
+            user.setLikeCount(Math.max(0, likeCount + (expDelta >= 0 ? 1 : -1)));
+        }
+
+        userService.updateById(user);
     }
 
     // ========== 辅助方法 ==========

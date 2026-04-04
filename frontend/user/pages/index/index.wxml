@@ -84,7 +84,8 @@
       </view>
       <view class="coupon-text">
         <text class="coupon-title">领券中心</text>
-        <text class="coupon-desc">{{coupons.length}}张待领取</text>
+        <text class="coupon-desc" wx:if="{{unreceivedCount > 0}}">{{unreceivedCount}}张待领取</text>
+        <text class="coupon-desc" wx:else>查看优惠活动</text>
       </view>
       <view class="coupon-arrow">›</view>
     </view>

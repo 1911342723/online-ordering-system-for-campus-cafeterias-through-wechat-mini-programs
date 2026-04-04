@@ -2,16 +2,7 @@
 const request = require('../../utils/request')
 const { DEFAULT_IMAGES } = require('../../utils/config')
 const { showError, showSuccess, navigateToLogin, getImageUrl, checkLogin } = require('../../utils/util')
-
-// 等级配置
-const LEVEL_CONFIG = [
-  { level: 1, title: '美食小白', icon: '🌱', minExp: 0, maxExp: 100, tips: '再发布1篇帖子即可升级' },
-  { level: 2, title: '美食学徒', icon: '🌿', minExp: 100, maxExp: 300, tips: '多发帖、评论可以快速升级哦' },
-  { level: 3, title: '美食达人', icon: '🌳', minExp: 300, maxExp: 600, tips: '你已经是美食达人啦！' },
-  { level: 4, title: '美食专家', icon: '⭐', minExp: 600, maxExp: 1000, tips: '继续加油，即将成为美食大师！' },
-  { level: 5, title: '美食大师', icon: '🏆', minExp: 1000, maxExp: 2000, tips: '恭喜成为美食大师！' },
-  { level: 6, title: '美食之神', icon: '👑', minExp: 2000, maxExp: 999999, tips: '你已经是传说中的美食之神！' }
-]
+const { resolveUserLevel } = require('../../utils/level')
 
 Page({
   data: {
@@ -94,8 +85,7 @@ Page({
       
       if (userInfo) {
         // 计算等级
-        const exp = userInfo.exp || 0
-        const levelInfo = this.calculateLevel(exp)
+        const levelInfo = resolveUserLevel(userInfo)
         
         this.setData({
           stats: {
@@ -156,8 +146,7 @@ Page({
    * 加载模拟统计数据
    */
   loadMockStats() {
-    const mockExp = 150
-    const levelInfo = this.calculateLevel(mockExp)
+    const levelInfo = resolveUserLevel({ exp: 150 })
     
     this.setData({
       stats: {
@@ -175,29 +164,7 @@ Page({
    * 计算用户等级
    */
   calculateLevel(exp) {
-    let currentLevel = LEVEL_CONFIG[0]
-    
-    for (let i = LEVEL_CONFIG.length - 1; i >= 0; i--) {
-      if (exp >= LEVEL_CONFIG[i].minExp) {
-        currentLevel = LEVEL_CONFIG[i]
-        break
-      }
-    }
-    
-    const nextLevel = LEVEL_CONFIG.find(l => l.level === currentLevel.level + 1) || currentLevel
-    const expInLevel = exp - currentLevel.minExp
-    const expNeeded = currentLevel.maxExp - currentLevel.minExp
-    const progress = Math.min(100, Math.round((expInLevel / expNeeded) * 100))
-    
-    return {
-      level: currentLevel.level,
-      title: currentLevel.title,
-      icon: currentLevel.icon,
-      currentExp: exp,
-      nextExp: currentLevel.maxExp,
-      progress: progress,
-      tips: currentLevel.tips
-    }
+    return resolveUserLevel({ exp })
   },
 
   /**

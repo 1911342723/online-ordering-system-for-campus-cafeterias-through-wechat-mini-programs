@@ -36,16 +36,45 @@ Page({
    */
   async loadUserBalance() {
     try {
+      // 优先读取后端实时余额，避免使用过期缓存
+      const res = await request({
+        url: '/payment/balance',
+        method: 'GET',
+        silent: true
+      })
+
+      if (res && res.balance !== undefined) {
+        this.updateBalancePayMethodDesc(res.balance)
+        return
+      }
+
+      // 接口异常时再兜底使用全局缓存
       const userInfo = app.globalData.userInfo
       if (userInfo && userInfo.balance !== undefined) {
-        const balance = (userInfo.balance / 100).toFixed(2)
-        const payMethods = this.data.payMethods
-        payMethods[2].desc = `当前余额：¥${balance}`
-        this.setData({ payMethods })
+        this.updateBalancePayMethodDesc(userInfo.balance)
       }
     } catch (error) {
       console.error('加载余额失败:', error)
     }
+  },
+
+  /**
+   * 更新余额支付文案
+   */
+  updateBalancePayMethodDesc(balanceRaw) {
+    const numericBalance = Number(balanceRaw)
+    const balance = Number.isFinite(numericBalance) ? numericBalance.toFixed(2) : '0.00'
+    const payMethods = this.data.payMethods.map((method) => {
+      if (method.id === 3) {
+        return {
+          ...method,
+          desc: `当前余额：¥${balance}`
+        }
+      }
+      return method
+    })
+
+    this.setData({ payMethods })
   },
 
   /**
@@ -85,7 +114,7 @@ Page({
     try {
       showLoading('支付中...')
       
-      const result = await request({
+      await request({
         url: '/payment/pay',
         method: 'POST',
         data: {
@@ -95,23 +124,24 @@ Page({
       })
       
       hideLoading()
+
+      showSuccess('支付成功！')
       
-      if (result.code === 1) {
-        showSuccess('支付成功！')
-        
-        // 跳转到订单列表页，避免重复支付
-        setTimeout(() => {
-          wx.switchTab({
-            url: '/pages/order/order'
-          })
-        }, 1500)
-      } else {
-        showError(result.msg || '支付失败')
-      }
+      // 跳转到订单列表页，避免重复支付
+      setTimeout(() => {
+        wx.switchTab({
+          url: '/pages/order/order'
+        })
+      }, 1500)
     } catch (error) {
       hideLoading()
       console.error('支付失败:', error)
-      showError('支付失败')
+      const msg = error && error.msg ? error.msg : '支付失败'
+      if (msg.includes('余额不足')) {
+        showError(`余额不足，当前需支付¥${this.data.orderAmount}`)
+      } else {
+        showError(msg)
+      }
     }
   }
 })

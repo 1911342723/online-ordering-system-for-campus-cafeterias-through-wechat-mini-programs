@@ -22,6 +22,7 @@
     "pages/cart/cart",
     "pages/order/checkout",
     "pages/order/detail",
+    "pages/chat/chat",
     "pages/address/list",
     "pages/address/edit",
     "pages/payment/payment",

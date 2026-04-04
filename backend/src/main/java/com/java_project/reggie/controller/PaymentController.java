@@ -28,6 +28,8 @@ import java.util.Map;
 @RequestMapping("/payment")
 public class PaymentController {
 
+    private static final BigDecimal CENTS_DIVISOR = new BigDecimal("100");
+
     @Autowired
     private UserService userService;
     
@@ -61,8 +63,16 @@ public class PaymentController {
             return R.error("无权操作此订单");
         }
         
-        // 验证订单状态（必须是待付款）
+        // 验证订单状态
         if (order.getStatus() != 1) {
+            if (order.getStatus() >= 2) {
+                // 已经付款，幂等处理
+                Map<String, Object> result = new HashMap<>();
+                result.put("orderId", orderId);
+                result.put("status", order.getStatus());
+                result.put("message", "订单已付款，无需重复支付");
+                return R.success(result);
+            }
             return R.error("订单状态异常");
         }
         
@@ -75,7 +85,8 @@ public class PaymentController {
             }
             
             BigDecimal balance = user.getBalance();
-            BigDecimal orderAmount = order.getAmount();
+            // 订单金额在系统中按"分"保存，余额按"元"保存，这里统一转为元比较
+            BigDecimal orderAmount = normalizeOrderAmountToYuan(order.getAmount());
             
             // 验证余额是否充足
             if (balance.compareTo(orderAmount) < 0) {
@@ -87,7 +98,7 @@ public class PaymentController {
             user.setBalance(newBalance);
             userService.updateById(user);
             
-            log.info("余额支付成功，用户{}余额从{}扣除{}，剩余{}", userId, balance, orderAmount, newBalance);
+            log.info("余额支付成功，用户{}余额从{}扣除{}元，剩余{}", userId, balance, orderAmount, newBalance);
         } else {
             // 微信/支付宝模拟支付
             log.info("模拟支付成功，支付方式：{}", payMethod == 1 ? "微信" : "支付宝");
@@ -159,20 +170,29 @@ public class PaymentController {
         if (!order.getUserId().equals(userId)) {
             throw new CustomException("无权操作此订单");
         }
-        
-        // 验证订单状态
-        if (order.getStatus() != 1) {
-            throw new CustomException("订单状态异常，无法支付");
-        }
-        
+
         // 查询用户余额
         User user = userService.getById(userId);
         if (user == null) {
             throw new CustomException("用户不存在");
         }
         
+        // 验证订单状态
+        if (order.getStatus() != 1) {
+            if (order.getStatus() >= 2) {
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", true);
+                result.put("message", "订单已付款，无需重复支付");
+                result.put("balance", user.getBalance());
+                result.put("orderId", orderId);
+                return R.success(result);
+            }
+            throw new CustomException("订单状态异常，无法支付");
+        }
+        
         BigDecimal balance = user.getBalance();
-        BigDecimal orderAmount = order.getAmount();
+        // 订单金额在系统中按"分"保存，余额按"元"保存，这里统一转为元比较
+        BigDecimal orderAmount = normalizeOrderAmountToYuan(order.getAmount());
         
         // 验证余额是否充足
         if (balance.compareTo(orderAmount) < 0) {
@@ -229,6 +249,14 @@ public class PaymentController {
         
         // 验证订单状态
         if (order.getStatus() != 1) {
+            if (order.getStatus() >= 2) {
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", true);
+                result.put("message", "订单已付款，无需重复支付");
+                result.put("orderId", orderId);
+                result.put("payType", payType);
+                return R.success(result);
+            }
             throw new CustomException("订单状态异常，无法支付");
         }
         
@@ -309,6 +337,17 @@ public class PaymentController {
         result.put("userId", userId);
         
         return R.success(result);
+    }
+
+    /**
+     * 订单金额统一换算为元。
+     * 当前系统订单金额以分为单位（前端展示统一/100），余额以元为单位存储。
+     */
+    private BigDecimal normalizeOrderAmountToYuan(BigDecimal amountInCents) {
+        if (amountInCents == null) {
+            return BigDecimal.ZERO;
+        }
+        return amountInCents.divide(CENTS_DIVISOR, 2, java.math.RoundingMode.HALF_UP);
     }
 }
 

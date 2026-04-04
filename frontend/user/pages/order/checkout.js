@@ -4,7 +4,7 @@ const { showError, showSuccess, showLoading, hideLoading } = require('../../util
 
 Page({
   data: {
-    deliveryType: 1, // 1:自取 2:外送
+    deliveryType: 2, // 1:自取 2:外送
     selectedAddress: null,
     orderItems: [],
     dishAmount: '0.00',
@@ -15,7 +15,7 @@ Page({
     selectedCoupon: null, // 选中的优惠券
     availableCoupons: [], // 可用优惠券列表
     couponDiscount: 0, // 优惠券优惠金额
-    deliveryFee: 0 // 配送费
+    deliveryFee: 3.00 // 配送费
   },
 
   onLoad(options) {
@@ -35,6 +35,9 @@ Page({
       totalAmount: orderData.total,
       canteenId: orderData.canteenId || 1,
       canteenName: orderData.canteenName || '食堂'
+    }, () => {
+      // 默认按外送方式计算总价
+      this.calculateTotal()
     })
     
     // 加载可用优惠券

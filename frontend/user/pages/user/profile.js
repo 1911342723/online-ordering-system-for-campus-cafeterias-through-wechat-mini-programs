@@ -2,6 +2,7 @@
 const request = require('../../utils/request')
 const { DEFAULT_IMAGES } = require('../../utils/config')
 const { showLoading, hideLoading, showError, showSuccess, getImageUrl } = require('../../utils/util')
+const { resolveUserLevel } = require('../../utils/level')
 
 Page({
   data: {
@@ -51,8 +52,10 @@ Page({
         tempSignature: userInfo.signature || ''
       })
       
-      // 计算等级
-      this.calculateLevel(userInfo.exp || 0)
+      // 计算等级（兼容 exp/level/points 等字段）
+      this.setData({
+        userLevel: resolveUserLevel(userInfo)
+      })
     }
   },
 
@@ -60,31 +63,8 @@ Page({
    * 计算用户等级
    */
   calculateLevel(exp) {
-    const LEVEL_CONFIG = [
-      { level: 1, title: '美食小白', icon: '🌱', minExp: 0, maxExp: 100 },
-      { level: 2, title: '美食学徒', icon: '🌿', minExp: 100, maxExp: 300 },
-      { level: 3, title: '美食达人', icon: '🌳', minExp: 300, maxExp: 600 },
-      { level: 4, title: '美食专家', icon: '⭐', minExp: 600, maxExp: 1000 },
-      { level: 5, title: '美食大师', icon: '🏆', minExp: 1000, maxExp: 2000 },
-      { level: 6, title: '美食之神', icon: '👑', minExp: 2000, maxExp: 999999 }
-    ]
-    
-    let currentLevel = LEVEL_CONFIG[0]
-    for (let i = LEVEL_CONFIG.length - 1; i >= 0; i--) {
-      if (exp >= LEVEL_CONFIG[i].minExp) {
-        currentLevel = LEVEL_CONFIG[i]
-        break
-      }
-    }
-    
     this.setData({
-      userLevel: {
-        level: currentLevel.level,
-        title: currentLevel.title,
-        icon: currentLevel.icon,
-        currentExp: exp,
-        nextExp: currentLevel.maxExp
-      }
+      userLevel: resolveUserLevel({ exp })
     })
   },
 

@@ -28,7 +28,7 @@ page {
 }
 
 .tab.active {
-  color: #FF6B00;
+  color: var(--primary-color);
   font-weight: bold;
 }
 
@@ -40,7 +40,7 @@ page {
   transform: translateX(-50%);
   width: 60rpx;
   height: 6rpx;
-  background-color: #FF6B00;
+  background-color: var(--primary-color);
   border-radius: 3rpx;
 }
 
@@ -51,7 +51,7 @@ page {
 
 .coupon-card {
   display: flex;
-  background: linear-gradient(135deg, #FF6B00, #FF8F3D);
+  background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
   border-radius: 16rpx;
   margin-bottom: 20rpx;
   overflow: hidden;
@@ -152,7 +152,7 @@ page {
   width: 300rpx;
   height: 80rpx;
   line-height: 80rpx;
-  background: linear-gradient(135deg, #FF6B00, #FF8F3D);
+  background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
   color: #fff;
   border-radius: 40rpx;
   font-size: 28rpx;

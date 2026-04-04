@@ -18,7 +18,7 @@ Page({
     cartTotal: 0,
     defaultDishImg: DEFAULT_IMAGES.dish,
     showQrcodeModal: false,
-    defaultQrcode: 'https://via.placeholder.com/300x300?text=QR+Code',
+    defaultQrcode: '/assets/icons/icons8-纵向模式扫描-100.png',
     icons: {
       cart: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjRkZGRkZGIiBzdHJva2U9Im5vbmUiPjxjaXJjbGUgY3g9IjkiIGN5PSIyMSIgcj0iMSIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMjEiIHI9IjEiLz48cGF0aCBkPSJNMSAxaDRsMi42OCAxMy4zOWEyIDIgMCAwIDAgMiAxLjYxaDkuNzJhMiAyIDAgMCAwIDItMS42MUwyMyA2SDYiLz48L3N2Zz4=',
       cartEmpty: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM5OTk5OTkiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48Y2lyY2xlIGN4PSI5IiBjeT0iMjEiIHI9IjEiLz48Y2lyY2xlIGN4PSIyMCIgY3k9IjIxIiByPSIxIi8+PHBhdGggZD0iTTEgMWg0bDIuNjggMTMuMzlhMiAyIDAgMCAwIDIgMS42MWg5LjcyYTIgMiAwIDAgMCAyLTEuNjFMMjMgNkg2Ii8+PC9zdmc+'
@@ -109,7 +109,8 @@ Page({
       this.setData({
         merchantInfo: {
           ...merchantInfo,
-          image: getImageUrl(merchantInfo.image, DEFAULT_IMAGES.merchant)
+          image: getImageUrl(merchantInfo.image, DEFAULT_IMAGES.merchant),
+          wechatGroupQrcode: getImageUrl(merchantInfo.wechatGroupQrcode, this.data.defaultQrcode)
         },
         merchantName: merchantInfo.name || this.data.merchantName
       })
@@ -606,9 +607,36 @@ Page({
     
     wx.showLoading({ title: '保存中...' })
     
-    // 下载图片
+    const qrcodeUrl = merchantInfo.wechatGroupQrcode
+
+    // 本地资源直接获取信息再保存
+    if (!qrcodeUrl.startsWith('http')) {
+      wx.getImageInfo({
+        src: qrcodeUrl,
+        success: (imgRes) => {
+          wx.saveImageToPhotosAlbum({
+            filePath: imgRes.path,
+            success: () => {
+              wx.hideLoading()
+              showSuccess('已保存到相册')
+            },
+            fail: () => {
+              wx.hideLoading()
+              showError('保存失败')
+            }
+          })
+        },
+        fail: () => {
+          wx.hideLoading()
+          showError('下载失败')
+        }
+      })
+      return
+    }
+
+    // 下载网络图片
     wx.downloadFile({
-      url: merchantInfo.wechatGroupQrcode,
+      url: qrcodeUrl,
       success: (res) => {
         if (res.statusCode === 200) {
           // 保存到相册

@@ -25,10 +25,10 @@
       <view class="status-desc">{{statusDesc}}</view>
       
       <!-- Pickup Code (Large Card) - 精美取餐码 -->
-      <view class="pickup-code-box" wx:if="{{orderInfo.status >= 2 && orderInfo.status <= 4}}">
+      <view class="pickup-code-box" wx:if="{{orderInfo.deliveryType !== 2 && orderInfo.status >= 2 && orderInfo.status <= 4}}">
         <view class="pickup-left">
           <text class="label">取餐码 / PICKUP CODE</text>
-          <text class="code">{{orderInfo.pickupCode || 'A-888'}}</text>
+          <text class="code">{{orderInfo.pickupCode || orderInfo.generatedPickupCode || '--'}}</text>
         </view>
         <view class="qr-wrapper">
           <view class="qr-icon-modern">

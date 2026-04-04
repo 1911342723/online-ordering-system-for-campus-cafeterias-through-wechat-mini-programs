@@ -1,56 +1,148 @@
-// pages/chat/chat.js
-const app = getApp()
-const { request } = require('../../utils/request')
+const request = require('../../utils/request')
 
 Page({
   data: {
     merchantId: null,
     merchantName: '',
+    currentUserId: null,
     messages: [],
     inputMessage: '',
     scrollToView: '',
-    sending: false
+    sending: false,
+    isIpx: false,
+    isFirstLoad: true
   },
 
-  onLoad(options) {
+  async onLoad(options) {
+    const systemInfo = wx.getSystemInfoSync()
+    this.setData({
+      isIpx: systemInfo.safeArea && systemInfo.safeArea.bottom < systemInfo.screenHeight
+    })
+
     if (options.merchantId) {
       this.setData({
-        merchantId: options.merchantId,
-        merchantName: options.merchantName || '商家'
+        merchantId: String(options.merchantId),
+        merchantName: decodeURIComponent(options.merchantName || '联系商家')
       })
-      this.loadMessages()
+
+      wx.setNavigationBarTitle({
+        title: this.data.merchantName
+      })
+
+      await this.ensureCurrentUserId()
+
+      await this.loadMessages()
+      this.setData({ isFirstLoad: false })
       
-      // 定时刷新消息
-      this.refreshInterval = setInterval(() => {
-        this.loadMessages(true)
-      }, 3000)
+      if (this.data.messages.length === 0 && options.orderNumber) {
+        const content = `您好，我想咨询订单 ${decodeURIComponent(options.orderNumber)} 的相关问题。`
+        this.sendQuickMessage(content)
+      }
+      
+      this.startPolling()
     }
+  },
+
+  onShow() {
+    if (!this.data.isFirstLoad) {
+      this.loadMessages(true)
+      this.startPolling()
+    }
+  },
+
+  onHide() {
+    this.stopPolling()
   },
 
   onUnload() {
+    this.stopPolling()
+  },
+
+  startPolling() {
+    this.stopPolling()
+    this.refreshInterval = setInterval(() => {
+      this.loadMessages(true)
+    }, 3000)
+  },
+
+  stopPolling() {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval)
+      this.refreshInterval = null
     }
   },
 
-  // 加载消息列表
+  safeDate(time) {
+    if (!time) return new Date()
+    if (Array.isArray(time)) {
+      const [y, m, d, h = 0, mm = 0, s = 0] = time
+      return new Date(y, (m || 1) - 1, d || 1, h, mm, s)
+    }
+    if (typeof time === 'string' && time.includes(' ') && !time.includes('T')) {
+      return new Date(time.replace(' ', 'T'))
+    }
+    return new Date(time)
+  },
+
+  processMessagesTime(messages) {
+    let lastTime = 0
+    return messages.map((msg) => {
+      const msgTime = this.safeDate(msg.createTime).getTime()
+      let showTime = false
+      if (msgTime - lastTime > 5 * 60 * 1000) {
+        showTime = true
+        lastTime = msgTime
+      }
+      return {
+        ...msg,
+        showTime,
+        displayTime: this.formatTime(msg.createTime)
+      }
+    })
+  },
+
   async loadMessages(silent = false) {
     try {
+      const userId = await this.ensureCurrentUserId()
+      if (!userId) return
+
       const res = await request({
-        url: '/message/list',
+        url: '/message/im/thread',
         method: 'GET',
         data: {
-          merchantId: this.data.merchantId,
-          userId: app.globalData.userInfo?.id
+          merchantId: this.data.merchantId
+        },
+        silent: true
+      })
+
+      const rawMessages = Array.isArray(res) ? res : []
+      console.log("[im] loaded messages size:", rawMessages.length);
+      
+      let latestList = rawMessages.map((msg, index) => {
+        return {
+          ...msg,
+          id: String(msg.id || `msg_${Date.now()}_${index}`),
+          fromMerchant: msg.fromMerchant === true || msg.fromMerchant === 'true',
+          sending: false
         }
       })
+
+      const sendingMessages = this.data.messages.filter(m => m.sending);
+      // latestList = [...latestList, ...sendingMessages]; // You can append sending ones if you need them persisted through reloads
+
+      const processedMessages = this.processMessagesTime(latestList)
       
-      if (res.code === 1) {
-        this.setData({
-          messages: res.data || [],
-          scrollToView: `msg-${(res.data || []).length - 1}`
-        })
-      }
+      const needScroll = this.data.messages.length !== processedMessages.length || (processedMessages.length > 0 && this.data.messages.length > 0 && processedMessages[processedMessages.length - 1].id !== this.data.messages[this.data.messages.length - 1].id);
+
+      this.setData({
+        messages: processedMessages
+      }, () => {
+        if (needScroll) {
+          this.scrollToBottom()
+        }
+      })
+
+      this.markChatRead()
     } catch (error) {
       if (!silent) {
         console.error('加载消息失败:', error)
@@ -58,69 +150,136 @@ Page({
     }
   },
 
-  // 输入框变化
+  async markChatRead() {
+    try {
+      const userId = await this.ensureCurrentUserId()
+      if (!userId) return
+
+      await request({
+        url: '/message/im/read',
+        method: 'PUT',
+        data: {
+          merchantId: this.data.merchantId,
+          userId
+        },
+        silent: true
+      })
+    } catch (e) {}
+  },
+
   onInputChange(e) {
     this.setData({
       inputMessage: e.detail.value
     })
   },
 
-  // 发送消息
   async sendMessage() {
-    const message = this.data.inputMessage.trim()
+    const content = this.data.inputMessage.trim()
+    if (!content || this.data.sending) return
     
-    if (!message) {
-      wx.showToast({
-        title: '请输入消息内容',
-        icon: 'none'
-      })
-      return
+    this.setData({ inputMessage: '' }) // 先清空，给用户秒发的干脆感
+    await this.sendQuickMessage(content)
+  },
+
+  async sendQuickMessage(content) {
+    const userId = await this.ensureCurrentUserId()
+    
+    // 乐观更新（Optimistic Update）
+    const optMsg = {
+      id: `local_${Date.now()}`,
+      content: content,
+      createTime: new Date().toISOString(),
+      fromMerchant: false,
+      sending: true
     }
     
-    this.setData({ sending: true })
-    
+    const newMessages = [...this.data.messages, optMsg]
+    this.setData({
+      messages: this.processMessagesTime(newMessages)
+    }, () => {
+      this.scrollToBottom()
+    })
+
     try {
       const res = await request({
-        url: '/message/send',
+        url: '/message/im/send',
         method: 'POST',
         data: {
           merchantId: this.data.merchantId,
-          userId: app.globalData.userInfo?.id,
-          content: message,
-          fromMerchant: false,
-          userName: app.globalData.userInfo?.name || '用户'
-        }
+          userId,
+          content,
+          fromMerchant: false
+        },
+        silent: true
       })
-      
-      if (res.code === 1) {
-        this.setData({
-          inputMessage: ''
-        })
-        await this.loadMessages()
-      }
+      console.log("[im] send success!", res);
+      // 发送成功，立即拉取实际消息
+      setTimeout(() => {
+        this.loadMessages(true)
+      }, 300)
     } catch (error) {
       console.error('发送消息失败:', error)
-      wx.showToast({
-        title: '发送失败',
-        icon: 'none'
+      const errorMsg = (error && error.msg) ? error.msg : '发消息失败'
+      wx.showToast({ 
+        title: errorMsg, 
+        icon: 'none',
+        duration: 3000
       })
-    } finally {
-      this.setData({ sending: false })
+      // 发送失败则将假消息撤回
+      this.setData({
+        messages: this.data.messages.filter(m => m.id !== optMsg.id)
+      })
     }
   },
 
-  // 格式化时间
-  formatTime(time) {
-    if (!time) return ''
-    const date = new Date(time)
+  scrollToBottom() {
+    const len = this.data.messages.length
+    if (len > 0) {
+      this.setData({
+        scrollToView: `msg-${len - 1}`
+      })
+    }
+  },
+
+  async ensureCurrentUserId() {
+    if (this.data.currentUserId) return this.data.currentUserId
+
+    const localUser = wx.getStorageSync('userInfo') || {}
+    const localId = localUser.id || localUser.userId
+    if (localId) {
+      this.setData({ currentUserId: localId })
+      return localId
+    }
+    
+    try {
+      const user = await request({ url: '/user/info', method: 'GET', silent: true })
+      const userId = (user && (user.id || user.userId)) || null
+      if (userId) {
+        wx.setStorageSync('userInfo', user)
+        this.setData({ currentUserId: userId })
+        return userId
+      }
+    } catch (e) {}
+
+    return null
+  },
+
+  formatTime(timeStr) {
+    if (!timeStr) return ''
+    const date = this.safeDate(timeStr)
     const now = new Date()
     const diff = now - date
+
+    // 今天
+    if (date.toDateString() === now.toDateString()) {
+      return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+    }
     
-    if (diff < 60000) return '刚刚'
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
-    
-    return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`
+    // 今年
+    if (date.getFullYear() === now.getFullYear()) {
+      return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+    }
+
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
   }
 })
-

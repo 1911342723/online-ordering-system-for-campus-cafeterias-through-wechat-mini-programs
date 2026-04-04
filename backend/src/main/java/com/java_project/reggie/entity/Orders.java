@@ -18,7 +18,7 @@ public class Orders implements Serializable {
     //订单号
     private String number;
 
-    //订单状态 1待付款，2待派送，3已派送，4已完成，5已取消
+    //订单状态 1待付款，2待接单，3制作中，4配送中，5已完成，6已取消
     private Integer status;
     
     
@@ -105,4 +105,13 @@ public class Orders implements Serializable {
 
     //评价状态 0:未评价 1:已评价
     private Integer reviewStatus = 0;
+
+    //商家接单时间
+    private LocalDateTime acceptedTime;
+
+    //出餐完成时间
+    private LocalDateTime completedTime;
+
+    //用户取餐时间
+    private LocalDateTime pickedUpTime;
 }

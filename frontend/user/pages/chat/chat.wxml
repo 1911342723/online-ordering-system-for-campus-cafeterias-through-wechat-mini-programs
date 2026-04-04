@@ -1,36 +1,45 @@
 <!--pages/chat/chat.wxml-->
 <view class="container">
-  <!-- 消息列表 -->
   <scroll-view 
     class="message-list" 
-    scroll-y 
+    scroll-y="true" 
     scroll-into-view="{{scrollToView}}"
-    scroll-with-animation
+    scroll-with-animation="true"
   >
     <view wx:if="{{messages.length === 0}}" class="empty">
-      <text>暂无消息，快来和商家聊聊吧~</text>
+      <text>有什么想对商家说的？快来打个招呼吧~</text>
     </view>
     
-    <view 
-      wx:for="{{messages}}" 
-      wx:key="id" 
-      id="msg-{{index}}"
-      class="message-item {{item.fromMerchant ? 'message-left' : 'message-right'}}"
-    >
-      <view class="message-avatar">
-        <text>{{item.fromMerchant ? '商' : '我'}}</text>
+    <view class="message-padding-top"></view>
+    
+    <block wx:for="{{messages}}" wx:key="index">
+      <!-- 时间戳展示 -->
+      <view class="time-divider" wx:if="{{item.showTime}}">
+        <text>{{item.displayTime}}</text>
       </view>
-      <view class="message-content">
-        <view class="message-bubble">
-          {{item.content}}
+
+      <view 
+        id="msg-{{index}}"
+        class="message-item {{item.fromMerchant ? 'message-left' : 'message-right'}}"
+      >
+        <view class="message-avatar">
+          <text>{{item.fromMerchant ? '商' : '我'}}</text>
         </view>
-        <view class="message-time">{{formatTime(item.createTime)}}</view>
+        <view class="message-content">
+          <view wx:if="{{item.sending}}" class="sending-icon">
+            <view class="spinner"></view>
+          </view>
+          <view class="message-bubble {{item.sending ? 'sending' : ''}}">
+            <text user-select="true">{{item.content}}</text>
+          </view>
+        </view>
       </view>
-    </view>
+    </block>
+    
+    <view class="message-padding-bottom"></view>
   </scroll-view>
 
-  <!-- 输入框 -->
-  <view class="input-bar">
+  <view class="input-bar {{isIpx ? 'is-ipx' : ''}}">
     <input 
       class="message-input" 
       placeholder="输入消息..." 
@@ -38,15 +47,14 @@
       bindinput="onInputChange"
       confirm-type="send"
       bindconfirm="sendMessage"
+      cursor-spacing="20"
+      adjust-position="true"
     />
-    <button 
-      class="send-button" 
+    <view 
+      class="send-btn {{inputMessage.length > 0 ? 'active' : ''}}" 
       bindtap="sendMessage"
-      disabled="{{sending || !inputMessage}}"
-      loading="{{sending}}"
     >
       发送
-    </button>
+    </view>
   </view>
 </view>
-

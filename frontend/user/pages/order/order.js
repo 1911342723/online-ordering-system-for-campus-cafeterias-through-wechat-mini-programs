@@ -8,7 +8,7 @@ Page({
     currentTab: 0,
     orders: [],
     defaultOrderImg: DEFAULT_IMAGES.order,
-    statusFilter: '', // 状态过滤：'', 3(制作中), 4(待取餐), 5(已完成)
+    statusFilter: '', // 状态过滤：'', 1, 2/3/4(进行中), 5(已完成)
     page: 1,
     pageSize: 10,
     hasMore: true,
@@ -83,8 +83,9 @@ Page({
       })
 
       if (result && result.records) {
+        const sourceRecords = this.filterRecordsByTab(result.records)
         // 【关键修复】使用与 loadOrders 完全相同的格式化逻辑
-        const formattedOrders = result.records.map(order => {
+        const formattedOrders = sourceRecords.map(order => {
           // 获取第一个菜品信息
           const firstDish = order.orderDetails && order.orderDetails.length > 0 
             ? order.orderDetails[0] 
@@ -105,12 +106,15 @@ Page({
           
           return {
             id: order.id || order.number,
-            shopName: order.canteenName || '第一食堂',
+            orderNumber: order.number || '',
+            merchantId: order.merchantId || null,
+            shopName: order.merchantName || order.canteenName || '商家',
             status: order.status,
             deliveryType: deliveryType,
             statusText: statusText,
             firstDishName: dishNameText,
             count: order.sumNum || 1,
+            pickupCode: this.buildPickupCode(order),
             amount: formatPrice(order.amount),
             orderTime: formatTime(order.orderTime),
             image: firstDish ? getImageUrl(firstDish.image, DEFAULT_IMAGES.order) : DEFAULT_IMAGES.order
@@ -164,9 +168,8 @@ Page({
     switch(index) {
       case 0: statusFilter = 0; break       // 全部（0表示不筛选）
       case 1: statusFilter = 1; break       // 待付款
-      case 2: statusFilter = 2; break       // 待派送(制作中)
-      case 3: statusFilter = 3; break       // 已派送(配送中)
-      case 4: statusFilter = 4; break       // 已完成
+      case 2: statusFilter = 'in_progress'; break // 进行中（待接单/制作中/配送中）
+      case 4: statusFilter = 5; break       // 已完成
     }
     
     this.setData({
@@ -204,7 +207,8 @@ Page({
       hideLoading()
       
       if (result && result.records && result.records.length > 0) {
-        const newOrders = result.records.map(order => {
+        const sourceRecords = this.filterRecordsByTab(result.records)
+        const newOrders = sourceRecords.map(order => {
           // 获取第一个菜品信息
           const firstDish = order.orderDetails && order.orderDetails.length > 0 
             ? order.orderDetails[0] 
@@ -225,12 +229,15 @@ Page({
           
           return {
             id: order.id || order.number,
-            shopName: order.canteenName || '第一食堂',
+            orderNumber: order.number || '',
+            merchantId: order.merchantId || null,
+            shopName: order.merchantName || order.canteenName || '商家',
             status: order.status,
             deliveryType: deliveryType,
             statusText: statusText,
             firstDishName: dishNameText,
             count: order.sumNum || 1,
+            pickupCode: this.buildPickupCode(order),
             amount: formatPrice(order.amount),
             orderTime: formatTime(order.orderTime),
             image: firstDish ? getImageUrl(firstDish.image, DEFAULT_IMAGES.order) : DEFAULT_IMAGES.order
@@ -241,7 +248,7 @@ Page({
           orders: [...this.data.orders, ...newOrders],
           page: this.data.page + 1,
           isLoading: false,
-          hasMore: newOrders.length === this.data.pageSize
+          hasMore: result.records.length === this.data.pageSize
         })
       } else {
         this.setData({
@@ -291,7 +298,7 @@ Page({
         id: '1234567892',
         shopName: '教工食堂',
         status: 4,
-        statusText: '待取餐',
+        statusText: '配送中',
         firstDishName: '红烧肉套餐',
         count: 3,
         amount: '45.00',
@@ -303,7 +310,11 @@ Page({
     // 过滤
     let filteredOrders = mockOrders
     if (this.data.statusFilter) {
-      filteredOrders = mockOrders.filter(o => o.status === this.data.statusFilter)
+      if (this.data.statusFilter === 'in_progress') {
+        filteredOrders = mockOrders.filter(o => [2, 3, 4].includes(o.status))
+      } else {
+        filteredOrders = mockOrders.filter(o => o.status === this.data.statusFilter)
+      }
     }
     
     this.setData({ orders: filteredOrders })
@@ -346,6 +357,36 @@ Page({
     wx.navigateTo({ 
       url: `/pages/order/detail?id=${orderId}` 
     })
+  },
+
+  contactShop(e) {
+    const { merchantId, merchantName, orderId, orderNumber } = e.currentTarget.dataset
+    if (!merchantId) {
+      showError('商家信息缺失，暂时无法联系')
+      return
+    }
+
+    const encodedMerchantName = encodeURIComponent(merchantName || '商家')
+    const encodedOrderNo = encodeURIComponent(orderNumber || orderId || '')
+    wx.navigateTo({
+      url: `/pages/chat/chat?merchantId=${merchantId}&merchantName=${encodedMerchantName}&orderId=${orderId || ''}&orderNumber=${encodedOrderNo}`
+    })
+  },
+
+  filterRecordsByTab(records = []) {
+    if (this.data.statusFilter === 'in_progress') {
+      return records.filter(order => [2, 3, 4].includes(order.status))
+    }
+    return records
+  },
+
+  buildPickupCode(order) {
+    if (!order) return '--'
+    if (order.pickupCode) return String(order.pickupCode)
+    const source = String(order.number || order.id || '')
+    if (!source) return '--'
+    const tail = source.slice(-4).padStart(4, '0')
+    return `A-${tail}`
   }
 })
 

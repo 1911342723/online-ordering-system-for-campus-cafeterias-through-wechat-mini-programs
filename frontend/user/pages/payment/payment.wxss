@@ -7,7 +7,7 @@
 
 /* 支付金额区域 */
 .amount-section {
-  background: linear-gradient(135deg, #FF6B35, #FF8F3D);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   padding: 80rpx 40rpx;
   text-align: center;
   color: #fff;
@@ -55,8 +55,8 @@
 }
 
 .pay-method-item.active {
-  border-color: #FF6B35;
-  background: rgba(255, 107, 53, 0.05);
+  border-color: var(--primary-color);
+  background: rgba(14, 165, 233, 0.05);
 }
 
 .pay-left {
@@ -99,7 +99,7 @@
 }
 
 .radio.checked {
-  border-color: #FF6B35;
+  border-color: var(--primary-color);
 }
 
 .radio-inner {
@@ -110,7 +110,7 @@
 }
 
 .radio.checked .radio-inner {
-  background: #FF6B35;
+  background: var(--primary-color);
 }
 
 /* 支付说明 */
@@ -162,16 +162,17 @@
 .footer-amount .value {
   font-size: 40rpx;
   font-weight: bold;
-  color: #FF6B35;
+  color: var(--primary-color);
   margin-left: 10rpx;
 }
 
 .pay-btn {
   flex-shrink: 0;
+  margin: 0;
   height: 88rpx;
   line-height: 88rpx;
   padding: 0 60rpx;
-  background: linear-gradient(135deg, #FF6B35, #FF8F3D);
+  background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
   color: #fff;
   border-radius: 44rpx;
   font-size: 32rpx;

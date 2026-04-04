@@ -23,7 +23,7 @@
               <el-option label="待付款" :value="1" />
               <el-option label="待接单" :value="2" />
               <el-option label="制作中" :value="3" />
-              <el-option label="待取餐" :value="4" />
+              <el-option label="配送中" :value="4" />
               <el-option label="已完成" :value="5" />
               <el-option label="已取消" :value="6" />
             </el-select>
@@ -153,9 +153,9 @@
               v-if="row.status === 3" 
               link 
               type="warning" 
-              @click="handleReadyForPickup(row)"
+              @click="handleStartDelivery(row)"
             >
-              待取餐
+              开始配送
             </el-button>
             <el-button 
               v-if="row.status === 4" 
@@ -322,7 +322,7 @@ const getStatusText = (status) => {
     1: '待付款',
     2: '待接单',
     3: '制作中',
-    4: '待取餐',
+    4: '配送中',
     5: '已完成',
     6: '已取消'
   }
@@ -417,7 +417,12 @@ const handleAcceptOrder = async (row) => {
   try {
     const res = await updateOrderStatus({ id: row.id, status: 3 })
     if (res.code === 1) {
-      ElMessage.success('接单成功')
+      if (queryParams.status === 2) {
+        ElMessage.success('接单成功，订单已移至“制作中”')
+        queryParams.status = 3
+      } else {
+        ElMessage.success('接单成功')
+      }
       fetchData()
       fetchPendingCount()
     } else {
@@ -429,12 +434,12 @@ const handleAcceptOrder = async (row) => {
   }
 }
 
-// 待取餐
-const handleReadyForPickup = async (row) => {
+// 开始配送
+const handleStartDelivery = async (row) => {
   try {
     const res = await updateOrderStatus({ id: row.id, status: 4 })
     if (res.code === 1) {
-      ElMessage.success('订单已标记为待取餐')
+      ElMessage.success('订单已进入配送中')
       fetchData()
       fetchPendingCount()
     } else {

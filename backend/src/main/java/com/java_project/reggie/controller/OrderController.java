@@ -16,6 +16,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,12 @@ public class OrderController {
     private OrderService orderService;
     @Autowired
     private OrderDtailService orderDtailService;
+
+    @Autowired
+    private com.java_project.reggie.service.ETAService etaService;
+
+    @Autowired
+    private com.java_project.reggie.service.RecommendationService recommendationService;
 
     /*
     * 用户下单
@@ -47,10 +54,22 @@ public class OrderController {
             throw new CustomException("订单不存在");
         }
         
-        // 验证订单所属用户（可选，根据业务需求）
+        // 权限控制：
+        // 1) 商家只能查看自己商家的订单
+        // 2) 管理员可查看所有订单
+        // 3) 普通用户只能查看自己的订单
         Long currentUserId = BaseContext.getThreadLocal();
-        if (currentUserId != null && !order.getUserId().equals(currentUserId)) {
-            throw new CustomException("无权查看此订单");
+        if (currentUserId != null) {
+            if (authHelper.isMerchant()) {
+                Long merchantId = authHelper.getCurrentMerchantId();
+                if (merchantId == null || order.getMerchantId() == null || !merchantId.equals(order.getMerchantId())) {
+                    throw new CustomException("无权查看此订单");
+                }
+            } else if (!authHelper.isAdmin()) {
+                if (!order.getUserId().equals(currentUserId)) {
+                    throw new CustomException("无权查看此订单");
+                }
+            }
         }
         
         // 转换为OrderDto并查询订单详情
@@ -255,17 +274,154 @@ public class OrderController {
         return R.success(dtoPage);
     }
 
-    /*管理端点击派送*/
+    /*管理端点击派送 / 更新订单状态*/
     @PutMapping
-    public R<String> updateOrderStatus(@RequestBody Orders request) {
+    public R<String> updateOrderStatus(@RequestBody java.util.Map<String, Object> request) {
+        Object idObj = request.get("id");
+        Object statusObj = request.get("status");
 
-        boolean updated = orderService.updateOrderStatus(request.getId(), request.getStatus());
+        if (idObj == null || statusObj == null) {
+            return R.error("参数缺失");
+        }
+
+        Long orderId;
+        Integer targetStatus;
+        try {
+            orderId = Long.valueOf(String.valueOf(idObj));
+            targetStatus = Integer.valueOf(String.valueOf(statusObj));
+        } catch (Exception e) {
+            log.warn("更新订单状态参数解析失败: id={}, status={}", idObj, statusObj);
+            return R.error("参数格式错误");
+        }
+
+        log.info("更新订单状态: orderId={}, status={}", orderId, targetStatus);
+
+        // 获取订单信息（用于ETA记录和偏好更新）
+        Orders existingOrder = orderService.getById(orderId);
+        if (existingOrder == null) {
+            return R.error("订单不存在");
+        }
+
+        // 权限控制：商家只能操作自己商家的订单，管理员可操作全部
+        if (authHelper.isMerchant()) {
+            Long merchantId = authHelper.getCurrentMerchantId();
+            if (merchantId == null || existingOrder.getMerchantId() == null || !merchantId.equals(existingOrder.getMerchantId())) {
+                return R.error("无权操作此订单");
+            }
+        } else if (!authHelper.isAdmin()) {
+            return R.error("无权操作此订单");
+        }
+
+        // 状态流转保护，防止非法跳转
+        Integer currentStatus = existingOrder.getStatus();
+        if (!isValidOrderStatusTransition(currentStatus, targetStatus)) {
+            return R.error("订单状态流转非法: " + currentStatus + " -> " + targetStatus);
+        }
+
+        boolean statusChanged = !currentStatus.equals(targetStatus);
+        boolean updated = orderService.updateOrderStatus(orderId, targetStatus);
 
         if (updated) {
+            // === ETA数据采集: 订单状态变为“已接单/制作中”(2) 时，记录接单时间 ===
+            if (statusChanged && targetStatus == 2) {
+                try {
+                    existingOrder.setStatus(targetStatus);
+                    existingOrder.setAcceptedTime(LocalDateTime.now());
+                    orderService.updateById(existingOrder);
+                    log.info("订单{}已接单，记录接单时间", orderId);
+                } catch (Exception e) {
+                    log.warn("记录接单时间失败", e);
+                }
+            }
+
+            // === ETA数据采集: 订单状态变为“已出餐/已派送”(3) 时，记录出餐完成日志 ===
+            if (statusChanged && targetStatus == 3) {
+                try {
+                    existingOrder.setStatus(targetStatus);
+                    // 更新订单出餐完成时间
+                    existingOrder.setCompletedTime(LocalDateTime.now());
+                    orderService.updateById(existingOrder);
+
+                    // 计算菜品数量
+                    LambdaQueryWrapper<OrderDetail> detailWrapper = new LambdaQueryWrapper<>();
+                    detailWrapper.eq(OrderDetail::getOrderId, existingOrder.getId());
+                    List<OrderDetail> details = orderDtailService.list(detailWrapper);
+                    int dishCount = details.stream().mapToInt(OrderDetail::getNumber).sum();
+
+                    // 写入出餐日志（供ETA算法使用）
+                    if (existingOrder.getMerchantId() != null) {
+                        etaService.recordOrderCompletion(
+                            existingOrder.getId(),
+                            existingOrder.getMerchantId(),
+                            dishCount
+                        );
+                    }
+                    log.info("订单{}已出餐，记录出餐日志", orderId);
+                } catch (Exception e) {
+                    log.warn("记录出餐日志失败", e);
+                }
+            }
+
+            // === 订单完成(4/5)时，更新用户偏好数据（供推荐算法使用） ===
+            if (statusChanged && (targetStatus == 4 || targetStatus == 5)) {
+                try {
+                    recommendationService.updateUserPreferenceByOrder(existingOrder.getUserId());
+                } catch (Exception e) {
+                    log.warn("更新用户偏好数据失败", e);
+                }
+            }
+
+            // 任务奖励：完成订单 +10经验（仅在真实状态变更到已完成时触发）
+            if (statusChanged && targetStatus == 5) {
+                try {
+                    grantOrderCompleteExp(existingOrder.getUserId(), 10);
+                } catch (Exception e) {
+                    log.warn("发放订单完成经验失败: orderId={}", orderId, e);
+                }
+            }
+
             return R.success("Order status updated successfully.");
         } else {
             return R.error("修改失败");
         }
+    }
+
+    private boolean isValidOrderStatusTransition(Integer currentStatus, Integer targetStatus) {
+        if (currentStatus == null || targetStatus == null) {
+            return false;
+        }
+        if (currentStatus.equals(targetStatus)) {
+            return true;
+        }
+
+        // 允许：待接单(2)->制作中(3)->配送中(4)->已完成(5)
+        // 允许：待接单(2)->已取消(6)
+        // 允许：制作中(3)->已取消(6)（特殊场景）
+        if (currentStatus == 2 && (targetStatus == 3 || targetStatus == 6)) {
+            return true;
+        }
+        if (currentStatus == 3 && (targetStatus == 4 || targetStatus == 6)) {
+            return true;
+        }
+        if (currentStatus == 4 && targetStatus == 5) {
+            return true;
+        }
+
+        // 已完成/已取消为终态，不允许再变更
+        return false;
+    }
+
+    private void grantOrderCompleteExp(Long userId, int expDelta) {
+        if (userId == null) {
+            return;
+        }
+        com.java_project.reggie.entity.User user = userService.getById(userId);
+        if (user == null) {
+            return;
+        }
+        int exp = user.getExp() == null ? 0 : user.getExp();
+        user.setExp(Math.max(0, exp + expDelta));
+        userService.updateById(user);
     }
 
     /**

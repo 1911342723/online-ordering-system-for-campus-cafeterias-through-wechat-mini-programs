@@ -1,7 +1,10 @@
 package com.java_project.reggie.common;
 
 import com.java_project.reggie.entity.Employee;
+import com.java_project.reggie.entity.Merchant;
 import com.java_project.reggie.service.EmployeeService;
+import com.java_project.reggie.service.MerchantService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -15,6 +18,9 @@ public class AuthHelper {
     
     @Autowired
     private EmployeeService employeeService;
+
+    @Autowired
+    private MerchantService merchantService;
     
     /**
      * 获取当前登录的员工信息
@@ -49,7 +55,18 @@ public class AuthHelper {
     public Long getCurrentMerchantId() {
         Employee employee = getCurrentEmployee();
         if (employee != null && "merchant".equals(employee.getRole())) {
-            return employee.getMerchantId();
+            if (employee.getMerchantId() != null) {
+                return employee.getMerchantId();
+            }
+
+            // 兼容历史数据：employee.merchant_id 为空时，尝试通过 merchant.employee_id 反查。
+            LambdaQueryWrapper<Merchant> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(Merchant::getEmployeeId, employee.getId());
+            wrapper.last("LIMIT 1");
+            Merchant merchant = merchantService.getOne(wrapper);
+            if (merchant != null) {
+                return merchant.getId();
+            }
         }
         return null;
     }

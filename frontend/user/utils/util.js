@@ -2,6 +2,8 @@
  * 通用工具函数
  */
 
+let loadingCounter = 0
+
 /**
  * 格式化价格 - 后端返回的是分，需要转换为元
  * @param {number} price - 价格（分）
@@ -105,9 +107,17 @@ function throttle(func, wait = 500) {
  */
 function getImageUrl(name, defaultImg = '') {
   if (!name) return defaultImg
+  if (name.startsWith('http://localhost') || name.startsWith('http://127.0.0.1')) {
+    // 微信小程序 image 组件不支持 http，开发环境回退到默认图
+    return defaultImg
+  }
   if (name.startsWith('http')) return name
   const { DOWNLOAD_URL_PREFIX } = require('./config')
-  return `${DOWNLOAD_URL_PREFIX}${name}`
+  const imageUrl = `${DOWNLOAD_URL_PREFIX}${name}`
+  if (imageUrl.startsWith('http://localhost') || imageUrl.startsWith('http://127.0.0.1')) {
+    return defaultImg
+  }
+  return imageUrl
 }
 
 /**
@@ -115,6 +125,7 @@ function getImageUrl(name, defaultImg = '') {
  * @param {string} title - 提示文字
  */
 function showLoading(title = '加载中...') {
+  loadingCounter += 1
   wx.showLoading({
     title,
     mask: true
@@ -125,7 +136,10 @@ function showLoading(title = '加载中...') {
  * 隐藏加载提示
  */
 function hideLoading() {
-  wx.hideLoading()
+  if (loadingCounter > 0) {
+    loadingCounter -= 1
+    wx.hideLoading()
+  }
 }
 
 /**

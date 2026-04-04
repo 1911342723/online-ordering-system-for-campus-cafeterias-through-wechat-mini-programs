@@ -520,6 +520,7 @@ Page({
       const coupons = await request({
         url: '/coupon/available',
         method: 'GET',
+        silent: true,
         data: {
           type: 1 // 只查询平台券
         }
@@ -535,10 +536,13 @@ Page({
           minAmount: Math.floor(parseFloat(coupon.minAmount) / 100) // 转为整数
         }))
         
-        this.setData({ coupons: formattedCoupons })
+        // 计算未领取的数量
+        const unreceivedCount = coupons.filter(c => !c.received).length
+
+        this.setData({ coupons: formattedCoupons, unreceivedCount: unreceivedCount })
       } else {
         // 即使没有优惠券，也显示入口（可以引导用户查看）
-        this.setData({ coupons: [] })
+        this.setData({ coupons: [], unreceivedCount: 0 })
       }
     } catch (error) {
       console.error('加载优惠券失败:', error)

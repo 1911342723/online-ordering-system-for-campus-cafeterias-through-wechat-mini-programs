@@ -17,7 +17,7 @@
       <block wx:if="{{orders.length > 0}}">
         <block wx:for="{{orders}}" wx:key="id">
           
-          <!-- Active Order Card (Status 2: Preparing, 3: Delivery, 4: Ready) -->
+          <!-- Active Order Card (Status 2: Waiting, 3: Preparing, 4: Delivering) -->
           <view class="active-card" wx:if="{{item.status === 2 || item.status === 3 || item.status === 4}}" bindtap="viewOrderDetail" data-id="{{item.id}}">
             <!-- Status Ribbon -->
             <view class="status-ribbon">
@@ -41,17 +41,17 @@
                 <view class="progress-labels">
                   <text class="{{item.status >= 2 ? 'active' : ''}}">已下单</text>
                   <text class="{{item.status >= 3 ? 'active' : ''}}">制作中</text>
-                  <text class="{{item.status >= 4 ? 'active' : ''}}">待取餐</text>
+                  <text class="{{item.status >= 4 ? 'active' : ''}}">配送中</text>
                 </view>
               </view>
 
               <view class="divider-dashed"></view>
 
-              <!-- Pickup Code -->
+              <!-- Delivery Code -->
               <view class="pickup-section">
                 <view class="pickup-left">
-                  <text class="pickup-label">取餐码</text>
-                  <text class="pickup-code">{{item.pickupCode || 'A-888'}}</text> <!-- Mock code if missing -->
+                  <text class="pickup-label">配送单号</text>
+                  <text class="pickup-code">{{item.pickupCode || '--'}}</text>
                 </view>
                 <view class="qr-icon-box">
                   <view class="qr-modern">
@@ -67,7 +67,7 @@
                 <text class="label">合计</text>
                 <text class="amount">¥{{item.amount}}</text>
               </view>
-              <button class="btn-contact" catchtap="contactShop">联系商家</button>
+              <button class="btn-contact" catchtap="contactShop" data-merchant-id="{{item.merchantId}}" data-merchant-name="{{item.shopName}}" data-order-id="{{item.id}}" data-order-number="{{item.orderNumber}}">联系商家</button>
             </view>
           </view>
 

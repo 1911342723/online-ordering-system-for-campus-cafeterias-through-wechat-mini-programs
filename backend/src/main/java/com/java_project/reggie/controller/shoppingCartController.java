@@ -5,7 +5,9 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.java_project.reggie.common.BaseContext;
 import com.java_project.reggie.common.R;
+import com.java_project.reggie.entity.Dish;
 import com.java_project.reggie.entity.ShoppingCart;
+import com.java_project.reggie.service.DishService;
 import com.java_project.reggie.service.ShoppingCartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -20,12 +22,37 @@ public class shoppingCartController {
     @Autowired
     private ShoppingCartService shoppingCartService;
 
+    @Autowired
+    private DishService dishService;
+
 
     @PostMapping("/add")
     public R<ShoppingCart> add(@RequestBody ShoppingCart shoppingCart){
         //设置用户id，指定是谁的购物车数据
         Long Id = BaseContext.getThreadLocal();
         shoppingCart.setUserId(Id);
+
+        // 前端可能未传 merchantId/canteenId，后端兜底从菜品信息补齐。
+        if (shoppingCart.getDishId() != null) {
+            Dish dish = dishService.getById(shoppingCart.getDishId());
+            if (dish != null) {
+                if (shoppingCart.getMerchantId() == null) {
+                    shoppingCart.setMerchantId(dish.getMerchantId());
+                }
+                if (shoppingCart.getCanteenId() == null) {
+                    shoppingCart.setCanteenId(dish.getCanteenId());
+                }
+                if (shoppingCart.getAmount() == null) {
+                    shoppingCart.setAmount(dish.getPrice());
+                }
+                if (shoppingCart.getImage() == null || shoppingCart.getImage().trim().isEmpty()) {
+                    shoppingCart.setImage(dish.getImage());
+                }
+                if (shoppingCart.getName() == null || shoppingCart.getName().trim().isEmpty()) {
+                    shoppingCart.setName(dish.getName());
+                }
+            }
+        }
 
         //查询当前是菜品还是套餐
         LambdaQueryWrapper<ShoppingCart> queryWrapper = new LambdaQueryWrapper<>();

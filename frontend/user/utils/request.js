@@ -32,9 +32,26 @@ const request = (options) => {
           if (code === 1) {
             resolve(data)
           } else if (msg === 'NOTLOGIN') {
-            // 静默处理未登录错误，不弹框提示
-            // 某些接口（如公告、推荐）不需要登录也能访问
             console.log('未登录访问:', options.url)
+            // 未登录优先跳转登录，除非设置了静默
+            if (!options.silent) {
+              const pages = getCurrentPages()
+              if (pages.length > 0) {
+                const currentPage = pages[pages.length - 1]
+                if (currentPage.route !== 'pages/login/login') {
+                  wx.showToast({
+                    title: '请先登录',
+                    icon: 'none',
+                    duration: 1500
+                  })
+                  setTimeout(() => {
+                    wx.navigateTo({
+                      url: '/pages/login/login'
+                    })
+                  }, 1500)
+                }
+              }
+            }
             reject(res.data)
           } else {
             // 其他错误：如果不是静默模式才显示提示

@@ -179,9 +179,22 @@ public class DishFlavorController {
             LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
             //添加查询条件 - 支持根据canteenId查询
             queryWrapper.eq(dish.getCanteenId()!=null,Dish::getCanteenId,dish.getCanteenId());
+            // 支持按商家查询（小程序菜单会传merchantId）
+            queryWrapper.eq(dish.getMerchantId()!=null,Dish::getMerchantId,dish.getMerchantId());
             queryWrapper.eq(dish.getCategoryId()!=null,Dish::getCategoryId,dish.getCategoryId());
             //查询状态是1的，为在售状态的
             queryWrapper.eq(Dish::getStatus,1);
+
+            // 商家登录态下强制只查当前商家，避免越权或参数错误
+            if (authHelper.isMerchant()) {
+                Long currentMerchantId = authHelper.getCurrentMerchantId();
+                if (currentMerchantId != null) {
+                    queryWrapper.eq(Dish::getMerchantId, currentMerchantId);
+                } else {
+                    log.warn("商家角色但未找到关联商家ID，返回空菜品列表");
+                    return R.success(new ArrayList<>());
+                }
+            }
 
             //添加排序条件
             queryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
@@ -222,7 +235,8 @@ public class DishFlavorController {
                 return dishDto;
             }).collect(Collectors.toList());
 
-            log.info("查询到{}道菜品", dishDtoList.size());
+            log.info("查询到{}道菜品, merchantId={}, categoryId={}, canteenId={}",
+                dishDtoList.size(), dish.getMerchantId(), dish.getCategoryId(), dish.getCanteenId());
             return R.success(dishDtoList);
         } catch (Exception e) {
             log.error("查询菜品列表异常: {}", e.getMessage(), e);

@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.MultipartStream;
 import org.apache.tomcat.util.http.fileupload.util.mime.MimeUtility;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -60,33 +61,51 @@ public class CommonController {
         //输入流，读取服务端文件内容
         FileInputStream fileInputStream = null;
         ServletOutputStream outputStream = null;
+        InputStream fallbackStream = null;
         
         try {
-            File file = new File(basePath + name);
+            String fileName = name == null ? "" : name.trim();
+            File file = new File(basePath + fileName);
             
-            // 检查文件是否存在
-            if (!file.exists()) {
-                log.warn("文件不存在: {}, 返回404", basePath + name);
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                return;
-            }
-            
-            fileInputStream = new FileInputStream(file);
-            
-            //输出流，通过网络写回浏览器，并在浏览器展示
-            response.setContentType("image/jpeg"); // 设置响应类型
+            // 输出流，通过网络写回浏览器，并在浏览器展示
+            response.setContentType(resolveContentType(fileName));
             outputStream = response.getOutputStream();
             
             int len = 0;
             byte[] bytes = new byte[1024];
-            //先用循环不断写到数组，并且在这个过程中不断刷新
-            //直到len长度为-1为止，表示刷写完成
-            while((len = fileInputStream.read(bytes)) != -1){
-                outputStream.write(bytes, 0, len);
-                //刷写一下
-                outputStream.flush();
+            if (file.exists()) {
+                fileInputStream = new FileInputStream(file);
+                while((len = fileInputStream.read(bytes)) != -1){
+                    outputStream.write(bytes, 0, len);
+                    outputStream.flush();
+                }
+                return;
             }
-            
+
+            log.warn("文件不存在: {}，尝试classpath兜底", basePath + fileName);
+            ClassPathResource classPathResource = new ClassPathResource("food_img/" + fileName);
+            if (classPathResource.exists()) {
+                fallbackStream = classPathResource.getInputStream();
+                while((len = fallbackStream.read(bytes)) != -1){
+                    outputStream.write(bytes, 0, len);
+                    outputStream.flush();
+                }
+                return;
+            }
+
+            // 最终兜底图，避免前端图片404
+            ClassPathResource defaultResource = new ClassPathResource("food_img/e8d26c1d-2c7c-424f-9531-49169cf96a36.jpg");
+            if (defaultResource.exists()) {
+                fallbackStream = defaultResource.getInputStream();
+                response.setContentType("image/jpeg");
+                while((len = fallbackStream.read(bytes)) != -1){
+                    outputStream.write(bytes, 0, len);
+                    outputStream.flush();
+                }
+                return;
+            }
+
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } catch (Exception e) {
             log.error("文件下载异常: {}", name, e);
         } finally {
@@ -94,10 +113,28 @@ public class CommonController {
             try {
                 if (outputStream != null) outputStream.close();
                 if (fileInputStream != null) fileInputStream.close();
+                if (fallbackStream != null) fallbackStream.close();
             } catch (Exception e) {
                 log.error("关闭流异常", e);
             }
         }
+    }
+
+    private String resolveContentType(String fileName) {
+        if (fileName == null) {
+            return "image/jpeg";
+        }
+        String lower = fileName.toLowerCase();
+        if (lower.endsWith(".png")) {
+            return "image/png";
+        }
+        if (lower.endsWith(".gif")) {
+            return "image/gif";
+        }
+        if (lower.endsWith(".webp")) {
+            return "image/webp";
+        }
+        return "image/jpeg";
     }
 }
 

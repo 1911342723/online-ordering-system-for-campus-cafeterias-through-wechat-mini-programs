@@ -204,11 +204,12 @@ Page({
     
     try {
       const res = await request({
-        url: '/order/completed',
+        url: '/order/userPage',
         method: 'GET',
         data: {
           page: isLoadMore ? this.data.orderPage + 1 : 1,
-          pageSize: 20
+          pageSize: 20,
+          status: 5
         }
       })
       

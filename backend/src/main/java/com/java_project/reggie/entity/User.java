@@ -93,6 +93,18 @@ public class User implements Serializable {
     private Integer likeCount = 0;
 
 
+    //健康目标: lose_fat=减脂, gain_muscle=增肌, balanced=均衡, none=无
+    private String healthGoal;
+
+
+    //每日目标卡路里摄入（千卡）
+    private Integer dailyCalorieTarget;
+
+
+    //饮食禁忌（逗号分隔，如：不吃辣,不吃海鲜,素食）
+    private String dietaryRestrictions;
+
+
     //创建时间
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;

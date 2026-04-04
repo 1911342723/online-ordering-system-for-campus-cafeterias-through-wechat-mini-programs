@@ -1,5 +1,19 @@
 import request from './request'
 
+function normalizeOrderIdPayload(data) {
+  if (!data || typeof data !== 'object') {
+    return data
+  }
+  const payload = { ...data }
+  if (payload.id !== undefined && payload.id !== null) {
+    payload.id = String(payload.id)
+  }
+  if (payload.orderId !== undefined && payload.orderId !== null) {
+    payload.orderId = String(payload.orderId)
+  }
+  return payload
+}
+
 /**
  * 订单管理API
  */
@@ -49,7 +63,7 @@ export function updateOrderStatus(data) {
   return request({
     url: '/order',
     method: 'put',
-    data
+    data: normalizeOrderIdPayload(data)
   })
 }
 
